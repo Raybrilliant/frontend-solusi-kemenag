@@ -1,0 +1,71 @@
+---
+import InternalLayout from "../../layouts/InternalLayout.astro";
+import InternalLayananForm from "../../components/Svelte/InternalLayananForm.svelte";
+---
+
+<style>
+    [data-anim="badge"] {
+        animation: fadeDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+    }
+    [data-anim="heading"] {
+        animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+    }
+    [data-anim="content"] {
+        animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+    }
+
+    @keyframes fadeDown {
+        from {
+            opacity: 0;
+            transform: translateY(-12px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    @keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<InternalLayout title="Layanan Internal ASN — Kemenag Kota Probolinggo">
+    <div class="pt-6 md:pt-12 pb-16 md:pb-24">
+        <!-- ── Hero ──────────────────────────────────── -->
+        <div class="text-center mb-10 md:mb-14">
+            <div
+                data-anim="badge"
+                class="inline-flex items-center gap-2 bg-green/20 border border-green/30 rounded-full px-3 py-1 mb-4"
+            >
+                <span class="w-1.5 h-1.5 rounded-full bg-green animate-pulse"
+                ></span>
+                <span
+                    class="text-[11px] font-bold text-green uppercase tracking-widest"
+                    >Portal ASN</span
+                >
+            </div>
+            <h1
+                data-anim="heading"
+                class="text-4xl md:text-5xl font-extrabold uppercase tracking-tight text-ink"
+            >
+                Layanan <span class="text-green">Internal</span>
+            </h1>
+            <p class="text-sm text-ink/45 mt-2 max-w-lg mx-auto">
+                Portal layanan khusus untuk Aparatur Sipil Negara Kementerian
+                Agama Kota Probolinggo.
+            </p>
+        </div>
+
+        <!-- ── Svelte Component ──────────────────────── -->
+        <div data-anim="content">
+            <InternalLayananForm client:load />
+        </div>
+    </div>
+</InternalLayout>

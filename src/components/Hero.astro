@@ -1,0 +1,232 @@
+---
+import { Icon } from "astro-icon/components";
+---
+
+<style>
+  .dot-grid {
+    background-image: radial-gradient(circle, #0F6B44 1.5px, transparent 1.5px);
+    background-size: 10px 10px;
+  }
+  .triangle-yellow {
+    width: 0;
+    height: 0;
+    border-left: 28px solid transparent;
+    border-right: 28px solid transparent;
+    border-bottom: 50px solid #F6C744;
+  }
+
+  /* ── Collage entrance: initial hidden ───────────────── */
+  [data-anim] { will-change: transform, opacity; }
+
+  [data-anim="ornament"]  { opacity: 0; transition: opacity 0.8s ease 0.2s; }
+  [data-anim="arch"]      { opacity: 0; transform: translateX(48px); transition: opacity 0.7s ease 0.1s, transform 0.7s ease 0.1s; }
+  [data-anim="triangle"]  { opacity: 0; transform: translateY(-28px); transition: opacity 0.6s ease 0.4s, transform 0.6s ease 0.4s; }
+  [data-anim="dots"]      { opacity: 0; transition: opacity 0.7s ease 0.3s; }
+  [data-anim="squiggles"] { opacity: 0; transition: opacity 0.7s ease 0.5s; }
+  [data-anim="photo"]     { opacity: 0; transform: translateY(24px); transition: opacity 0.9s ease 0.15s, transform 0.9s ease 0.15s; }
+  [data-anim="badge"]     { opacity: 0; transform: translateX(24px); transition: opacity 0.6s ease 0.6s, transform 0.6s ease 0.6s; }
+
+  /* ── Collage entrance: visible ───────────────────────── */
+  .collage.visible [data-anim="ornament"]  { opacity: 0.4; }
+  .collage.visible [data-anim="arch"]      { opacity: 1; transform: translateX(0); }
+  .collage.visible [data-anim="triangle"]  { opacity: 1; transform: translateY(0); }
+  .collage.visible [data-anim="dots"]      { opacity: 0.55; }
+  .collage.visible [data-anim="squiggles"] { opacity: 0.35; }
+  .collage.visible [data-anim="photo"]     { opacity: 1; transform: translateY(0); }
+  .collage.visible [data-anim="badge"]     { opacity: 1; transform: translateX(0); }
+
+  /* ── Hero text: entrance ────────────────────────────── */
+  .hero-text [data-anim="h1"] {
+    opacity: 0;
+    transform: translateY(50px);
+    transition: opacity 0.9s cubic-bezier(0.16,1,0.3,1), transform 0.9s cubic-bezier(0.16,1,0.3,1);
+  }
+  .hero-text [data-anim="h2"] {
+    opacity: 0;
+    transform: translateX(-24px);
+    transition: opacity 0.8s ease 0.18s, transform 0.8s ease 0.18s;
+  }
+  .hero-text [data-anim="desc"] {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.7s ease 0.35s, transform 0.7s ease 0.35s;
+  }
+  .hero-text [data-anim="btns"] {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.7s ease 0.52s, transform 0.7s ease 0.52s;
+  }
+  .hero-text.visible [data-anim="h1"]   { opacity: 1; transform: translateY(0); }
+  .hero-text.visible [data-anim="h2"]   { opacity: 1; transform: translateX(0); }
+  .hero-text.visible [data-anim="desc"] { opacity: 0.65; transform: translateY(0); }
+  .hero-text.visible [data-anim="btns"] { opacity: 1; transform: translateY(0); }
+
+  /* ── Buttons ─────────────────────────────────────────── */
+  .btn-hero {
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .btn-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: #F6C744;
+    transform: translateX(-101%);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 0;
+  }
+  .btn-hero:hover::before { transform: translateX(0); }
+  .btn-hero:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(15, 107, 68, 0.22);
+  }
+  .btn-label, .btn-icon {
+    position: relative;
+    z-index: 1;
+    transition: color 0.3s ease, transform 0.3s ease;
+  }
+  .btn-hero:hover .btn-label { color: #111111; }
+  .btn-hero:hover .btn-icon  { color: #111111; transform: translateX(5px); }
+
+  /* ── Keyframes ───────────────────────────────────────── */
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  @keyframes float-up {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-10px); }
+  }
+
+  /* ── Hover ───────────────────────────────────────────── */
+  .collage.visible:hover [data-anim="ornament"] {
+    opacity: 0.65;
+    animation: spin-slow 16s linear infinite;
+    transition: opacity 0.4s ease;
+  }
+  .collage.visible:hover [data-anim="arch"] {
+    transform: translateX(-5px) scaleY(1.02);
+    transition: transform 0.5s ease;
+  }
+  .collage.visible:hover [data-anim="triangle"] {
+    animation: float-up 2.4s ease-in-out infinite;
+    transition: none;
+  }
+  .collage.visible:hover [data-anim="photo"] {
+    transform: scale(1.03);
+    transition: transform 1s ease;
+  }
+  .collage.visible:hover [data-anim="dots"] {
+    opacity: 0.8;
+    transform: translate(2px, -2px);
+    transition: opacity 0.4s ease, transform 0.8s ease;
+  }
+  .collage.visible:hover [data-anim="badge"] {
+    transform: translateY(-5px);
+    transition: transform 0.4s ease;
+  }
+</style>
+<script>
+  function observeOnce(id: string, cls: string) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { el.classList.add(cls); obs.disconnect(); }
+    }, { threshold: 0 });
+    obs.observe(el);
+  }
+  function init() {
+    observeOnce('hero-text', 'visible');
+    observeOnce('hero-collage', 'visible');
+  }
+  init();
+  document.addEventListener('astro:page-load', init);
+</script>
+
+<section class="grid grid-cols-1 md:grid-cols-2 items-center mt-6 md:mt-10 gap-8 md:gap-0">
+    <!-- Hero Text Content -->
+    <div id="hero-text" class="hero-text col-span-1">
+        <h1 data-anim="h1" class="text-6xl sm:text-7xl md:text-9xl font-bold">SOLUSI</h1>
+        <h2 data-anim="h2" class="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-semibold uppercase leading-tight">
+            Sistem Online Layanan <span class="text-green">Unggul</span> <span class="text-green">Terintegrasi</span>
+        </h2>
+        <p data-anim="desc" class="text-sm md:text-lg mt-3 md:mt-4 italic">Cari layanan yang Anda butuhkan dengan cepat, mudah, dan transparan.</p>
+
+        <!-- Action Buttons -->
+        <div data-anim="btns" class="flex flex-wrap gap-3 mt-5 md:mt-6">
+            <a href="/" class="btn-hero bg-green text-cream text-xs md:text-sm py-3 md:py-4 px-5 md:px-6 font-bold uppercase tracking-wider inline-flex items-center cursor-pointer">
+                <span class="btn-label">Jelajahi Layanan</span>
+                <span class="btn-icon ml-2"><Icon name="mdi:arrow-right" class="w-4 h-4 md:w-5 md:h-5" /></span>
+            </a>
+            <a href="/check-progress" class="btn-hero bg-green text-cream text-xs md:text-sm py-3 md:py-4 px-5 md:px-6 font-bold uppercase tracking-wider inline-flex items-center cursor-pointer">
+                <span class="btn-label">Cek Progress</span>
+                <span class="btn-icon ml-2"><Icon name="mdi:progress-clock" class="w-4 h-4 md:w-5 md:h-5" /></span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Ilustrasi Hero - Collage Style (hidden on mobile) -->
+    <div id="hero-collage" class="collage col-span-1 relative h-72 sm:h-96 md:h-120 overflow-hidden hidden sm:block">
+
+        <!-- Islamic geometric ornament - top left -->
+        <div data-anim="ornament" class="absolute top-4 left-4 z-10">
+            <svg width="148" height="148" viewBox="0 0 120 120" fill="none" stroke="#111111" stroke-width="0.8">
+                <path d="M60,10 L67.65,41.52 L95.36,24.64 L78.48,52.35 L110,60 L78.48,67.65 L95.36,95.36 L67.65,78.48 L60,110 L52.35,78.48 L24.64,95.36 L41.52,67.65 L10,60 L41.52,52.35 L24.64,24.64 L52.35,41.52 Z"/>
+                <polygon points="60,40 74.14,45.86 80,60 74.14,74.14 60,80 45.86,74.14 40,60 45.86,45.86"/>
+                <line x1="60" y1="10" x2="60" y2="40"/>
+                <line x1="95.36" y1="24.64" x2="74.14" y2="45.86"/>
+                <line x1="110" y1="60" x2="80" y2="60"/>
+                <line x1="95.36" y1="95.36" x2="74.14" y2="74.14"/>
+                <line x1="60" y1="110" x2="60" y2="80"/>
+                <line x1="24.64" y1="95.36" x2="45.86" y2="74.14"/>
+                <line x1="10" y1="60" x2="40" y2="60"/>
+                <line x1="24.64" y1="24.64" x2="45.86" y2="45.86"/>
+                <line x1="67.65" y1="41.52" x2="78.48" y2="52.35"/>
+                <line x1="78.48" y1="67.65" x2="67.65" y2="78.48"/>
+                <line x1="52.35" y1="78.48" x2="41.52" y2="67.65"/>
+                <line x1="41.52" y1="52.35" x2="52.35" y2="41.52"/>
+            </svg>
+        </div>
+
+        <!-- Green arch panel - right side -->
+        <div data-anim="arch" class="absolute top-4 right-8 w-28 h-60 bg-green z-10 rounded-t-full"></div>
+
+        <!-- Yellow triangle -->
+        <div data-anim="triangle" class="triangle-yellow absolute top-22 right-15.5 z-20"></div>
+
+        <!-- Dot grid -->
+        <div data-anim="dots" class="dot-grid absolute top-4 right-36 w-18 h-18 z-5"></div>
+
+        <!-- Decorative squiggles -->
+        <div data-anim="squiggles" class="absolute top-8 left-[38%] z-5">
+            <svg width="32" height="22" viewBox="0 0 32 22" fill="none">
+                <path d="M0,8 Q4,2 8,8 Q12,14 16,8 Q20,2 24,8 Q28,14 32,8" stroke="#111" stroke-width="1.4"/>
+                <path d="M0,16 Q4,10 8,16 Q12,22 16,16 Q20,10 24,16 Q28,22 32,16" stroke="#111" stroke-width="1.4"/>
+            </svg>
+        </div>
+
+        <!-- Main photo - grayscale -->
+        <img
+            data-anim="photo"
+            src="/kemenag.png"
+            alt="Ilustrasi Masjid"
+            class="absolute bottom-0 left-[8%] w-[78%] object-cover object-bottom z-20"
+            style="filter: grayscale(100%);"
+        />
+
+        <!-- Zona Integritas badge -->
+        <a href="/zona-integritas" data-anim="badge" class="absolute bottom-10 right-4 z-30 bg-cream border border-ink/15 px-4 py-3 flex items-end gap-4">
+            <div class="leading-tight">
+                <p class="text-[11px] font-black uppercase tracking-wide">Zona</p>
+                <p class="text-[11px] font-black uppercase tracking-wide">Integritas</p>
+                <hr class="my-2 border-ink/20">
+                <p class="text-[10px] opacity-50 tracking-widest">WBK • WBBM</p>
+            </div>
+            <div class="w-8 h-8 bg-yellow flex items-center justify-center shrink-0">
+                <Icon name="mdi:arrow-top-right" class="w-4 h-4 text-ink" />
+            </div>
+        </a>
+
+    </div>
+</section>

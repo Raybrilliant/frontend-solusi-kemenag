@@ -1,0 +1,57 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import AdminLayananTable from "../../../components/Svelte/AdminLayananTable.svelte";
+---
+
+<style>
+    [data-anim="hero"] {
+        animation: fadeDown 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+    }
+    [data-anim="content"] {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+    }
+
+    @keyframes fadeDown {
+        from {
+            opacity: 0;
+            transform: translateY(-12px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    @keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<AdminLayout title="Layanan">
+    <div class="min-h-full">
+        <!-- ── Hero ──────────────────────────────────── -->
+        <div data-anim="hero" class="px-8 py-6">
+            <h1 class="text-4xl font-bold uppercase tracking-tight text-ink">
+                Daftar Layanan
+            </h1>
+            <p class="text-sm text-ink/50 mt-1">
+                Kelola semua layanan yang tersedia.
+            </p>
+        </div>
+
+        <!-- ── Table ──────────────────────────────────── -->
+        <div data-anim="content" class="px-8 py-6">
+            <AdminLayananTable
+                client:load
+                apiUrl="/api/admin/layanan"
+                apiKategori="/api/admin/kategori"
+            />
+        </div>
+    </div>
+</AdminLayout>

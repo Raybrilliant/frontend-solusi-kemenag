@@ -1,0 +1,78 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import AdminDetailPermohonan from "../../../components/Svelte/AdminDetailPermohonan.svelte";
+
+const BACKEND_URL = import.meta.env.BACKEND_URL ?? "http://localhost:3000";
+const { id } = Astro.params;
+
+let item: any = null;
+let syarat: any[] = [];
+let subService: any = null;
+
+try {
+    const res = await fetch(`${BACKEND_URL}/api/v1/permohonan/${id}`);
+    const json = await res.json();
+    item = json.data ?? null;
+
+    if (item?.serviceId) {
+        const [layRes, persRes] = await Promise.all([
+            fetch(`${BACKEND_URL}/api/v1/layanan/${item.serviceId}`),
+            fetch(
+                `${BACKEND_URL}/api/v1/persyaratan/?layananId=${item.serviceId}`,
+            ),
+        ]);
+        const layJson = await layRes.json();
+        const persJson = await persRes.json();
+        subService = layJson.data ?? null;
+        syarat = persJson.data ?? [];
+    }
+} catch (e) {
+    console.error("Failed to fetch permohonan detail:", e);
+}
+
+if (!item) {
+    return Astro.redirect("/admin/permohonan");
+}
+---
+
+<style>
+    [data-anim="header"] {
+        animation: fadeDown 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+    }
+    [data-anim="content"] {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+    }
+
+    @keyframes fadeDown {
+        from {
+            opacity: 0;
+            transform: translateY(-12px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    @keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<AdminLayout title={`Detail — ${item.id}`}>
+    <div data-anim="header"></div>
+    <div data-anim="content">
+        <AdminDetailPermohonan
+            client:load
+            permohonan={item}
+            syarat={syarat}
+            subService={subService}
+        />
+    </div>
+</AdminLayout>

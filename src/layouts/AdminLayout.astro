@@ -1,0 +1,46 @@
+---
+import "../styles/global.css";
+import AdminSidebar from "../components/AdminSidebar.astro";
+let { title } = Astro.props;
+---
+
+<html lang="id">
+    <head>
+        <meta charset="utf-8" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="icon" href="/favicon.ico" />
+        <meta name="viewport" content="width=device-width" />
+        <meta name="generator" content={Astro.generator} />
+        <title>Admin — {title}</title>
+    </head>
+
+    <body class="flex h-screen overflow-hidden bg-cream">
+        <AdminSidebar />
+
+        <!-- ── Right column ──────────────────────────── -->
+        <div class="flex-1 flex flex-col overflow-hidden min-w-0">
+            <!-- Topbar -->
+            <header
+                class="shrink-0 h-16 bg-cream/90 backdrop-blur-sm border-b border-black/7 flex items-center gap-4 px-6"
+            >
+                <!-- Sidebar toggle -->
+                <button
+                    data-sidebar-toggle
+                    class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/6 transition-colors text-ink/60 hover:text-ink cursor-pointer"
+                    aria-label="Toggle sidebar"
+                >
+                    <svg viewBox="0 0 24 24" class="w-5 h-5">
+                        <path
+                            fill="currentColor"
+                            d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path>
+                    </svg>
+                </button>
+            </header>
+
+            <!-- Page content -->
+            <main class="flex-1 overflow-y-auto">
+                <slot />
+            </main>
+        </div>
+    </body>
+</html>

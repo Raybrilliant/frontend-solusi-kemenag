@@ -1,0 +1,66 @@
+import type { APIRoute } from "astro";
+import { getUserFromToken } from "../../../../lib/get-user";
+
+const BACKEND_URL = import.meta.env.BACKEND_URL ?? "http://localhost:3000";
+
+// Proxy: GET /api/v1/dashboard/stats
+// Operator: ambil dari /stats/per-kategori dan filter ke kategori mereka
+export const GET: APIRoute = async ({ cookies }) => {
+  try {
+    const token = cookies?.get?.("auth_token")?.value;
+    const headers: Record<string, string> = token
+      ? { Authorization: `Bearer ${token}` }
+      : {};
+
+    const user = await getUserFromToken(token);
+    const isOperator = user?.role === "operator" && user.categoryId !== null;
+
+    if (isOperator) {
+      const res = await fetch(
+        `${BACKEND_URL}/api/v1/dashboard/stats/per-kategori`,
+        { headers },
+      );
+      const data = await res.json();
+
+      if (data.success && data.data) {
+        const entry = data.data.find(
+          (item: any) => item.categoryId === user!.categoryId,
+        );
+        const stats = entry
+          ? {
+              total: entry.total,
+              diterima: entry.diterima,
+              diproses: entry.diproses,
+              selesai: entry.selesai,
+              ditolak: entry.ditolak,
+            }
+          : { total: 0, diterima: 0, diproses: 0, selesai: 0, ditolak: 0 };
+
+        return new Response(
+          JSON.stringify({ success: true, data: stats }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        );
+      }
+
+      return new Response(JSON.stringify(data), {
+        status: res.status,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Admin / super_admin: gunakan endpoint global
+    const res = await fetch(`${BACKEND_URL}/api/v1/dashboard/stats`, {
+      headers,
+    });
+    const data = await res.json();
+    return new Response(JSON.stringify(data), {
+      status: res.status,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (e) {
+    return new Response(
+      JSON.stringify({ success: false, message: String(e) }),
+      { status: 500, headers: { "Content-Type": "application/json" } },
+    );
+  }
+};

@@ -1,0 +1,331 @@
+---
+import { Icon } from "astro-icon/components";
+
+const pathname = Astro.url.pathname;
+
+// User info from middleware (Astro.locals)
+const user = Astro.locals.user ?? null;
+const userName = user?.nama ?? "Admin";
+const userEmail = user?.email ?? "";
+const userRole = user?.role ?? "";
+const userInitials = userName
+    .split(" ")
+    .map((n: string) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+const navItems = [
+    { href: "/admin", icon: "mdi:view-dashboard-outline", label: "Dashboard" },
+    {
+        href: "/admin/permohonan",
+        icon: "mdi:clipboard-list-outline",
+        label: "Permohonan",
+    },
+    {
+        href: "/admin/layanan",
+        icon: "mdi:file-document-outline",
+        label: "Layanan",
+    },
+    {
+        href: "/admin/pengaduan",
+        icon: "mdi:message-alert-outline",
+        label: "Pengaduan",
+    },
+    ...(userRole === "super_admin"
+        ? [
+              {
+                  href: "/admin/kategori",
+                  icon: "mdi:shape-outline",
+                  label: "Kategori Layanan",
+              },
+              {
+                  href: "/admin/manajemenUser",
+                  icon: "mdi:accounts-outline",
+                  label: "Manajemen User",
+              },
+          ]
+        : []),
+];
+
+function isActive(href: string) {
+    if (href === "/admin")
+        return pathname === "/admin" || pathname === "/admin/";
+    return pathname.startsWith(href);
+}
+---
+
+<aside
+    id="admin-sidebar"
+    class="sidebar h-screen sticky top-0 flex flex-col shrink-0 overflow-hidden z-30"
+>
+    <!-- Logo -->
+    <div
+        class="logo-row flex items-center gap-3 px-5 h-16 border-b border-white/8 shrink-0"
+    >
+        <div
+            class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center shrink-0 border border-white/20"
+        >
+            <img src="/logo.png" class="w-6 h-6 object-contain" alt="Logo" />
+        </div>
+        <div class="label-group min-w-0">
+            <p
+                class="text-[9px] font-extrabold uppercase tracking-[0.14em] text-white/40 leading-none"
+            >
+                Kementerian Agama
+            </p>
+            <p
+                class="text-[11px] font-bold text-white leading-tight whitespace-nowrap"
+            >
+                Kota Probolinggo
+            </p>
+        </div>
+    </div>
+
+    <!-- Nav -->
+    <nav class="flex-1 overflow-y-auto overflow-x-hidden py-3 px-3">
+        <p
+            class="label-group text-[9px] font-extrabold uppercase tracking-[0.14em] text-white/25 px-3 py-2"
+        >
+            Menu Utama
+        </p>
+
+        {
+            navItems.map((item) => {
+                const active = isActive(item.href);
+                return (
+                    <a
+                        href={item.href}
+                        class={`nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 transition-colors ${
+                            active
+                                ? "bg-green text-white shadow-md"
+                                : "text-white/55 hover:bg-white/[0.07] hover:text-white/90"
+                        }`}
+                    >
+                        <Icon
+                            name={item.icon}
+                            width="18"
+                            height="18"
+                            class="shrink-0"
+                        />
+                        <span class="label-group text-[13px] font-semibold whitespace-nowrap">
+                            {item.label}
+                        </span>
+                        {active && (
+                            <Icon
+                                name="mdi:chevron-right"
+                                width="16"
+                                height="16"
+                                class="ml-auto shrink-0 opacity-60"
+                            />
+                        )}
+                    </a>
+                );
+            })
+        }
+    </nav>
+
+    <!-- Zona Integritas card -->
+    <div class="label-group mx-3 mb-3 rounded-xl p-4 zona-card">
+        <div class="flex items-start gap-2.5 mb-3">
+            <Icon
+                name="mdi:shield-check"
+                width="20"
+                height="20"
+                class="text-green shrink-0 mt-0.5"
+            />
+            <div>
+                <p class="text-[11px] font-bold text-white leading-tight">
+                    Zona Integritas
+                </p>
+                <p
+                    class="text-[10px] text-white/40 leading-relaxed mt-0.5 line-clamp-3"
+                >
+                    Layanan bebas pungli, transparan, dan profesional
+                </p>
+            </div>
+        </div>
+        <a
+            href="/pengaduan"
+            class="flex items-center gap-2 bg-green hover:bg-green/90 transition-colors rounded-lg px-3 py-2"
+        >
+            <span class="text-[11px] font-bold text-white">Laporkan Penyelewengan →</span>
+        </a>
+    </div>
+
+    <!-- User -->
+    <div class="relative shrink-0">
+        <div
+            id="user-dropdown"
+            class="user-dropdown hidden absolute bottom-full left-3 right-3 mb-2 rounded-xl overflow-hidden shadow-2xl border border-white/8"
+        >
+            <div class="py-1">
+                <a
+                    href="#"
+                    class="flex items-center gap-3 px-4 py-2.5 text-[12px] font-semibold text-white/80 hover:bg-white/[0.07] hover:text-white transition-colors"
+                >
+                    <Icon
+                        name="mdi:account-circle-outline"
+                        width="16"
+                        height="16"
+                        class="shrink-0"
+                    />
+                    Profil Saya
+                </a>
+                <a
+                    href="#"
+                    class="flex items-center gap-3 px-4 py-2.5 text-[12px] font-semibold text-white/80 hover:bg-white/[0.07] hover:text-white transition-colors"
+                >
+                    <Icon
+                        name="mdi:cog-outline"
+                        width="16"
+                        height="16"
+                        class="shrink-0"
+                    />
+                    Pengaturan
+                </a>
+                <div class="my-1 border-t border-white/8"></div>
+                <a
+                    href="/api/admin/auth/logout"
+                    class="w-full flex items-center gap-3 px-4 py-2.5 text-[12px] font-semibold text-red-400 hover:bg-white/[0.07] transition-colors"
+                >
+                    <Icon
+                        name="mdi:logout"
+                        width="16"
+                        height="16"
+                        class="shrink-0"
+                    />
+                    Keluar
+                </a>
+            </div>
+        </div>
+
+        <button
+            id="user-menu-btn"
+            class="user-row w-full flex items-center gap-3 px-4 py-3.5 border-t border-white/8 hover:bg-white/5 transition-colors cursor-pointer"
+            aria-expanded="false"
+            aria-haspopup="true"
+        >
+            <div
+                class="w-8 h-8 rounded-full bg-green flex items-center justify-center shrink-0 text-white text-xs font-bold"
+            >
+                {userInitials}
+            </div>
+            <div class="label-group min-w-0 flex-1 text-left">
+                <p class="text-[12px] font-bold text-white truncate">
+                    {userName}
+                </p>
+                <p class="text-[10px] text-white/40 truncate">
+                    {userEmail}
+                </p>
+            </div>
+            <Icon
+                name="mdi:chevron-down"
+                width="16"
+                height="16"
+                class="label-group user-chevron text-white/30 shrink-0 transition-transform duration-200"
+            />
+        </button>
+    </div>
+</aside>
+
+<style>
+    .sidebar {
+        width: 240px;
+        background: linear-gradient(175deg, #0f1f10 0%, #0a1a0c 100%);
+        border-right: 1px solid rgba(255, 255, 255, 0.07);
+        transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .sidebar.sidebar-collapsed {
+        width: 0;
+    }
+
+    .sidebar.sidebar-collapsed .label-group {
+        opacity: 0;
+        transition: opacity 0.15s ease;
+    }
+
+    .nav-item {
+        box-shadow: none;
+        transition:
+            background-color 0.15s ease,
+            color 0.15s ease,
+            box-shadow 0.15s ease;
+    }
+
+    .zona-card {
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .user-dropdown {
+        background: #162718;
+    }
+</style>
+
+<script>
+    function initSidebar() {
+        const sidebar = document.getElementById("admin-sidebar");
+        if (!sidebar) return;
+
+        if (localStorage.getItem("admin-sidebar-collapsed") === "true") {
+            sidebar.classList.add("sidebar-collapsed");
+        }
+
+        document.addEventListener("click", (e) => {
+            if ((e.target as Element)?.closest("[data-sidebar-toggle]")) {
+                sidebar.classList.toggle("sidebar-collapsed");
+                localStorage.setItem(
+                    "admin-sidebar-collapsed",
+                    sidebar.classList.contains("sidebar-collapsed").toString(),
+                );
+            }
+        });
+    }
+
+    function initUserMenu() {
+        const btn = document.getElementById("user-menu-btn");
+        const dropdown = document.getElementById("user-dropdown");
+        if (!btn || !dropdown) return;
+
+        const button = btn as HTMLElement;
+        const dropdownEl = dropdown as HTMLElement;
+        const chevron = button.querySelector(
+            ".user-chevron",
+        ) as HTMLElement | null;
+
+        function open() {
+            dropdownEl.classList.remove("hidden");
+            button.setAttribute("aria-expanded", "true");
+            chevron?.classList.add("rotate-180");
+        }
+
+        function close() {
+            dropdownEl.classList.add("hidden");
+            button.setAttribute("aria-expanded", "false");
+            chevron?.classList.remove("rotate-180");
+        }
+
+        button.addEventListener("click", (e) => {
+            e.stopPropagation();
+            dropdownEl.classList.contains("hidden") ? open() : close();
+        });
+
+        document.addEventListener("click", (e) => {
+            if (
+                !btn.contains(e.target as Node) &&
+                !dropdownEl.contains(e.target as Node)
+            ) {
+                close();
+            }
+        });
+    }
+
+    initSidebar();
+    initUserMenu();
+    document.addEventListener("astro:page-load", () => {
+        initSidebar();
+        initUserMenu();
+    });
+</script>

@@ -1,0 +1,55 @@
+---
+import LayananSection from "./Svelte/LayananSection.svelte";
+import SearchLayanan from "./Svelte/SearchLayanan.svelte";
+import mdiData from "@iconify-json/mdi/icons.json";
+
+const BACKEND_URL = import.meta.env.BACKEND_URL ?? "http://localhost:3000";
+
+function iconBody(name: string): string {
+    const key = name.includes(":") ? name.split(":")[1] : name;
+    return (mdiData.icons as Record<string, { body: string }>)[key]?.body ?? "";
+}
+
+// Fetch categories and layanan from backend
+let servicesWithIcon: any[] = [];
+let subServicesWithIcon: any[] = [];
+
+try {
+    const [catRes, layRes] = await Promise.all([
+        fetch(`${BACKEND_URL}/api/v1/categories/`),
+        fetch(`${BACKEND_URL}/api/v1/layanan/`),
+    ]);
+
+    const categories = (await catRes.json()).data ?? [];
+    const layanan = (await layRes.json()).data ?? [];
+
+    servicesWithIcon = categories.map((s: any) => ({
+        ...s,
+        iconBody: iconBody(s.icon),
+    }));
+    subServicesWithIcon = layanan.map((s: any) => ({
+        ...s,
+        iconBody: iconBody(s.icon),
+        relatedServiceId: s.categoryId,
+        progress: `${s.slaDuration} ${s.slaUnit === "menit" ? "Menit" : s.slaUnit === "jam" ? "Jam" : "Hari"}`,
+    }));
+} catch (e) {
+    console.error("Failed to fetch services:", e);
+}
+---
+
+<!-- Search Section -->
+<section class="-mt-10 bg-cream z-30 relative">
+    <SearchLayanan
+        services={servicesWithIcon}
+        subServices={subServicesWithIcon}
+        client:load
+    />
+</section>
+
+<!-- Service List -->
+<LayananSection
+    services={servicesWithIcon}
+    subServices={subServicesWithIcon}
+    client:load
+/>

@@ -1,0 +1,514 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { Icon } from "astro-icon/components";
+import FormPermohonan from "../../components/Svelte/FormPermohonan.svelte";
+
+const BACKEND_URL = import.meta.env.BACKEND_URL ?? "http://localhost:3000";
+const { id } = Astro.params;
+
+let layanan: any = null;
+let kategoriList: any[] = [];
+let kategoriTitle = "Layanan";
+
+try {
+    const [layRes, catRes] = await Promise.all([
+        fetch(`${BACKEND_URL}/api/v1/layanan/${id}`),
+        fetch(`${BACKEND_URL}/api/v1/categories/`),
+    ]);
+
+    const layJson = await layRes.json();
+    const catJson = await catRes.json();
+
+    layanan = layJson.data ?? null;
+    kategoriList = catJson.data ?? [];
+
+    if (layanan?.categoryId) {
+        const cat = kategoriList.find((c: any) => c.id === layanan.categoryId);
+        kategoriTitle = cat?.title ?? "Layanan";
+    }
+} catch (e) {
+    console.error("Failed to fetch layanan:", e);
+}
+
+const subService = layanan;
+const serviceTitle = subService?.title ?? "Detail Layanan";
+const dokumen = subService?.persyaratan ?? [];
+
+function isUrl(str: string): boolean {
+    return /^https?:\/\//i.test(str ?? "");
+}
+---
+
+<style>
+    [data-anim="breadcrumb"] {
+        animation: slideDown 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+    }
+    [data-anim="badge"] {
+        animation: slideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both;
+    }
+    [data-anim="heading"] {
+        animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.18s both;
+    }
+    [data-anim="desc"] {
+        animation: slideUp 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+    }
+    [data-anim="cards"] {
+        animation: slideUp 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
+    }
+    [data-anim="persyaratan"] {
+        animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
+    }
+    [data-anim="zona"] {
+        animation: slideUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.58s both;
+    }
+    [data-anim="right"] {
+        animation: slideRight 0.75s cubic-bezier(0.16, 1, 0.3, 1) 0.22s both;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-14px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(28px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    @keyframes slideRight {
+        from {
+            opacity: 0;
+            transform: translateX(36px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+</style>
+
+<BaseLayout title={serviceTitle}>
+    <section
+        class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 my-6 md:my-12"
+    >
+        <div>
+            <!-- Breadcrumb -->
+            <nav
+                data-anim="breadcrumb"
+                class="text-sm mb-4 md:mb-5"
+                aria-label="Breadcrumb"
+            >
+                <ol class="list-none p-0 inline-flex items-center">
+                    <li class="flex items-center">
+                        <a href="/" class="text-green font-medium">Layanan</a>
+                        <Icon
+                            name="mdi:chevron-right"
+                            class="mx-2 text-gray-400"
+                        />
+                    </li>
+                    <li class="flex items-center">
+                        <a
+                            href={`/?kat=${layanan?.categoryId ?? ""}`}
+                            class="text-green font-medium hover:underline truncate max-w-32 sm:max-w-none"
+                        >
+                            {kategoriTitle}
+                        </a>
+                        <Icon
+                            name="mdi:chevron-right"
+                            class="mx-2 text-gray-400"
+                        />
+                    </li>
+                    <li class="text-gray-500 truncate max-w-32 sm:max-w-none">
+                        {serviceTitle}
+                    </li>
+                </ol>
+            </nav>
+
+            <div
+                data-anim="badge"
+                class="font-semibold mb-2 bg-yellow w-fit px-3 md:px-4 py-1.5 md:py-2 uppercase text-xs md:text-sm"
+            >
+                {kategoriTitle}
+            </div>
+            <h1
+                data-anim="heading"
+                class="text-3xl sm:text-4xl md:text-5xl font-bold mb-2 md:mb-3 uppercase leading-tight"
+            >
+                {serviceTitle}
+            </h1>
+            <p data-anim="desc" class="text-sm md:text-base opacity-70">
+                {subService?.description}
+            </p>
+
+            <!-- Info cards -->
+            <div
+                data-anim="cards"
+                class="grid grid-cols-2 gap-2 md:gap-3 my-4 md:my-5"
+            >
+                <div
+                    class="border border-ink bg-cream p-3 md:p-4 flex items-center gap-3 md:gap-4"
+                >
+                    <div
+                        class="w-10 h-10 md:w-12 md:h-12 bg-green flex items-center justify-center shrink-0"
+                    >
+                        <Icon
+                            name="mdi:currency-usd-off"
+                            class="text-white"
+                            width="20"
+                            height="20"
+                        />
+                    </div>
+                    <div>
+                        <p
+                            class="text-[10px] md:text-xs font-medium uppercase opacity-60"
+                        >
+                            Biaya Layanan
+                        </p>
+                        <h3
+                            class="text-sm md:text-xl font-bold uppercase text-green"
+                        >
+                            {subService?.cost ?? "0 Rupiah"}
+                        </h3>
+                    </div>
+                </div>
+                <div
+                    class="border border-ink bg-cream p-3 md:p-4 flex items-center gap-3 md:gap-4"
+                >
+                    <div
+                        class="w-10 h-10 md:w-12 md:h-12 bg-green flex items-center justify-center shrink-0"
+                    >
+                        <Icon
+                            name="mdi:clock-outline"
+                            class="text-white"
+                            width="20"
+                            height="20"
+                        />
+                    </div>
+                    <div>
+                        <p
+                            class="text-[10px] md:text-xs font-medium uppercase opacity-60"
+                        >
+                            Waktu Penyelesaian
+                        </p>
+                        <h3
+                            class="text-sm md:text-xl font-bold uppercase text-green"
+                        >
+                            {subService?.slaDuration ?? "-"}
+                            {
+                                subService?.slaUnit === "menit"
+                                    ? "Menit"
+                                    : subService?.slaUnit === "jam"
+                                      ? "Jam"
+                                      : subService?.slaUnit === "hari"
+                                        ? "Hari"
+                                        : ""
+                            }
+                        </h3>
+                        <p
+                            class="text-[10px] md:text-xs font-medium uppercase opacity-60"
+                        >
+                            Sejak Berkas Lengkap
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Persyaratan -->
+            {
+                dokumen.length > 0 && (
+                    <div
+                        data-anim="persyaratan"
+                        class="border border-ink bg-cream p-4"
+                    >
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-green flex items-center justify-center shrink-0">
+                                <Icon
+                                    name="mdi:file-document-outline"
+                                    class="text-white"
+                                    width="20"
+                                    height="20"
+                                />
+                            </div>
+                            <h2 class="font-semibold uppercase text-sm">
+                                Persyaratan Dokumen
+                            </h2>
+                        </div>
+                        <ul class="flex flex-col gap-0">
+                            {dokumen.map((item: any, i: number) => (
+                                <>
+                                    <li class="flex items-start gap-2 py-2 text-sm">
+                                        <span
+                                            class={`text-xs font-bold px-1.5 py-0.5 shrink-0 mt-0.5 ${item.required ? "bg-green text-cream" : "bg-ink/10 text-ink/60"}`}
+                                        >
+                                            {item.required
+                                                ? "Wajib"
+                                                : "Opsional"}
+                                        </span>
+                                        <div>
+                                            <span>{item.label}</span>
+                                            {item.description && (
+                                                <div class="mt-0.5">
+                                                    {isUrl(item.description) ? (
+                                                        <a
+                                                            href={item.description}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            class="text-xs text-green hover:underline break-all"
+                                                        >
+                                                            {item.description}
+                                                        </a>
+                                                    ) : (
+                                                        <p class="text-xs text-ink/50 leading-snug">{item.description}</p>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </li>
+                                    {i < dokumen.length - 1 && (
+                                        <hr class="border-ink/10" />
+                                    )}
+                                </>
+                            ))}
+                        </ul>
+                    </div>
+                )
+            }
+
+            <!-- Zona Integritas -->
+            <div
+                data-anim="zona"
+                class="border mt-5 border-green bg-green/10 p-4 flex items-center gap-3"
+            >
+                <Icon
+                    name="mdi:shield-check"
+                    class="text-green shrink-0 animate-pulse"
+                    width="20"
+                    height="20"
+                />
+                <div>
+                    <p
+                        class="text-sm font-bold uppercase tracking-wide text-green"
+                    >
+                        Zona Integritas
+                    </p>
+                    <p class="text-xs opacity-80">
+                        Kantor Kementerian Agama Kota Probolinggo berkomitmen
+                        memberikan pelayanan prima menuju Wilayah Bebas dari
+                        Korupsi (WBK) dan Wilayah Birokrasi Bersih dan Melayani
+                        (WBBM).
+                    </p>
+                    <a
+                        href="/pengaduan"
+                        class="text-green text-sm font-semibold mt-1 inline-block hover:underline"
+                        >Laporkan Penyelewengan →</a
+                    >
+                </div>
+            </div>
+        </div>
+
+        {
+            subService?.type === "External" ? (
+                <div data-anim="right" class="flex flex-col gap-3 md:gap-4">
+                    <div class="border-2 border-ink bg-cream p-4 md:p-6 flex flex-col gap-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 md:w-12 md:h-12 bg-green flex items-center justify-center shrink-0">
+                                <Icon
+                                    name="mdi:web"
+                                    class="text-cream"
+                                    width="22"
+                                    height="22"
+                                />
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-widest opacity-50">
+                                    Jenis Layanan
+                                </p>
+                                <h2 class="text-base md:text-xl font-bold uppercase">
+                                    Layanan Eksternal
+                                </h2>
+                            </div>
+                        </div>
+
+                        <div class="border-l-4 border-green pl-4">
+                            <p class="text-xs font-bold uppercase tracking-widest text-green mb-1">
+                                <!-- Dibuat Sub Judul -->
+                            </p>
+                            <p class="text-sm opacity-80 leading-relaxed">
+                                Layanan ini telah tersedia secara digital melalui platform resmi. Silakan akses langsung melalui tautan di bawah ini.
+                            </p>
+                        </div>
+
+                        {subService?.externalLink ? (
+                            <a
+                                href={subService.externalLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="flex items-center justify-center gap-2.5 bg-green text-cream font-bold text-sm uppercase tracking-wide px-5 py-3.5 hover:bg-green/90 active:scale-[0.98] transition-all"
+                            >
+                                <Icon
+                                    name="mdi:open-in-new"
+                                    class="shrink-0"
+                                    width="18"
+                                    height="18"
+                                />
+                                Akses Layanan
+                            </a>
+                        ) : (
+                            <p class="text-sm text-center opacity-40 italic">Link layanan belum tersedia.</p>
+                        )}
+                    </div>
+
+                    <a
+                        href="/check-progress"
+                        class="flex items-center justify-between gap-3 border border-ink/20 bg-cream p-4 hover:border-green hover:bg-green/5 transition-colors group"
+                    >
+                        <div class="flex items-center gap-3">
+                            <Icon
+                                name="mdi:magnify"
+                                class="text-green shrink-0"
+                                width="20"
+                                height="20"
+                            />
+                            <div>
+                                <p class="text-sm font-bold">
+                                    Sudah mengajukan berkas?
+                                </p>
+                                <p class="text-xs opacity-60">
+                                    Cek status progres layanan Anda
+                                </p>
+                            </div>
+                        </div>
+                        <Icon
+                            name="mdi:chevron-right"
+                            class="text-gray-400 group-hover:text-green transition-colors shrink-0"
+                            width="20"
+                            height="20"
+                        />
+                    </a>
+                </div>
+            ) : subService?.type === "Offline" ? (
+                <div data-anim="right" class="flex flex-col gap-3 md:gap-4">
+                    <div class="border-2 border-ink bg-cream p-4 md:p-6 flex flex-col gap-3 md:gap-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 md:w-12 md:h-12 bg-ink flex items-center justify-center shrink-0">
+                                <Icon
+                                    name="mdi:map-marker-outline"
+                                    class="text-cream"
+                                    width="22"
+                                    height="22"
+                                />
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-widest opacity-50">
+                                    Jenis Layanan
+                                </p>
+                                <h2 class="text-base md:text-xl font-bold uppercase">
+                                    Luring (Offline)
+                                </h2>
+                            </div>
+                        </div>
+                        <p class="text-sm leading-relaxed opacity-80">
+                            Layanan ini{" "}
+                            <span class="font-bold">
+                                hanya dapat diakses secara luring
+                            </span>
+                            . Silakan membawa berkas persyaratan secara langsung
+                            ke:
+                        </p>
+                        <div class="bg-green text-cream p-3 md:p-4 flex gap-3">
+                            <Icon
+                                name="mdi:office-building"
+                                class="shrink-0 mt-0.5"
+                                width="20"
+                                height="20"
+                            />
+                            <div>
+                                <p class="font-bold text-sm uppercase">
+                                    PTSP Kantor Kementerian Agama
+                                </p>
+                                <p class="text-sm opacity-90">
+                                    Kota Probolinggo
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border border-ink bg-cream p-4 md:p-5">
+                        <div class="flex items-center gap-3 mb-3 md:mb-4">
+                            <div class="w-10 h-10 bg-green flex items-center justify-center shrink-0">
+                                <Icon
+                                    name="mdi:clock-outline"
+                                    class="text-cream"
+                                    width="20"
+                                    height="20"
+                                />
+                            </div>
+                            <h3 class="font-bold uppercase text-sm tracking-wide">
+                                Jam Operasional
+                            </h3>
+                        </div>
+                        <ul class="flex flex-col gap-0 text-sm">
+                            <li class="flex items-center justify-between py-2.5 border-b border-ink/10">
+                                <span class="font-semibold">Senin – Kamis</span>
+                                <span class="font-bold text-green">
+                                    08.00 – 15.30 WIB
+                                </span>
+                            </li>
+                            <li class="flex items-center justify-between py-2.5">
+                                <span class="font-semibold">Jumat</span>
+                                <span class="font-bold text-green">
+                                    08.30 – 16.00 WIB
+                                </span>
+                            </li>
+                        </ul>
+                        <p class="text-xs opacity-50 mt-3">
+                            * Sabtu, Minggu, dan hari libur nasional tutup
+                        </p>
+                    </div>
+
+                    <a
+                        href="/check-progress"
+                        class="flex items-center justify-between gap-3 border border-ink/20 bg-cream p-4 hover:border-green hover:bg-green/5 transition-colors group"
+                    >
+                        <div class="flex items-center gap-3">
+                            <Icon
+                                name="mdi:magnify"
+                                class="text-green shrink-0"
+                                width="20"
+                                height="20"
+                            />
+                            <div>
+                                <p class="text-sm font-bold">
+                                    Sudah mengajukan berkas?
+                                </p>
+                                <p class="text-xs opacity-60">
+                                    Cek status progres layanan Anda
+                                </p>
+                            </div>
+                        </div>
+                        <Icon
+                            name="mdi:chevron-right"
+                            class="text-gray-400 group-hover:text-green transition-colors shrink-0"
+                            width="20"
+                            height="20"
+                        />
+                    </a>
+                </div>
+            ) : (
+                <div data-anim="right">
+                    <FormPermohonan serviceId={id} client:load />
+                </div>
+            )
+        }
+    </section>
+</BaseLayout>

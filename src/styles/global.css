@@ -1,0 +1,35 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #F6F1E8;
+  --color-ink: #111111;
+  --color-green: #0F6B44;
+  --color-yellow: #F6C744;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* body {
+  font-family: var(--font-sans);
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+  position: relative;
+} */
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(rgba(15, 107, 68, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 107, 68, 0.07) 1px, transparent 1px);
+  background-size: 48px 48px;
+  animation: gridDrift 10s linear infinite;
+}
+
+@keyframes gridDrift {
+  from { background-position: 0 0; }
+  to   { background-position: 48px 48px; }
+}

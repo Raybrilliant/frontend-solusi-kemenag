@@ -1,0 +1,241 @@
+---
+import { Icon } from "astro-icon/components";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import RiwayatLayanan from "../../components/Svelte/RiwayatLayanan.svelte";
+import TrendLayanan from "../../components/Svelte/TrendLayanan.svelte";
+import KepuasanMasyarakat from "../../components/Svelte/KepuasanMasyarakat.svelte";
+import KategoriPopuler from "../../components/Svelte/KategoriPopuler.svelte";
+
+const cardData = [
+    {
+        title: "Total Layanan Masuk",
+        value: "150",
+        percentage: 10,
+        icon: "mdi:file-document-multiple-outline",
+    },
+    {
+        title: "Sedang Diproses",
+        value: "120",
+        percentage: 5,
+        icon: "mdi:progress-clock",
+    },
+    {
+        title: "Layanan Selesai",
+        value: "10",
+        percentage: -2,
+        icon: "mdi:check-all",
+    },
+];
+---
+
+<BaseLayout title="Informasi Layanan">
+    <!-- Judul -->
+    <section class="my-6 md:my-12 overflow-hidden">
+        <div
+            class="hero-label font-semibold mb-2 bg-yellow w-fit px-3 md:px-4 py-1.5 md:py-2 uppercase text-xs md:text-sm tracking-wide"
+        >
+            Dashboard Layanan Publik
+        </div>
+        <h1
+            class="hero-title text-4xl sm:text-5xl md:text-7xl font-bold uppercase tracking-tight leading-none"
+        >
+            Informasi Layanan
+        </h1>
+        <h3
+            class="hero-sub text-base sm:text-xl md:text-3xl font-semibold mt-3 md:mt-4"
+        >
+            <span class="text-green">Transparan. Akuntabel.</span> Untuk Pelayanan
+            yang Lebih Baik.
+        </h3>
+        <p
+            class="hero-desc text-sm md:text-lg text-gray-600 mt-2 md:mt-4 max-w-lg"
+        >
+            Pantau data layanan, proses, penyelesaian, dan hasil survey
+            masyarakat secara real-time dan transparan.
+        </p>
+    </section>
+
+    <!-- Card Informasi -->
+    <section
+        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5"
+    >
+        {
+            cardData.map((card, index) => (
+                <div
+                    class="p-4 md:p-6 border shadow-sm rounded-lg flex items-center gap-3 md:gap-5 card-enter group hover:shadow-md hover:-translate-y-1 transition-all duration-300 cursor-default"
+                    style={`animation-delay:${index * 0.12}s`}
+                >
+                    <div
+                        class={`w-14 h-14 md:w-20 md:h-20 shrink-0 rounded-lg ${index === 1 ? "bg-yellow" : "bg-green"} flex items-center justify-center transition-transform duration-300 group-hover:scale-110`}
+                    >
+                        <Icon
+                            name={card.icon}
+                            class={`${index === 1 ? "text-black" : "text-white"}`}
+                            width="26"
+                            height="26"
+                        />
+                    </div>
+                    <div>
+                        <h3 class="text-sm md:text-xl font-bold uppercase">
+                            {card.title}
+                        </h3>
+                        <div class="flex items-center gap-3 md:gap-5 mt-1 md:mt-2">
+                            <p class="text-2xl md:text-4xl font-bold">
+                                {card.value}
+                            </p>
+                            <p
+                                class={`text-xs md:text-sm flex items-center gap-1 ${card.percentage > 0 ? "bg-green/10 text-green" : "bg-red-200 text-red-500"} rounded-full py-1 px-2 md:px-3 font-semibold`}
+                            >
+                                {card.percentage > 0 ? (
+                                    <Icon
+                                        name="mdi:arrow-top-right"
+                                        width="14"
+                                        height="14"
+                                    />
+                                ) : (
+                                    <Icon
+                                        name="mdi:arrow-bottom-right"
+                                        width="14"
+                                        height="14"
+                                    />
+                                )}
+                                {Math.abs(card.percentage)}%
+                            </p>
+                        </div>
+                        <p class="text-xs md:text-sm text-gray-600 mt-0.5">
+                            Dari bulan lalu
+                        </p>
+                    </div>
+                </div>
+            ))
+        }
+    </section>
+
+    <!-- Statistik -->
+    <section
+        class="grid grid-cols-1 md:grid-cols-5 gap-3 md:gap-5 my-3 md:my-5"
+    >
+        <div class="md:col-span-3 h-full">
+            <TrendLayanan apiUrl="/api/trend" client:load />
+        </div>
+        <div class="md:col-span-2 h-full">
+            <RiwayatLayanan apiUrl="/api/riwayat" client:load />
+        </div>
+    </section>
+
+    <section
+        class="my-3 md:my-5 grid grid-cols-1 md:grid-cols-5 gap-3 md:gap-5"
+    >
+        <div class="md:col-span-2 h-full border rounded-lg p-4 md:p-5">
+            <div class="flex items-center gap-2 md:gap-3 mb-3">
+                <Icon
+                    name="mdi:thumb-up"
+                    width="18"
+                    height="18"
+                    fill="#FBBF24"
+                />
+                <h2
+                    class="font-bold uppercase text-sm md:text-xl tracking-tight"
+                >
+                    Survei Kepuasan Masyarakat
+                </h2>
+            </div>
+            <KepuasanMasyarakat apiUrl="/api/kepuasan" client:load />
+        </div>
+        <div class="md:col-span-3 h-full border rounded-lg p-4 md:p-5">
+            <h2
+                class="font-bold uppercase text-sm md:text-xl tracking-tight mb-3"
+            >
+                Kategori Layanan Terpopuler
+            </h2>
+            <KategoriPopuler apiUrl="/api/kategori-populer" client:load />
+        </div>
+    </section>
+
+    <!-- Zona Integritas -->
+    <div class="border border-green bg-green/10 p-4 flex items-center justify-between gap-3 my-3 md:my-5">
+        <div>
+            <p
+                class="text-lg md:text-2xl font-bold uppercase tracking-wide text-green"
+            >
+                Zona Integritas
+            </p>
+            <p class="text-sm md:text-base opacity-80 mt-0.5">
+                Kantor Kementerian Agama Kota Probolinggo berkomitmen memberikan
+                pelayanan prima menuju Wilayah Bebas dari Korupsi (WBK) dan
+                Wilayah Birokrasi Bersih dan Melayani (WBBM).
+            </p>
+
+            <a
+                href="/pengaduan"
+                class="text-green text-sm font-semibold mt-1 inline-block hover:underline"
+            >
+                Laporkan Penyelewengan →
+            </a>
+        </div>
+        <div
+            class="w-14 h-14 md:w-20 md:h-20 bg-green/10 rounded-full flex items-center justify-center animate-pulse shrink-0"
+            style="color:#0F6B44"
+        >
+            <Icon
+                name="mdi:shield-check"
+                class="text-green"
+                width="26"
+                height="26"
+            />
+        </div>
+    </div>
+</BaseLayout>
+
+<style>
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+    @keyframes slideRight {
+        from {
+            opacity: 0;
+            transform: translateX(-24px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .card-enter {
+        opacity: 0;
+        animation: slideUp 0.45s ease forwards;
+    }
+
+    .hero-label {
+        opacity: 0;
+        animation: slideRight 0.5s ease forwards 0.05s;
+    }
+    .hero-title {
+        opacity: 0;
+        animation: slideRight 0.55s ease forwards 0.15s;
+    }
+    .hero-sub {
+        opacity: 0;
+        animation: slideRight 0.55s ease forwards 0.28s;
+    }
+    .hero-desc {
+        opacity: 0;
+        animation: slideRight 0.5s ease forwards 0.4s;
+    }
+</style>

@@ -1,5 +1,5 @@
 {
-  "name": "",
+  "name": "solusi-kemenag-frontend",
   "type": "module",
   "version": "0.0.1",
   "engines": {
@@ -12,6 +12,18 @@
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^6.3.7"
+    "@astrojs/node": "^10.1.1",
+    "@astrojs/svelte": "^8.1.1",
+    "@iconify/svelte": "^5.2.1",
+    "@tailwindcss/vite": "^4.3.0",
+    "@tanstack/svelte-table": "^8.21.3",
+    "astro": "^6.3.7",
+    "astro-icon": "^1.1.5",
+    "svelte": "^5.55.9",
+    "tailwindcss": "^4.3.0",
+    "typescript": "^6.0.3"
+  },
+  "devDependencies": {
+    "@iconify-json/mdi": "^1.2.3"
   }
 }
