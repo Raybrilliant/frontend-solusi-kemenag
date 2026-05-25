@@ -6,23 +6,66 @@ import TrendLayanan from "../../components/Svelte/TrendLayanan.svelte";
 import KepuasanMasyarakat from "../../components/Svelte/KepuasanMasyarakat.svelte";
 import KategoriPopuler from "../../components/Svelte/KategoriPopuler.svelte";
 
+const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
+
+const [statsRes, trendRes] = await Promise.allSettled([
+    fetch(`${BACKEND_URL}/api/v1/dashboard/stats`),
+    fetch(`${BACKEND_URL}/api/v1/dashboard/trend?period=3`),
+]);
+
+const stats = { total: 0, diterima: 0, diproses: 0, selesai: 0, ditolak: 0 };
+if (statsRes.status === "fulfilled" && statsRes.value.ok) {
+    try {
+        const json = await statsRes.value.json();
+        if (json.success && json.data) Object.assign(stats, json.data);
+    } catch {}
+}
+
+function calcPct(curr: number, prev: number): number {
+    if (prev === 0) return curr > 0 ? 100 : 0;
+    return Math.round(((curr - prev) / prev) * 100);
+}
+
+let percentTotal = 0,
+    percentDiproses = 0,
+    percentSelesai = 0;
+
+if (trendRes.status === "fulfilled" && trendRes.value.ok) {
+    try {
+        const json = await trendRes.value.json();
+        if (json.success && json.data) {
+            const { total, selesai, proses } = json.data as {
+                total: number[];
+                selesai: number[];
+                proses: number[];
+            };
+            const n = total?.length ?? 0;
+            if (n >= 2) {
+                percentTotal = calcPct(total[n - 1], total[n - 2]);
+                percentSelesai = calcPct(selesai[n - 1], selesai[n - 2]);
+                percentDiproses = calcPct(proses[n - 1], proses[n - 2]);
+            }
+        }
+    } catch {}
+}
+
 const cardData = [
     {
         title: "Total Layanan Masuk",
-        value: "150",
-        percentage: 10,
+        value: stats.total.toLocaleString("id-ID"),
+        percentage: percentTotal,
         icon: "mdi:file-document-multiple-outline",
     },
     {
         title: "Sedang Diproses",
-        value: "120",
-        percentage: 5,
+        value: stats.diproses.toLocaleString("id-ID"),
+        percentage: percentDiproses,
         icon: "mdi:progress-clock",
     },
     {
         title: "Layanan Selesai",
-        value: "10",
-        percentage: -2,
+        value: stats.selesai.toLocaleString("id-ID"),
+        percentage: percentSelesai,
         icon: "mdi:check-all",
     },
 ];

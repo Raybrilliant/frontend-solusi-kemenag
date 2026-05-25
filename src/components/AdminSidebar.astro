@@ -27,17 +27,17 @@ const navItems = [
         icon: "mdi:file-document-outline",
         label: "Layanan",
     },
-    {
-        href: "/admin/pengaduan",
-        icon: "mdi:message-alert-outline",
-        label: "Pengaduan",
-    },
     ...(userRole === "super_admin"
         ? [
               {
                   href: "/admin/kategori",
                   icon: "mdi:shape-outline",
                   label: "Kategori Layanan",
+              },
+              {
+                  href: "/admin/pengaduan",
+                  icon: "mdi:message-alert-outline",
+                  label: "Pengaduan",
               },
               {
                   href: "/admin/manajemenUser",

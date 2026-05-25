@@ -13,8 +13,10 @@
     let loading = $state(true);
 
     const statusColor = {
+        Diterima: { bg: "#DBEAFE", text: "#1E40AF" },
         Diproses: { bg: "#FEF3C7", text: "#92400E" },
         Selesai: { bg: "#D1FAE5", text: "#065F46" },
+        Ditolak: { bg: "#FEE2E2", text: "#991B1B" },
     };
 
     async function loadTab(tab) {
@@ -30,7 +32,7 @@
                 `${apiUrl}?status=${encodeURIComponent(status)}`,
             );
             const json = await res.json();
-            const payload = json.data ?? json;
+            const payload = json.data ?? [];
             cache[status] = payload;
             items = payload;
         } finally {
@@ -133,8 +135,7 @@
                         <!-- Badge -->
                         <span
                             class="text-xs font-semibold px-2.5 py-1 rounded shrink-0"
-                            style="background:{statusColor[item.status]
-                                .bg}; color:{statusColor[item.status].text}"
+                            style="background:{(statusColor[item.status] ?? statusColor.Diproses).bg}; color:{(statusColor[item.status] ?? statusColor.Diproses).text}"
                         >
                             {item.status}
                         </span>
