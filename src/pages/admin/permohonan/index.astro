@@ -1,6 +1,10 @@
 ---
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import AdminPermohonanTable from "../../../components/Svelte/AdminPermohonanTable.svelte";
+import AdminTambahPermohonan from "../../../components/Svelte/AdminTambahPermohonan.svelte";
+
+const userRole = Astro.locals.user?.role ?? "";
+const canAdd = userRole === "super_admin" || userRole === "admin";
 ---
 
 <style>
@@ -36,13 +40,18 @@ import AdminPermohonanTable from "../../../components/Svelte/AdminPermohonanTabl
 <AdminLayout title="Permohonan">
     <div class="min-h-full">
         <!-- ── Hero ──────────────────────────────────── -->
-        <div data-anim="hero" class="px-8 py-6">
-            <h1 class="text-4xl font-bold uppercase tracking-tight text-ink">
-                Permohonan
-            </h1>
-            <p class="text-sm text-ink/50 mt-1">
-                Kelola semua permohonan yang dikirim oleh pengguna.
-            </p>
+        <div data-anim="hero" class="px-8 py-6 flex items-start justify-between gap-4">
+            <div>
+                <h1 class="text-4xl font-bold uppercase tracking-tight text-ink">
+                    Permohonan
+                </h1>
+                <p class="text-sm text-ink/50 mt-1">
+                    Kelola semua permohonan yang dikirim oleh pengguna.
+                </p>
+            </div>
+            {canAdd && (
+                <AdminTambahPermohonan client:load />
+            )}
         </div>
 
         <!-- ── Table ──────────────────────────────────── -->

@@ -88,7 +88,7 @@
 <!-- ── Toast ──────────────────────────────────────────── -->
 {#if toast}
     <div
-        class="fixed top-5 right-5 z-50 flex items-center gap-3 px-5 py-3.5 shadow-xl max-w-sm rounded-xl {toast.type ===
+        class="fixed top-4 left-4 right-4 sm:left-auto sm:right-5 sm:top-5 z-50 flex items-center gap-3 px-5 py-3.5 shadow-xl sm:max-w-sm rounded-xl {toast.type ===
         'success'
             ? 'bg-green text-white'
             : 'bg-red-600 text-white'}"

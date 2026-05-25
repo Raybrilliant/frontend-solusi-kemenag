@@ -28,11 +28,48 @@ const features = [
         <meta charset="utf-8" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="icon" href="/favicon.ico" />
-        <meta name="viewport" content="width=device-width" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Login Admin — Kemenag Kota Probolinggo</title>
     </head>
 
     <body class="h-screen grid grid-cols-2 overflow-hidden bg-cream">
+
+        <!-- ══════════════════════════════════════════════════════════
+         MOBILE / TABLET BLOCKER — shown on screens < 1024px (lg)
+    ══════════════════════════════════════════════════════════════ -->
+        <div class="lg:hidden fixed inset-0 z-50 bg-cream flex flex-col items-center justify-center px-8 text-center">
+            <!-- Icon -->
+            <div class="w-20 h-20 bg-ink/5 border border-ink/10 rounded-2xl flex items-center justify-center mb-6">
+                <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-ink/30">
+                    <rect x="2" y="3" width="20" height="14" rx="2"/>
+                    <path d="M8 21h8M12 17v4"/>
+                </svg>
+            </div>
+
+            <!-- Text -->
+            <h1 class="text-xl font-extrabold uppercase tracking-tight text-ink mb-2">
+                Buka di Desktop
+            </h1>
+            <p class="text-sm text-ink/50 leading-relaxed max-w-xs mb-6">
+                Panel admin hanya dapat diakses melalui <strong class="text-ink/70">komputer atau laptop</strong>. Silakan buka halaman ini menggunakan browser desktop.
+            </p>
+
+            <!-- Badge -->
+            <div class="inline-flex items-center gap-2 bg-yellow/30 border border-yellow/50 px-4 py-2">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" class="text-yellow-700 shrink-0">
+                    <path d="M1 21L12 2l11 19H1zm11-3v-2h-2v2h2zm0-4V10h-2v4h2z"/>
+                </svg>
+                <span class="text-xs font-bold text-yellow-800 uppercase tracking-wide">Akses Terbatas — Desktop Only</span>
+            </div>
+
+            <!-- Back link -->
+            <a href="/" class="mt-8 text-xs font-semibold text-ink/35 hover:text-ink/60 transition-colors flex items-center gap-1.5">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                    <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20z"/>
+                </svg>
+                Kembali ke halaman utama
+            </a>
+        </div>
         <!-- ══════════════════════════════════════════════════════════
          LEFT PANEL — brand & feature info (static)
     ══════════════════════════════════════════════════════════════ -->

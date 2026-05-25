@@ -52,7 +52,7 @@
 
 <svelte:window onclick={handleWindowClick} onkeydown={e => e.key === 'Escape' && close()} />
 
-<div bind:this={rootEl} class="relative border-2 border-ink rounded-lg bg-white/60 p-5" >
+<div bind:this={rootEl} class="relative md:border-2 md:border-ink md:bg-white/60 md:p-5">
 
   <!-- ── Input ─────────────────────────────────────────── -->
   <div class="relative">

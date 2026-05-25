@@ -90,3 +90,29 @@ export const GET: APIRoute = async ({ url, cookies }) => {
     );
   }
 };
+
+export const POST: APIRoute = async ({ request, cookies }) => {
+  try {
+    const token = cookies.get("auth_token")?.value;
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+    const body = await request.json();
+    const res = await fetch(`${BACKEND_URL}/api/v1/permohonan/`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    return new Response(JSON.stringify(data), {
+      status: res.ok ? 200 : res.status,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (e) {
+    return new Response(
+      JSON.stringify({ success: false, message: String(e) }),
+      { status: 500, headers: { "Content-Type": "application/json" } },
+    );
+  }
+};

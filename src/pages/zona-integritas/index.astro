@@ -1,0 +1,811 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const percentage = [35,0];
+const journey = [
+    {
+        year: "2024",
+        icon: "✊",
+        title: "Deklarasi Komitmen",
+        desc: "Pimpinan dan seluruh pegawai menandatangani pakta integritas sebagai wujud komitmen bersama untuk membangun zona integritas yang bersih dan profesional.",
+    },
+    {
+        year: "2025",
+        icon: "⚙️",
+        title: "Pembangunan Sistem",
+        desc: "Membangun sistem pelayanan yang transparan, digital, dan terukur. Penataan tata laksana dan penguatan pengawasan internal mulai dijalankan secara konsisten.",
+    },
+    {
+        year: "2026",
+        icon: "🚀",
+        title: "Inovasi Pelayanan SOLUSI",
+        desc: "Peluncuran platform SOLUSI — sistem layanan digital terintegrasi untuk mempermudah akses masyarakat terhadap layanan Kemenag Kota Probolinggo.",
+    },
+    {
+        year: "Sekarang",
+        icon: "🎯",
+        title: "Terus Berjuang",
+        desc: "Proses penilaian dan pembinaan terus berlanjut. Kami berbenah, mendengar masukan masyarakat, dan memperkuat budaya kerja berintegritas di setiap lini.",
+    },
+];
+
+const kkn = [
+    {
+        letter: "K",
+        title: "Korupsi",
+        color: "#ef4444",
+        desc: "Penyelewengan atau penyalahgunaan kekuasaan untuk keuntungan pribadi. Kami berkomitmen NOL toleransi terhadap segala bentuk korupsi.",
+    },
+    {
+        letter: "K",
+        title: "Kolusi",
+        color: "#f97316",
+        desc: "Persekongkolan rahasia yang merugikan kepentingan masyarakat atau negara. Setiap proses dilakukan secara terbuka dan akuntabel.",
+    },
+    {
+        letter: "N",
+        title: "Nepotisme",
+        color: "#eab308",
+        desc: "Mengutamakan kerabat dalam urusan jabatan dan layanan. Seluruh pelayanan kami berdasarkan merit, prosedur, dan keadilan.",
+    },
+];
+
+const channels = [
+    { icon: "💻", label: "Aplikasi SOLUSI", value: "Fitur Pengaduan di halaman utama" },
+    { icon: "📬", label: "Kotak Saran", value: "Tersedia di ruang pelayanan lantai 1" },
+    { icon: "📞", label: "Telepon / WA", value: "0813-5913-6007" },
+    { icon: "🏢", label: "Tatap Muka", value: "Senin–Jumat, 08.00–16.00 WIB" },
+];
+
+const marqueeItems = [
+    "✦ Zona Integritas",
+    "· WBK",
+    "· WBBM",
+    "· Bebas Korupsi",
+    "· Melayani dengan Tulus",
+    "✦ Zona Integritas",
+    "· WBK",
+    "· WBBM",
+    "· Bebas Korupsi",
+    "· Melayani dengan Tulus",
+];
+
+const hakAnda = [
+  { icon: "🎁", title: "Permintaan Maaf Resmi", desc: "Permohonan maaf apabila terjadi keterlambatan atau kesalahan dalam proses pelayanan." },
+  { icon: "🔁", title: "Pelayanan Ulang", desc: "Pelayanan akan diulang tanpa biaya tambahan apabila terjadi kesalahan yang diakibatkan oleh kelalaian petugas kami." },
+  { icon: "📋", title: "Tindak Lanjut Terukur", desc: "Setiap pengaduan ditindaklanjuti dan hasilnya dilaporkan kepada pemohon maksimal 5 hari kerja." },
+]
+
+const slotImage = [
+  { label: "SLOT GAMBAR HERO", src: "/zona-integritas/hero.webp", alt: "Foto Komitmen Zona Integritas", scale: 190, objectPosition: "center" },
+  { label: "SLOT GAMBAR KEGIATAN", src: "/zona-integritas/kegiatan.webp", alt: "Foto Kegiatan Zona Integritas", scale: 100, objectPosition: "center" },
+  { label: "SLOT GAMBAR TIMELINE", src: "/zona-integritas/timeline.png", alt: "Foto Timeline Zona Integritas", scale: 100, objectPosition: "center" },
+  { label: "SLOT GAMBAR MAKLUMAT", src: "/zona-integritas/maklumat.webp", alt: "Foto Maklumat Zona Integritas", scale: 100, objectPosition: "center" },
+  { label: "SLOT GAMBAR PELAYANAN", src: "/zona-integritas/pelayanan.webp", alt: "Foto Pelayanan Zona Integritas", scale: 100, objectPosition: "center" },
+  { label: "SLOT GAMBAR TTD PAKTA", src: "/zona-integritas/tandatangan.webp", alt: "Foto TTD Pakta Zona Integritas", scale: 100, objectPosition: "center" },
+]
+---
+
+<style>
+    /* ── Scroll Reveal ─────────────────────────────────── */
+    [data-reveal] {
+        opacity: 0;
+        transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+            transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+        will-change: transform, opacity;
+    }
+    [data-reveal="up"]    { transform: translateY(36px); }
+    [data-reveal="left"]  { transform: translateX(-40px); }
+    [data-reveal="right"] { transform: translateX(40px); }
+    [data-reveal="scale"] { transform: scale(0.92); }
+    [data-reveal].revealed { opacity: 1; transform: none; }
+
+    [data-delay="1"] { transition-delay: 0.08s; }
+    [data-delay="2"] { transition-delay: 0.16s; }
+    [data-delay="3"] { transition-delay: 0.24s; }
+    [data-delay="4"] { transition-delay: 0.32s; }
+
+    /* ── Seamless Marquee ──────────────────────────────── */
+    .marquee-track {
+        overflow: hidden;
+        display: flex;
+    }
+    /* Two identical copies; each moves left by its own full width → seamless loop */
+    .marquee-inner {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+        gap: 1.5rem;
+        padding-right: 1.5rem;
+        animation: marquee-scroll 22s linear infinite;
+    }
+    @keyframes marquee-scroll {
+        from { transform: translateX(0); }
+        to   { transform: translateX(-100%); }
+    }
+
+    /* ── Section Tag ───────────────────────────────────── */
+    .section-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        background: #0f6b44;
+        color: #f6f1e8;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-bottom: 14px;
+    }
+    .section-tag.yellow { background: #f6c744; color: #111111; }
+
+    /* ── Image Slot ────────────────────────────────────── */
+    .img-slot {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: #e8e2d4;
+        border: 2px dashed #c5bfb1;
+        overflow: hidden;
+        position: relative;
+    }
+    .img-slot.dark-slot {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: rgba(255, 255, 255, 0.12);
+    }
+    .img-slot-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: #9a9484;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        text-align: center;
+        padding: 0 1.5rem;
+    }
+    .img-slot.dark-slot .img-slot-label { color: rgba(255, 255, 255, 0.25); }
+
+    /* ── Progress Bar ──────────────────────────────────── */
+    .prog-bar-fill {
+        height: 100%;
+        width: 0;
+        transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s;
+    }
+
+    /* ── Dark Section ──────────────────────────────────── */
+    .dark-section {
+        background: #111111;
+        color: #f6f1e8;
+        position: relative;
+        overflow: hidden;
+    }
+    .dark-section::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image:
+            linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+        background-size: 48px 48px;
+        pointer-events: none;
+    }
+
+    /* ── KPK Banner ────────────────────────────────────── */
+    .kpk-section {
+        background: #111111;
+        color: #f6f1e8;
+        position: relative;
+        overflow: hidden;
+    }
+    .kpk-section::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 22px,
+            rgba(246, 199, 68, 0.04) 22px,
+            rgba(246, 199, 68, 0.04) 44px
+        );
+        pointer-events: none;
+    }
+</style>
+
+<BaseLayout title="Zona Integritas">
+<main>
+
+    <!-- ══ HERO ══════════════════════════════════════════ -->
+    <section class="pt-10 md:pt-16 pb-16 md:pb-24 relative overflow-hidden">
+
+        <!-- Decorative ornament top-right -->
+        <div class="absolute -top-8 -right-8 w-72 h-72 opacity-[0.035] pointer-events-none select-none">
+            <svg viewBox="0 0 200 200" fill="none" stroke="#0F6B44" stroke-width="0.8">
+                <path d="M100,10 L107.65,41.52 L135.36,24.64 L118.48,52.35 L150,60 L118.48,67.65 L135.36,95.36 L107.65,78.48 L100,110 L92.35,78.48 L64.64,95.36 L81.52,67.65 L50,60 L81.52,52.35 L64.64,24.64 L92.35,41.52 Z"/>
+                <polygon points="100,55 110.6,59.39 115,70 110.6,80.61 100,85 89.4,80.61 85,70 89.4,59.39"/>
+            </svg>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+
+            <!-- Left: text -->
+            <div>
+                <div data-reveal="up"
+                     class="inline-flex items-center gap-2 mb-6 px-4 py-2 border border-yellow/60 bg-yellow/10">
+                    <span class="w-2 h-2 rounded-full bg-yellow animate-pulse shrink-0"></span>
+                    <span class="text-xs font-bold uppercase tracking-widest text-ink/70">
+                        Dalam Proses — Belum WBK / WBBM
+                    </span>
+                </div>
+
+                <h1 data-reveal="up" data-delay="1"
+                    class="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold leading-none uppercase tracking-tight text-ink mb-6">
+                    Menuju<br/>
+                    <span class="text-green">Zona</span><br/>
+                    Integritas
+                </h1>
+
+                <p data-reveal="up" data-delay="2"
+                   class="text-base md:text-lg text-ink/60 leading-relaxed max-w-lg mb-8">
+                    Kantor Kementerian Agama Kota Probolinggo terus berjuang meraih predikat
+                    <strong class="text-ink">Wilayah Bebas dari Korupsi (WBK)</strong> dan
+                    <strong class="text-ink">Wilayah Birokrasi Bersih dan Melayani (WBBM)</strong>
+                    sebagai bukti pelayanan publik yang bersih, transparan, dan profesional.
+                </p>
+
+                <!-- Progress cards -->
+                <div data-reveal="up" data-delay="3" class="grid grid-cols-2 gap-4">
+                    <div class="p-5 border border-ink/10 bg-white/60">
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-ink/40 mb-1">Target I</p>
+                        <p class="text-2xl font-black text-green mb-0.5">WBK</p>
+                        <p class="text-xs text-ink/50 mb-3">Wilayah Bebas dari Korupsi</p>
+                        <div class="h-1.5 bg-ink/10 overflow-hidden">
+                            <div class="prog-bar-fill bg-green" data-w={`${percentage[0]}%`}></div>
+                        </div>
+                        <p class="text-[10px] text-ink/40 mt-1.5 font-semibold">~{percentage[0]}% Kesiapan</p>
+                    </div>
+                    <div class="p-5 border border-ink/10 bg-white/60">
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-ink/40 mb-1">Target II</p>
+                        <p class="text-2xl font-black text-yellow mb-0.5">WBBM</p>
+                        <p class="text-xs text-ink/50 mb-3">Birokrasi Bersih &amp; Melayani</p>
+                        <div class="h-1.5 bg-ink/10 overflow-hidden">
+                            <div class="prog-bar-fill bg-yellow" data-w={`${percentage[1]}%`}></div>
+                        </div>
+                        <p class="text-[10px] text-ink/40 mt-1.5 font-semibold">~{percentage[1]}% Kesiapan</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: image slot -->
+            <div data-reveal="right" data-delay="2">
+                <!--
+                    📸 SLOT GAMBAR HERO
+                    Ganti div.img-slot ini dengan:
+                    <img src="/images/zona-integritas/hero.jpg" alt="..." class="w-full h-80 md:h-[460px] object-cover" />
+                -->
+                <div class="img-slot h-80 md:h-[460px]">
+                    <!-- <svg viewBox="0 0 24 24" width="52" height="52" fill="currentColor" class="text-ink/15">
+                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                    </svg>
+                    <p class="img-slot-label">Foto Kantor / Kegiatan Zona Integritas</p> -->
+                    <img src={slotImage[0].src} alt={slotImage[0].alt} class={`w-full h-full object-cover object-${slotImage[0].objectPosition} scale-[${slotImage[0].scale}%]`} />
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══ MARQUEE ════════════════════════════════════════ -->
+    <div class="-mx-4 sm:-mx-8 md:-mx-14 lg:-mx-20 bg-green text-cream py-3.5 overflow-hidden">
+        <div class="marquee-track">
+            <!-- Copy 1 -->
+            <div class="marquee-inner">
+                {marqueeItems.map(text => (
+                    <span class="text-[11px] font-bold uppercase tracking-[0.12em] opacity-70 shrink-0">
+                        {text}
+                    </span>
+                ))}
+            </div>
+            <!-- Copy 2 (identical, enables seamless loop) -->
+            <div class="marquee-inner" aria-hidden="true">
+                {marqueeItems.map(text => (
+                    <span class="text-[11px] font-bold uppercase tracking-[0.12em] opacity-70 shrink-0">
+                        {text}
+                    </span>
+                ))}
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ APA ITU ZONA INTEGRITAS ═══════════════════════ -->
+    <section class="py-16 md:py-24">
+        <div data-reveal="up" class="section-tag">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+            </svg>
+            Tentang Program
+        </div>
+        <h2 data-reveal="up" data-delay="1"
+            class="text-3xl md:text-5xl font-bold uppercase tracking-tight text-ink mb-4 max-w-2xl">
+            Apa itu Zona Integritas?
+        </h2>
+        <p data-reveal="up" data-delay="2" class="text-ink/60 max-w-2xl mb-10 leading-relaxed">
+            Zona Integritas adalah predikat yang diberikan kepada instansi pemerintah yang pimpinan
+            dan jajarannya berkomitmen mewujudkan WBK dan WBBM melalui reformasi birokrasi yang
+            terukur dan berkelanjutan.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div data-reveal="left" class="relative overflow-hidden bg-green text-cream p-8">
+                <div class="absolute top-3 right-3 text-cream/[0.07] text-9xl font-black leading-none select-none">WBK</div>
+                <div class="relative">
+                    <span class="inline-block px-3 py-1 bg-cream/20 text-[10px] font-black uppercase tracking-widest mb-5">
+                        Predikat Pertama
+                    </span>
+                    <h3 class="text-2xl md:text-3xl font-bold mb-3">Wilayah Bebas dari Korupsi</h3>
+                    <p class="text-cream/70 text-sm leading-relaxed">
+                        Diberikan kepada unit kerja yang memenuhi indikator hasil dan proses pembangunan
+                        Zona Integritas — mencakup manajemen perubahan, penataan tata laksana, SDM,
+                        penguatan pengawasan, dan akuntabilitas kinerja.
+                    </p>
+                </div>
+            </div>
+
+            <div data-reveal="right" class="relative overflow-hidden border-2 border-ink bg-cream p-8">
+                <div class="absolute top-3 right-3 text-ink/[0.04] text-9xl font-black leading-none select-none">WBBM</div>
+                <div class="relative">
+                    <span class="inline-block px-3 py-1 bg-yellow text-[10px] font-black uppercase tracking-widest mb-5">
+                        Predikat Tertinggi
+                    </span>
+                    <h3 class="text-2xl md:text-3xl font-bold mb-3">Wilayah Birokrasi Bersih &amp; Melayani</h3>
+                    <p class="text-ink/60 text-sm leading-relaxed">
+                        Predikat tertinggi Zona Integritas. Diberikan kepada unit kerja yang berhasil
+                        meraih WBK dan memenuhi standar pelayanan publik yang tinggi, inovatif, serta
+                        berorientasi pada kepuasan masyarakat.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!--
+            📸 SLOT GAMBAR: Kegiatan / Sosialisasi / Deklarasi Zona Integritas
+            Ganti div.img-slot dengan: <img src="/images/zona-integritas/kegiatan.jpg" ... />
+        -->
+        <div data-reveal="up" class="img-slot h-60 md:h-80">
+            <!-- <svg viewBox="0 0 24 24" width="44" height="44" fill="currentColor" class="text-ink/15">
+                <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+            </svg>
+            <p class="img-slot-label">Foto Kegiatan / Deklarasi Zona Integritas</p> -->
+            <img src={slotImage[1].src} alt={slotImage[1].alt} class={`w-full h-full object-cover object-${slotImage[1].objectPosition} scale-[${slotImage[1].scale}%]`} />
+        </div>
+    </section>
+
+    <!-- ══ PERJALANAN KAMI ════════════════════════════════ -->
+    <section class="dark-section -mx-4 sm:-mx-8 md:-mx-14 lg:-mx-20 px-4 sm:px-8 md:px-14 lg:px-20 py-16 md:py-24">
+        <div class="relative z-10">
+            <div data-reveal="up" class="section-tag yellow">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                    <path d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 3.21-1.81 6-4.72 7.28L13 17v5h5l-1.22-1.22C19.91 19.07 22 15.76 22 12c0-5.18-3.95-9.45-9-9.95zM11 2.05C5.95 2.55 2 6.82 2 12c0 3.76 2.09 7.07 5.22 8.78L6 22h5V2.05z"/>
+                </svg>
+                Perjalanan Kami
+            </div>
+            <h2 data-reveal="up" data-delay="1"
+                class="text-3xl md:text-5xl font-bold uppercase tracking-tight text-cream mb-12 max-w-2xl">
+                Langkah Nyata Menuju Integritas
+            </h2>
+
+            <!-- Timeline -->
+            <div>
+                {journey.map((item, i) => (
+                    <div data-reveal="up" data-delay={String((i % 4) + 1)}
+                         class="flex gap-6 group">
+                        <!-- Icon + connector -->
+                        <div class="flex flex-col items-center shrink-0">
+                            <div class="w-12 h-12 bg-green border-2 border-green/40 group-hover:border-yellow flex items-center justify-center text-xl z-10 transition-colors shrink-0">
+                                {item.icon}
+                            </div>
+                            {i < journey.length - 1 && (
+                                <div class="w-px flex-1 bg-gradient-to-b from-green/50 to-white/5 min-h-[3rem]"></div>
+                            )}
+                        </div>
+                        <!-- Content -->
+                        <div class="pb-10 flex-1 min-w-0">
+                            <span class="text-[10px] font-black tracking-widest text-yellow uppercase">{item.year}</span>
+                            <h3 class="text-lg font-bold text-cream mt-1 mb-2">{item.title}</h3>
+                            <p class="text-sm text-cream/55 leading-relaxed">{item.desc}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <!--
+                📸 SLOT GAMBAR: Dokumentasi Perjalanan ZI
+                Ganti div.img-slot dengan: <img src="/images/zona-integritas/perjalanan.jpg" ... />
+            -->
+            <div data-reveal="up" class="img-slot dark-slot h-56 md:h-64 mt-4">
+                <!-- <svg viewBox="0 0 24 24" width="44" height="44" fill="currentColor" class="text-white/15">
+                    <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                </svg>
+                <p class="img-slot-label">Foto Dokumentasi Perjalanan Zona Integritas</p> -->
+                <img src={slotImage[2].src} alt={slotImage[2].alt} class={`w-full h-full object-cover object-${slotImage[2].objectPosition} scale-[${slotImage[2].scale}%]`} />
+            </div>
+        </div>
+    </section>
+
+    <!-- ══ MAKLUMAT PELAYANAN ═════════════════════════════ -->
+    <section class="py-16 md:py-24">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+
+            <!--
+                📸 SLOT GAMBAR: Papan / Banner Maklumat Pelayanan
+                Ganti div.img-slot dengan: <img src="/images/zona-integritas/maklumat.jpg" ... />
+            -->
+            <div data-reveal="left" class="order-2 lg:order-1">
+                <div class="img-slot h-72 md:h-[420px]">
+                    <!-- <svg viewBox="0 0 24 24" width="44" height="44" fill="currentColor" class="text-ink/15">
+                        <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/>
+                    </svg>
+                    <p class="img-slot-label">Foto Papan / Banner Maklumat Pelayanan</p> -->
+                    <img src={slotImage[3].src} alt={slotImage[3].alt} class={`w-full h-full object-cover object-${slotImage[3].objectPosition} scale-[${slotImage[3].scale}%]`} />
+                </div>
+            </div>
+
+            <div class="order-1 lg:order-2">
+                <div data-reveal="right" class="section-tag">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                        <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/>
+                    </svg>
+                    Maklumat Pelayanan
+                </div>
+                <h2 data-reveal="right" data-delay="1"
+                    class="text-3xl md:text-4xl font-bold uppercase tracking-tight text-ink mb-4">
+                    Janji Kami kepada Masyarakat
+                </h2>
+                <p data-reveal="right" data-delay="2" class="text-ink/60 mb-6 leading-relaxed text-sm md:text-base">
+                    Kami, seluruh pegawai Kantor Kementerian Agama Kota Probolinggo, menyatakan sanggup
+                    memberikan pelayanan sesuai standar yang ditetapkan. Apabila tidak memenuhi janji ini,
+                    kami siap menerima sanksi sesuai peraturan perundang-undangan yang berlaku.
+                </p>
+
+                <ul data-reveal="right" data-delay="3" class="space-y-3">
+                    {[
+                        "Melayani dengan cepat, tepat, dan penuh rasa hormat",
+                        "Tidak memungut biaya di luar ketentuan yang berlaku",
+                        "Memberikan informasi yang jelas, akurat, dan terbuka",
+                        "Menyelesaikan layanan sesuai waktu yang telah dijanjikan",
+                        "Menjunjung tinggi kejujuran dan integritas dalam setiap tindakan",
+                        "Menolak segala bentuk gratifikasi dan suap",
+                    ].map(item => (
+                        <li class="flex items-start gap-3 text-sm text-ink/70">
+                            <span class="mt-0.5 w-5 h-5 bg-green text-cream flex items-center justify-center shrink-0">
+                                <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                                </svg>
+                            </span>
+                            {item}
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══ KOMPENSASI ════════════════════════════════════ -->
+    <section class="-mx-4 sm:-mx-8 md:-mx-14 lg:-mx-20 px-4 sm:px-8 md:px-14 lg:px-20 py-16 md:py-24 bg-yellow/10 border-y border-yellow/25">
+        <div data-reveal="up" class="section-tag yellow">Kompensasi Layanan</div>
+        <h2 data-reveal="up" data-delay="1"
+            class="text-3xl md:text-4xl font-bold uppercase tracking-tight text-ink mb-4 max-w-2xl">
+            Hak Anda Jika Kami Gagal Melayani
+        </h2>
+        <p data-reveal="up" data-delay="2" class="text-ink/60 max-w-2xl mb-10 leading-relaxed">
+            Apabila kami tidak memenuhi standar pelayanan yang ditetapkan, Anda berhak mendapatkan
+            kompensasi sebagai bentuk pertanggungjawaban dan komitmen perbaikan kami.
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            {hakAnda.map((item, i) => (
+                <div data-reveal="up" data-delay={String(i + 1)}
+                     class="p-7 bg-white border border-yellow/30 hover:border-yellow/70 transition-colors">
+                    <div class="text-4xl mb-4">{item.icon}</div>
+                    <h3 class="font-bold text-ink mb-2">{item.title}</h3>
+                    <p class="text-sm text-ink/60 leading-relaxed">{item.desc}</p>
+                </div>
+            ))}
+        </div>
+    </section>
+
+    <!-- ══ PENGADUAN ══════════════════════════════════════ -->
+    <section class="py-16 md:py-24">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+
+            <div>
+                <div data-reveal="up" class="section-tag">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+                    </svg>
+                    Pengaduan
+                </div>
+                <h2 data-reveal="up" data-delay="1"
+                    class="text-3xl md:text-4xl font-bold uppercase tracking-tight text-ink mb-4">
+                    Suara Anda Penting Bagi Kami
+                </h2>
+                <p data-reveal="up" data-delay="2" class="text-ink/60 mb-8 leading-relaxed">
+                    Kami membuka seluas-luasnya saluran pengaduan. Setiap aduan ditangani secara serius,
+                    profesional, dan bebas dari diskriminasi dalam bentuk apapun.
+                </p>
+
+                <div data-reveal="up" data-delay="3" class="space-y-3">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-ink/35 mb-4">Saluran Pengaduan</p>
+                    {channels.map(ch => (
+                        <div class="flex items-center gap-4 p-4 border border-ink/10 bg-white/50 hover:border-green/40 transition-colors">
+                            <span class="text-2xl shrink-0">{ch.icon}</span>
+                            <div>
+                                <p class="text-[10px] font-bold uppercase tracking-wider text-ink/40">{ch.label}</p>
+                                <p class="text-sm font-semibold text-ink">{ch.value}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <div class="space-y-5">
+                <!--
+                    📸 SLOT GAMBAR: Ruang Pengaduan / Petugas Pelayanan
+                    Ganti div.img-slot dengan: <img src="/images/zona-integritas/pengaduan.jpg" ... />
+                -->
+                <div data-reveal="right" class="img-slot h-56">
+                    <!-- <svg viewBox="0 0 24 24" width="40" height="40" fill="currentColor" class="text-ink/15">
+                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                    </svg>
+                    <p class="img-slot-label">Foto Ruang Pengaduan / Petugas Pelayanan</p> -->
+                    <img src={slotImage[4].src} alt={slotImage[4].alt} class={`w-full h-full object-cover object-${slotImage[4].objectPosition} scale-[${slotImage[4].scale}%]`} />
+                </div>
+
+                <div data-reveal="right" data-delay="2" class="p-7 bg-green text-cream">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-cream/50 mb-5">
+                        Alur Penanganan Pengaduan
+                    </p>
+                    <ol class="space-y-4">
+                        {[
+                            "Masyarakat menyampaikan pengaduan melalui saluran yang tersedia",
+                            "Petugas mencatat dan memverifikasi laporan dalam 1×24 jam kerja",
+                            "Pengaduan diteruskan ke unit terkait untuk ditindaklanjuti",
+                            "Hasil tindak lanjut disampaikan kepada pelapor maksimal 5 hari kerja",
+                        ].map((step, i) => (
+                            <li class="flex items-start gap-4">
+                                <span class="shrink-0 w-7 h-7 bg-yellow text-ink font-black text-xs flex items-center justify-center">
+                                    {i + 1}
+                                </span>
+                                <span class="text-sm text-cream/75 leading-relaxed">{step}</span>
+                            </li>
+                        ))}
+                    </ol>
+                </div>
+
+                <a data-reveal="right" data-delay="3"
+                   href="/pengaduan"
+                   class="flex items-center justify-between w-full p-5 bg-ink text-cream hover:bg-green transition-colors group">
+                    <span class="font-bold uppercase tracking-wider text-sm">Sampaikan Pengaduan Sekarang</span>
+                    <svg class="group-hover:translate-x-1 transition-transform shrink-0"
+                         viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                        <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══ BEBAS KKN ═══════════════════════════════════════ -->
+    <section class="dark-section -mx-4 sm:-mx-8 md:-mx-14 lg:-mx-20 px-4 sm:px-8 md:px-14 lg:px-20 py-16 md:py-24">
+
+        <!-- Decorative giant "0" — inside section so it's clipped by overflow:hidden -->
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none select-none"
+             style="opacity:0.025; overflow:hidden;">
+            <span style="font-size:28rem; font-weight:900; line-height:1; color:white;">0</span>
+        </div>
+
+        <div class="relative z-10">
+            <div data-reveal="up" class="section-tag">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                </svg>
+                Integritas Tanpa Kompromi
+            </div>
+            <h2 data-reveal="up" data-delay="1"
+                class="text-3xl md:text-5xl font-bold uppercase tracking-tight text-cream mb-4 max-w-2xl">
+                Nol Toleransi untuk KKN
+            </h2>
+            <p data-reveal="up" data-delay="2" class="text-cream/50 max-w-xl mb-12 leading-relaxed">
+                Seluruh jajaran Kemenag Kota Probolinggo berkomitmen menjauhi segala bentuk Korupsi,
+                Kolusi, dan Nepotisme dalam setiap aspek pekerjaan dan pelayanan kepada masyarakat.
+            </p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-10">
+                {kkn.map((item, i) => (
+                    <div data-reveal="up" data-delay={String(i + 1)}
+                         class="p-7 border border-white/10 bg-white/5 hover:bg-white/10 transition-colors">
+                        <div class="text-6xl font-black mb-4 leading-none" style={`color:${item.color}`}>
+                            {item.letter}
+                        </div>
+                        <h3 class="text-lg font-bold text-cream mb-2">{item.title}</h3>
+                        <p class="text-sm text-cream/50 leading-relaxed mb-5">{item.desc}</p>
+                        <div class="inline-flex items-center gap-2 px-3 py-1.5 border text-[10px] font-black uppercase tracking-widest"
+                             style={`border-color:${item.color}55; color:${item.color}`}>
+                            <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
+                                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                            </svg>
+                            NOL TOLERANSI
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <!--
+                📸 SLOT GAMBAR: Penandatanganan Pakta Integritas / Deklarasi Bebas KKN
+                Ganti div.img-slot dengan: <img src="/images/zona-integritas/pakta.jpg" ... />
+            -->
+            <div data-reveal="up" class="img-slot dark-slot h-56 md:h-64">
+                <!-- <svg viewBox="0 0 24 24" width="44" height="44" fill="currentColor" class="text-white/15">
+                    <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                </svg>
+                <p class="img-slot-label">Foto Penandatanganan Pakta Integritas / Deklarasi Bebas KKN</p> -->
+                <img src={slotImage[5].src} alt={slotImage[5].alt} class={`w-full h-full object-cover object-${slotImage[5].objectPosition} scale-[${slotImage[5].scale}%]`} />
+            </div>
+        </div>
+    </section>
+
+    <!-- ══ LAPORKAN KE KPK ════════════════════════════════ -->
+    <section class="kpk-section -mx-4 sm:-mx-8 md:-mx-14 lg:-mx-20 px-4 sm:px-8 md:px-14 lg:px-20 py-20 md:py-28">
+        <div class="relative z-10 max-w-3xl mx-auto text-center">
+
+            <div data-reveal="scale"
+                 class="inline-flex items-center gap-3 px-6 py-3 border border-yellow/40 mb-10">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="#F6C744">
+                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                </svg>
+                <span class="text-yellow text-[10px] font-black uppercase tracking-widest">
+                    Komisi Pemberantasan Korupsi — Republik Indonesia
+                </span>
+            </div>
+
+            <h2 data-reveal="up" data-delay="1"
+                class="text-3xl md:text-5xl font-bold uppercase tracking-tight text-cream mb-6">
+                Temukan Pelanggaran?<br/>
+                <span class="text-yellow">Lapor ke KPK</span>
+            </h2>
+
+            <p data-reveal="up" data-delay="2"
+               class="text-cream/50 mb-10 leading-relaxed text-sm md:text-base max-w-2xl mx-auto">
+                Jika Anda menemukan indikasi korupsi, pungutan liar, gratifikasi, atau penyalahgunaan
+                wewenang di lingkungan Kemenag Kota Probolinggo, laporkan langsung ke KPK melalui
+                platform <strong class="text-yellow">Gratifikasi Online (GOL) </strong> atau <strong class="text-red-700">SP4N LAPOR!</strong> .
+                Identitas Anda dijaga kerahasiaannya.
+            </p>
+
+            <div data-reveal="up" data-delay="3"
+                 class="flex flex-col sm:flex-row gap-4 justify-center mb-10">
+                <a href="https://gol.kpk.go.id"
+                   target="_blank" rel="noopener noreferrer"
+                   class="inline-flex items-center justify-center gap-3 px-8 py-4 bg-yellow text-ink font-bold uppercase tracking-wider text-sm hover:bg-yellow/90 transition-colors">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+                        <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
+                    </svg>
+                    Lapor di gol.kpk.go.id
+                </a>
+                <a href="https://sp4n.lapor.go.id"
+                   target="_blank" rel="noopener noreferrer"
+                   class="inline-flex items-center justify-center gap-3 px-8 py-4 bg-red-700 text-cream font-bold uppercase tracking-wider text-sm hover:border-cream hover:bg-red-700/90 transition-colors">
+                       <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+                           <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
+                       </svg>
+                    Pengaduan SP4N LAPOR!
+                </a>
+            </div>
+
+            <div data-reveal="up" data-delay="4"
+                 class="border border-cream/10 p-5 text-left max-w-lg mx-auto">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-yellow mb-3">Yang Dapat Dilaporkan</p>
+                <ul class="space-y-2">
+                    {[
+                        "Pungutan liar atau pungli dalam proses pelayanan",
+                        "Permintaan gratifikasi oleh oknum pegawai",
+                        "Penyalahgunaan kewenangan atau jabatan",
+                        "Diskriminasi dalam pemberian layanan",
+                    ].map(item => (
+                        <li class="flex items-start gap-3 text-xs text-cream/50">
+                            <svg viewBox="0 0 24 24" width="12" height="12" fill="#F6C744" class="shrink-0 mt-0.5">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+                            </svg>
+                            {item}
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══ PENUTUP ════════════════════════════════════════ -->
+    <section class="py-16 md:py-24 text-center">
+        <div data-reveal="scale" class="inline-block mb-6">
+            <div class="w-12 h-1 bg-green mx-auto mb-5"></div>
+            <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-ink/30">
+                Bersama Mewujudkan Birokrasi Bersih
+            </span>
+        </div>
+
+        <h2 data-reveal="up" data-delay="1"
+            class="text-3xl md:text-4xl font-bold uppercase text-ink mb-4">
+            Kami Berkomitmen,<br/>
+            <span class="text-green">Anda Mengawasi</span>
+        </h2>
+        <p data-reveal="up" data-delay="2"
+           class="text-ink/50 text-sm max-w-md mx-auto mb-10 leading-relaxed">
+            Perubahan sejati lahir dari kolaborasi antara pemerintah dan masyarakat.
+            Mari bersama-sama mewujudkan birokrasi Kemenag Kota Probolinggo yang bersih,
+            terpercaya, dan melayani sepenuh hati.
+        </p>
+
+        <div data-reveal="up" data-delay="3" class="flex flex-wrap justify-center gap-4">
+            <a href="/"
+               class="px-8 py-3.5 bg-green text-cream font-bold uppercase tracking-wider text-sm hover:bg-green/90 transition-colors">
+                Kembali ke Beranda
+            </a>
+            <a href="/pengaduan"
+               class="px-8 py-3.5 border-2 border-ink text-ink font-bold uppercase tracking-wider text-sm hover:bg-ink hover:text-cream transition-colors">
+                Sampaikan Pengaduan
+            </a>
+        </div>
+    </section>
+
+</main>
+</BaseLayout>
+
+<script>
+{
+    // ── Scroll Reveal ──────────────────────────────────────
+    const revealObs = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add("revealed");
+                    revealObs.unobserve(entry.target);
+                }
+            });
+        },
+        { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
+    );
+
+    // ── Progress Bar ───────────────────────────────────────
+    const progObs = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    const el = entry.target as HTMLElement;
+                    const target = el.dataset.w ?? "0";
+                    // rAF ensures browser has painted width:0 before transitioning
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => { el.style.width = target; });
+                    });
+                    progObs.unobserve(el);
+                }
+            });
+        },
+        { threshold: 0.8 }
+    );
+
+    function init() {
+        document.querySelectorAll("[data-reveal]").forEach((el) => {
+            el.classList.remove("revealed");
+            revealObs.observe(el);
+        });
+        document.querySelectorAll(".prog-bar-fill").forEach((el) => {
+            (el as HTMLElement).style.width = "0";
+            progObs.observe(el);
+        });
+    }
+
+    init();
+    document.addEventListener("astro:page-load", init);
+}
+</script>

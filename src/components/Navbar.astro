@@ -17,14 +17,14 @@ const navLinks = [
 ];
 
 const navButtons = [
+    // {
+    //     href: "/admin",
+    //     label: "Masuk",
+    //     bg: "bg-green",
+    //     icon: "mdi:account",
+    // },
     {
-        href: "/admin/login",
-        label: "Masuk",
-        bg: "bg-green",
-        icon: "mdi:account",
-    },
-    {
-        href: "/internal/login",
+        href: "/internal",
         label: "ASN",
         bg: "bg-yellow",
         icon: "mdi:accounts",
@@ -34,20 +34,20 @@ const navButtons = [
 
 <!-- ── Desktop & mobile wrapper ──────────────────────────────── -->
 <header class="relative">
-    <nav class="flex justify-between items-center py-4 md:py-5">
+    <nav class="flex justify-between items-center py-4 lg:py-5">
         <!-- Logo -->
         <div class="flex gap-3 items-center">
-            <img src="/logo.png" class="w-10 md:w-13" alt="Logo" />
+            <img src="/logo.png" class="w-10 lg:w-13" alt="Logo" />
             <div
-                class="font-semibold -space-y-1 md:-space-y-2 uppercase leading-tight"
+                class="font-semibold -space-y-1 lg:-space-y-2 uppercase leading-tight"
             >
-                <h3 class="text-[11px] md:text-sm">Kantor Kementerian Agama</h3>
-                <h3 class="text-[11px] md:text-sm">Kota Probolinggo</h3>
+                <h3 class="text-[11px] lg:text-sm">Kantor Kementerian Agama</h3>
+                <h3 class="text-[11px] lg:text-sm">Kota Probolinggo</h3>
             </div>
         </div>
 
-        <!-- Desktop nav links -->
-        <ul class="hidden md:flex gap-5 uppercase font-semibold text-sm">
+        <!-- Desktop nav links (lg+) -->
+        <ul class="hidden lg:flex gap-5 uppercase font-semibold text-sm">
             {
                 navLinks.map((l) => (
                     <li>
@@ -62,8 +62,8 @@ const navButtons = [
             }
         </ul>
 
-        <!-- Desktop login buttons -->
-        <ul class="hidden md:flex items-center font-semibold text-sm">
+        <!-- Desktop login buttons (lg+) -->
+        <ul class="hidden lg:flex items-center font-semibold text-sm">
             {
                 navButtons.map((b) => (
                     <li>
@@ -79,10 +79,10 @@ const navButtons = [
             }
         </ul>
 
-        <!-- Mobile: hamburger -->
+        <!-- Mobile & tablet: hamburger (< lg) -->
         <button
             id="mobile-menu-btn"
-            class="md:hidden flex flex-col justify-center items-center w-9 h-9 gap-1.5 cursor-pointer"
+            class="lg:hidden flex flex-col justify-center items-center w-9 h-9 gap-1.5 cursor-pointer"
             aria-label="Buka menu"
             aria-expanded="false"
         >
@@ -98,47 +98,49 @@ const navButtons = [
         </button>
     </nav>
 
-    <!-- Mobile drawer -->
+    <!-- Mobile & tablet drawer (< lg) -->
     <div
         id="mobile-menu"
-        class="mobile-drawer md:hidden overflow-hidden"
+        class="mobile-drawer lg:hidden overflow-hidden"
         style="max-height: 0; transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1);"
     >
-        <div class="border-t border-ink/8 pt-3 pb-5 space-y-1">
-            <!-- Nav links -->
-            {
-                navLinks.map((l) => (
-                    <a
-                        href={l.href}
-                        class={`flex items-center gap-3 px-2 py-2.5 text-sm font-semibold uppercase rounded-lg transition-colors
-            ${isActive(l.href) ? "text-green" : "text-ink/60 hover:text-ink hover:bg-black/4"}`}
-                    >
-                        {l.label}
-                        {isActive(l.href) && (
-                            <span class="ml-auto w-1.5 h-1.5 rounded-full bg-green" />
-                        )}
-                    </a>
-                ))
-            }
+        <div class="border-t border-ink/8 pt-3 pb-5">
+            <!-- Nav links: 1-col on mobile, 2-col grid on tablet -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-0.5">
+                {
+                    navLinks.map((l) => (
+                        <a
+                            href={l.href}
+                            class={`flex items-center gap-3 px-3 py-2.5 text-sm font-semibold uppercase rounded-lg transition-colors
+                ${isActive(l.href) ? "text-green bg-green/5" : "text-ink/60 hover:text-ink hover:bg-black/4"}`}
+                        >
+                            {l.label}
+                            {isActive(l.href) && (
+                                <span class="ml-auto w-1.5 h-1.5 rounded-full bg-green shrink-0" />
+                            )}
+                        </a>
+                    ))
+                }
+            </div>
 
             <!-- Divider -->
             <div class="my-3 border-t border-ink/8"></div>
 
-            <!-- Login buttons stacked -->
-            {
-                navButtons.map((b) => (
-                    <a
-                        href={b.href}
-                        class={`btn-asn w-full ${b.bg} font-bold uppercase text-sm px-5 py-3
-            flex items-center justify-between gap-2 cursor-pointer mt-2`}
-                    >
-                        <>
+            <!-- Login buttons -->
+            <div class="flex flex-col sm:flex-row gap-2">
+                {
+                    navButtons.map((b) => (
+                        <a
+                            href={b.href}
+                            class={`btn-asn ${b.bg} font-bold uppercase text-sm px-5 py-3
+                flex items-center justify-between sm:justify-center gap-2 cursor-pointer sm:flex-1`}
+                        >
                             <Icon name={b.icon} />
                             <span>{b.label}</span>
-                        </>
-                    </a>
-                ))
-            }
+                        </a>
+                    ))
+                }
+            </div>
         </div>
     </div>
 </header>

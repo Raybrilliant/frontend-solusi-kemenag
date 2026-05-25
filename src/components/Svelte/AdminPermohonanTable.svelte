@@ -60,6 +60,30 @@
         return () => clearTimeout(_debounce);
     });
 
+    let deleting = $state(false);
+
+    async function deleteSelected() {
+        if (!selected.length) return;
+        const ids = selected.map((r) => r.id);
+        const confirmed = window.confirm(
+            `Hapus ${ids.length} permohonan yang dipilih? Tindakan ini tidak dapat dibatalkan.`,
+        );
+        if (!confirmed) return;
+
+        deleting = true;
+        try {
+            await Promise.all(
+                ids.map((id) =>
+                    fetch(`/api/admin/permohonan/${id}`, { method: "DELETE" }),
+                ),
+            );
+            data = data.filter((row) => !ids.includes(row.id));
+            selected = [];
+        } finally {
+            deleting = false;
+        }
+    }
+
     const tabCount = $derived({
         semua: dashboardStats.total,
         Diterima: dashboardStats.diterima,
@@ -311,9 +335,10 @@
             >Ekspor</button
         >
         <button
-            onclick={() => {}}
-            class="hover:text-red-400 transition-colors cursor-pointer"
-            >Hapus</button
+            onclick={deleteSelected}
+            disabled={deleting}
+            class="hover:text-red-400 transition-colors cursor-pointer disabled:opacity-50"
+            >{deleting ? "Menghapus..." : "Hapus"}</button
         >
         <button
             onclick={() => (selected = [])}

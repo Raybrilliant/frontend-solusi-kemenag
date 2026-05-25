@@ -89,6 +89,22 @@ import { Icon } from "astro-icon/components";
   .btn-hero:hover .btn-label { color: #111111; }
   .btn-hero:hover .btn-icon  { color: #111111; transform: translateX(5px); }
 
+  /* ── Tutorial Modal ─────────────────────────────────── */
+  @keyframes modalBackdropIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes modalSlideIn {
+    from { opacity: 0; transform: translateY(24px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  #tutorial-modal {
+    animation: modalBackdropIn 0.2s ease both;
+  }
+  #tutorial-modal .modal-box {
+    animation: modalSlideIn 0.28s cubic-bezier(0.16,1,0.3,1) both;
+  }
+
   /* ── Keyframes ───────────────────────────────────────── */
   @keyframes spin-slow {
     from { transform: rotate(0deg); }
@@ -147,7 +163,7 @@ import { Icon } from "astro-icon/components";
 <section class="grid grid-cols-1 md:grid-cols-2 items-center mt-6 md:mt-10 gap-8 md:gap-0">
     <!-- Hero Text Content -->
     <div id="hero-text" class="hero-text col-span-1">
-        <h1 data-anim="h1" class="text-6xl sm:text-7xl md:text-9xl font-bold">SOLUSI</h1>
+        <h1 data-anim="h1" class="text-6xl sm:text-7xl md:text-7xl lg:text-8xl xl:text-9xl font-bold">SOLUSI</h1>
         <h2 data-anim="h2" class="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-semibold uppercase leading-tight">
             Sistem Online Layanan <span class="text-green">Unggul</span> <span class="text-green">Terintegrasi</span>
         </h2>
@@ -155,15 +171,27 @@ import { Icon } from "astro-icon/components";
 
         <!-- Action Buttons -->
         <div data-anim="btns" class="flex flex-wrap gap-3 mt-5 md:mt-6">
-            <a href="/" class="btn-hero bg-green text-cream text-xs md:text-sm py-3 md:py-4 px-5 md:px-6 font-bold uppercase tracking-wider inline-flex items-center cursor-pointer">
-                <span class="btn-label">Jelajahi Layanan</span>
-                <span class="btn-icon ml-2"><Icon name="mdi:arrow-right" class="w-4 h-4 md:w-5 md:h-5" /></span>
-            </a>
-            <a href="/check-progress" class="btn-hero bg-green text-cream text-xs md:text-sm py-3 md:py-4 px-5 md:px-6 font-bold uppercase tracking-wider inline-flex items-center cursor-pointer">
+            <button id="tutorial-btn" type="button" class="btn-hero bg-green text-cream text-xs md:text-sm py-3 md:py-4 px-5 md:px-6 font-bold uppercase tracking-wider inline-flex items-center cursor-pointer border-0">
+                <span class="btn-label">Tonton Tutorial</span>
+                <span class="btn-icon ml-2"><Icon name="mdi:play-circle" class="w-4 h-4 md:w-5 md:h-5" /></span>
+            </button>
+            <a href="/check-progress" class="btn-hero bg-green text-cream text-xs md:text-sm py-3 md:py-4 px-5 md:px-6 font-bold uppercase tracking-wider hidden md:inline-flex items-center cursor-pointer">
                 <span class="btn-label">Cek Progress</span>
                 <span class="btn-icon ml-2"><Icon name="mdi:progress-clock" class="w-4 h-4 md:w-5 md:h-5" /></span>
             </a>
         </div>
+
+        <!-- Mobile-only: Zona Integritas link -->
+        <a href="/zona-integritas"
+           class="md:hidden inline-flex items-center gap-1.5 mt-3 text-xs font-semibold text-ink/50 hover:text-green transition-colors group">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" class="text-green/60 group-hover:text-green transition-colors">
+                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+            </svg>
+            Zona Integritas WBK · WBBM
+            <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" class="opacity-40">
+                <path d="M6.4 18L5 16.6 14.6 7H6V5h12v12h-2V8.4z"/>
+            </svg>
+        </a>
     </div>
 
     <!-- Ilustrasi Hero - Collage Style (hidden on mobile) -->
@@ -230,3 +258,79 @@ import { Icon } from "astro-icon/components";
 
     </div>
 </section>
+
+<!-- Tutorial Modal -->
+<div
+    id="tutorial-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Tutorial Penggunaan SOLUSI"
+    aria-hidden="true"
+    style="display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.78); backdrop-filter:blur(5px); align-items:center; justify-content:center; padding:1rem;"
+>
+    <div class="modal-box" style="position:relative; width:min(820px,94vw); background:#000; box-shadow:0 32px 80px rgba(0,0,0,0.6);">
+        <!-- Close button -->
+        <button
+            id="tutorial-close"
+            aria-label="Tutup modal"
+            style="position:absolute; top:-14px; right:-14px; z-index:1; width:36px; height:36px; border-radius:50%; background:#fff; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(0,0,0,0.3); color:#111;"
+        >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+        <!-- 16:9 iframe wrapper -->
+        <div style="aspect-ratio:16/9; width:100%; overflow:hidden;">
+            <iframe
+                id="tutorial-iframe"
+                src=""
+                title="Tutorial Penggunaan SOLUSI"
+                width="100%"
+                height="100%"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+                style="display:block;"
+            ></iframe>
+        </div>
+    </div>
+</div>
+
+<script>
+{
+    // Ganti dengan YouTube Video ID tutorial Anda
+    const YT_VIDEO_ID = "GANTI_VIDEO_ID_DISINI";
+
+    const modal  = document.getElementById("tutorial-modal");
+    const iframe = document.getElementById("tutorial-iframe");
+    const btnOpen  = document.getElementById("tutorial-btn");
+    const btnClose = document.getElementById("tutorial-close");
+
+    function openTutorial() {
+        iframe.src = `https://www.youtube.com/embed/${YT_VIDEO_ID}?autoplay=1&rel=0`;
+        modal.style.display = "flex";
+        modal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+        btnClose.focus();
+    }
+
+    function closeTutorial() {
+        modal.style.display = "none";
+        modal.setAttribute("aria-hidden", "true");
+        iframe.src = "";
+        document.body.style.overflow = "";
+        btnOpen.focus();
+    }
+
+    function initTutorialModal() {
+        btnOpen?.addEventListener("click", openTutorial);
+        btnClose?.addEventListener("click", closeTutorial);
+        modal?.addEventListener("click", (e) => { if (e.target === modal) closeTutorial(); });
+    }
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && modal?.style.display !== "none") closeTutorial();
+    });
+
+    initTutorialModal();
+    document.addEventListener("astro:page-load", initTutorialModal);
+}
+</script>

@@ -13,37 +13,37 @@ const userName = user?.nama ?? "ASN";
         <meta charset="utf-8" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="icon" href="/favicon.ico" />
-        <meta name="viewport" content="width=device-width" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="generator" content={Astro.generator} />
         <title>{title ? `${title} - ` : ""} Kantor Kementerian Agama Kota Probolinggo</title>
     </head>
     <body class="px-4 sm:px-8 md:px-14 lg:px-20 mb-10 md:mb-20 bg-cream">
         <!-- Internal Navbar -->
-        <header class="border-b border-ink/8 py-4 md:py-5 mb-8 md:mb-12">
+        <header class="border-b border-ink/8 py-4 lg:py-5 mb-8 lg:mb-12">
             <nav class="flex justify-between items-center">
                 <!-- Logo -->
                 <a
                     href="/internal"
                     class="flex gap-3 items-center hover:opacity-80 transition-opacity"
                 >
-                    <img src="/logo.png" class="w-10 md:w-13" alt="Logo" />
+                    <img src="/logo.png" class="w-10 lg:w-13" alt="Logo" />
                     <div
-                        class="-space-y-1 md:-space-y-2 uppercase leading-tight"
+                        class="-space-y-1 lg:-space-y-2 uppercase leading-tight"
                     >
-                        <h3 class="text-[11px] md:text-sm font-semibold">
+                        <h3 class="text-[11px] lg:text-sm font-semibold">
                             Kantor Kementerian Agama
                         </h3>
-                        <h3 class="text-[11px] md:text-sm font-semibold">
+                        <h3 class="text-[11px] lg:text-sm font-semibold">
                             Kota Probolinggo
                         </h3>
                     </div>
                 </a>
 
                 <!-- Right side: ASN badge + user name + logout -->
-                <div class="flex items-center gap-3 md:gap-4">
+                <div class="flex items-center gap-3 lg:gap-4">
                     <!-- ASN badge -->
                     <div
-                        class="hidden sm:flex items-center gap-2 bg-green/10 border border-green/20 rounded-full px-3 py-1.5"
+                        class="flex items-center gap-2 bg-green/10 border border-green/20 rounded-full px-3 py-1.5"
                     >
                         <span class="w-1.5 h-1.5 rounded-full bg-green"></span>
                         <span
@@ -52,7 +52,7 @@ const userName = user?.nama ?? "ASN";
                         >
                     </div>
 
-                    <!-- User name -->
+                    <!-- User name (hidden on small mobile) -->
                     <span
                         class="text-sm font-semibold text-ink/60 hidden sm:inline"
                         >{userName}</span
@@ -63,7 +63,7 @@ const userName = user?.nama ?? "ASN";
                         href="/api/internal/auth/logout"
                         class="flex items-center gap-1.5 text-sm font-semibold text-ink/40 hover:text-red-500 transition-colors"
                     >
-                        <svg viewBox="0 0 24 24" class="w-4 h-4">
+                        <svg viewBox="0 0 24 24" class="w-4 h-4 shrink-0">
                             <path
                                 fill="currentColor"
                                 d="M16 17v-3H9v-4h7V7l5 5l-5 5M14 2a2 2 0 0 1 2 2v2h-2V4H5v16h9v-2h2v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9z"
