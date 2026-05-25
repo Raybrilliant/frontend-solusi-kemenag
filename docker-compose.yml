@@ -1,9 +1,6 @@
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: kemenag-frontend:latest
+    image: ${DOCKER_USERNAME}/solusi-kemenag-frontend:latest
     container_name: kemenag-frontend
     restart: unless-stopped
     ports:
