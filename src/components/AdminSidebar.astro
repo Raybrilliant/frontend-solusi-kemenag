@@ -27,7 +27,7 @@ const navItems = [
         icon: "mdi:file-document-outline",
         label: "Layanan",
     },
-    ...(userRole === "super_admin"
+    ...(userRole === "super_admin" || userRole === "admin"
         ? [
               {
                   href: "/admin/kategori",
@@ -39,6 +39,10 @@ const navItems = [
                   icon: "mdi:message-alert-outline",
                   label: "Pengaduan",
               },
+          ]
+        : []),
+    ...(userRole === "super_admin"
+        ? [
               {
                   href: "/admin/manajemenUser",
                   icon: "mdi:accounts-outline",
@@ -161,7 +165,7 @@ function isActive(href: string) {
         >
             <div class="py-1">
                 <a
-                    href="#"
+                    href="/admin/profil"
                     class="flex items-center gap-3 px-4 py-2.5 text-[12px] font-semibold text-white/80 hover:bg-white/[0.07] hover:text-white transition-colors"
                 >
                     <Icon
@@ -171,18 +175,6 @@ function isActive(href: string) {
                         class="shrink-0"
                     />
                     Profil Saya
-                </a>
-                <a
-                    href="#"
-                    class="flex items-center gap-3 px-4 py-2.5 text-[12px] font-semibold text-white/80 hover:bg-white/[0.07] hover:text-white transition-colors"
-                >
-                    <Icon
-                        name="mdi:cog-outline"
-                        width="16"
-                        height="16"
-                        class="shrink-0"
-                    />
-                    Pengaturan
                 </a>
                 <div class="my-1 border-t border-white/8"></div>
                 <a

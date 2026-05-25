@@ -1,0 +1,51 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import AdminProfil from "../../../components/Svelte/AdminProfil.svelte";
+
+const user = Astro.locals.user ?? null;
+---
+
+<style>
+    [data-anim="hero"] {
+        animation: fadeDown 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+    }
+    [data-anim="content"] {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+    }
+    @keyframes fadeDown {
+        from { opacity: 0; transform: translateY(-12px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<AdminLayout title="Profil Saya">
+    <div class="min-h-full">
+        <div data-anim="hero" class="px-8 py-6">
+            <h1 class="text-4xl font-bold uppercase tracking-tight text-ink">
+                Profil Saya
+            </h1>
+            <p class="text-sm text-ink/50 mt-1">
+                Perbarui nama dan password akun Anda.
+            </p>
+        </div>
+
+        <div data-anim="content" class="px-8 pb-8">
+            <!-- Info akun (read-only) -->
+            <div class="max-w-lg mb-6 bg-green/5 border border-green/20 px-5 py-4 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full bg-green flex items-center justify-center shrink-0 text-white text-base font-bold">
+                    {(user?.nama ?? "A").split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                </div>
+                <div class="min-w-0">
+                    <p class="text-sm font-bold text-ink truncate">{user?.nama ?? "-"}</p>
+                    <p class="text-xs text-ink/50 mt-0.5">NIP: {user?.nip ?? "-"} &nbsp;·&nbsp; {user?.role ?? "-"}</p>
+                </div>
+            </div>
+
+            <AdminProfil user={user} client:load />
+        </div>
+    </div>
+</AdminLayout>
