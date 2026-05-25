@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { getUserFromToken } from "../../../../lib/get-user";
 
-const BACKEND_URL = import.meta.env.BACKEND_URL ?? "http://localhost:3000";
+const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
 // Proxy: GET /api/v1/dashboard/stats
 // Operator: ambil dari /stats/per-kategori dan filter ke kategori mereka

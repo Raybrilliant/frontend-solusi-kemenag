@@ -6,7 +6,7 @@
  */
 import { defineMiddleware } from "astro:middleware";
 
-const BACKEND_URL = import.meta.env.BACKEND_URL ?? "http://localhost:3000";
+const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
 // Halaman yang TIDAK perlu auth (public)
 const PUBLIC_PATHS = [

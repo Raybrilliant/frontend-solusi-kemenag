@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { transformTrackResponse, transformPengaduanTrackResponse } from "../../lib/track-transform";
 
-const BACKEND_URL = import.meta.env.BACKEND_URL ?? "http://localhost:3000";
+const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
 export const GET: APIRoute = async ({ url }) => {
   const kode = url.searchParams.get("kode")?.trim().toUpperCase();

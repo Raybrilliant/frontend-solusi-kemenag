@@ -2,7 +2,7 @@
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import AdminDetailPermohonan from "../../../components/Svelte/AdminDetailPermohonan.svelte";
 
-const BACKEND_URL = import.meta.env.BACKEND_URL ?? "http://localhost:3000";
+const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 const { id } = Astro.params;
 
 let item: any = null;

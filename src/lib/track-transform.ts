@@ -1,4 +1,4 @@
-const BACKEND_URL = import.meta.env.BACKEND_URL ?? "http://localhost:3000";
+const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
 export function toUploadProxyUrl(url: string | null | undefined): string | null {
   if (!url) return null;

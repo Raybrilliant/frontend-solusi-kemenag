@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 
-const BACKEND_URL = import.meta.env.BACKEND_URL ?? "http://localhost:3000";
+const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
 function getAuthHeaders(cookies: any): Record<string, string> {
   const token = cookies?.get?.("auth_token")?.value ?? "";

@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 
-const BACKEND_URL = import.meta.env.BACKEND_URL ?? "http://localhost:3000";
+const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
 /**
  * POST /api/internal/auth/login

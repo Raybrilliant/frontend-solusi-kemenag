@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 
-const BACKEND_URL = import.meta.env.BACKEND_URL ?? 'http://localhost:3000';
+const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:3000';
 
 // Proxy: GET /api/v1/auth/me
 export const GET: APIRoute = async ({ request }) => {

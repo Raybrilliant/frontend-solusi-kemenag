@@ -5,7 +5,7 @@
  * melalui Astro API routes. Backend URL bisa dikonfigurasi via environment variable.
  */
 
-const BACKEND_URL = import.meta.env.BACKEND_URL ?? 'http://localhost:3000';
+const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:3000';
 
 interface FetchOptions {
   method?: string;

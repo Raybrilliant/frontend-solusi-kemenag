@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { getUserFromToken } from "../../../lib/get-user";
 
-const BACKEND_URL = import.meta.env.BACKEND_URL ?? "http://localhost:3000";
+const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
 // Cache layanan data untuk SLA calculation (slaDuration/slaUnit)
 let _layananCache: any[] | null = null;
