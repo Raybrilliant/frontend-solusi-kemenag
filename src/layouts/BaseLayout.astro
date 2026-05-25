@@ -5,11 +5,13 @@ import FloatingActions from '../components/Svelte/FloatingActions.svelte'
 let { title } = Astro.props
 ---
 
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 	<head>
 		<meta charset="utf-8" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" href="/favicon.ico" />
+		<meta name="description" content="Kantor Kementerian Agama Kota Probolinggo. Melayani masyarakat dengan integritas untuk mewujudkan masyarakat yang taat beragama, rukun, cerdas, dan sejahtera. Portal resmi berita & layanan publik." />
+		<meta name="keywords" content="Kantor Kementerian Agama, Kota Probolinggo, Solusi, Sistem Online Layanan Unggul Terintegrasi" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="generator" content={Astro.generator} />
 		<title>{title ? `${title} - ` : ""} Kantor Kementerian Agama Kota Probolinggo</title>
