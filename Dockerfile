@@ -1,36 +1,43 @@
-# ── Stage 1: Build ────────────────────────────────────────────
-FROM oven/bun:1-alpine AS builder
+# ═══════════════════════════════════════════════════════════
+#  DOCKERFILE — Astro SSR (Standalone) — 3-stage build
+#  Final image ~140 MB (Node 22 Alpine)
+# ═══════════════════════════════════════════════════════════
 
+# ── Stage 1: Install dependencies ────────────────────────
+# Package.json changes → invalidate layer cache only here
+FROM node:22-alpine AS deps
 WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm ci
 
-COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
-
+# ── Stage 2: Build ───────────────────────────────────────
+FROM node:22-alpine AS build
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN bun run build
+RUN npm run build
 
-# ── Stage 2: Production deps only ─────────────────────────────
-FROM oven/bun:1-alpine AS deps
-
+# ── Stage 3: Production ──────────────────────────────────
+FROM node:22-alpine
 WORKDIR /app
 
-COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile --production
+# Security: non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-# ── Stage 3: Runtime ──────────────────────────────────────────
-FROM node:22-alpine AS runner
+# Hanya salin yang diperlukan untuk runtime
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/package.json ./
 
-WORKDIR /app
+# Install production dependencies saja (tanpa devDependencies)
+# node_modules dari stage build TIDAK disalin — kita install ulang
+# agar image tidak membawa devDependencies
+COPY --from=deps /app/node_modules ./node_modules
 
-# Copy built output and production node_modules
-COPY --from=builder /app/dist ./dist
-COPY --from=deps    /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
-
-ENV HOST=0.0.0.0
-ENV PORT=4321
-ENV NODE_ENV=production
+ENV NODE_ENV=production \
+    HOST=0.0.0.0 \
+    PORT=4321
 
 EXPOSE 4321
+USER appuser
 
-CMD ["node", "./dist/server/entry.mjs"]
+CMD ["node", "dist/server/entry.mjs"]

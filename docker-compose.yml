@@ -1,20 +1,13 @@
 services:
-  frontend:
-    image: solusi-kemenag-frontend:latest
+  app:
     build:
       context: .
       dockerfile: Dockerfile
+    image: kemenag-frontend:latest
+    container_name: kemenag-frontend
+    restart: unless-stopped
     ports:
-      - "4321:4321"
+      - "${PORT:-4321}:4321"
     environment:
-      - HOST=0.0.0.0
-      - PORT=4321
       - NODE_ENV=production
       - BACKEND_URL=${BACKEND_URL}
-    restart: unless-stopped
-    networks:
-      - kemenag-net
-
-networks:
-  kemenag-net:
-    driver: bridge
