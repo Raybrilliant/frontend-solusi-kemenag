@@ -1,0 +1,56 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import AdminSurveiManager from "../../../components/Svelte/AdminSurveiManager.svelte";
+---
+
+<style>
+    [data-anim="hero"] {
+        animation: fadeDown 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+    }
+    [data-anim="content"] {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+    }
+
+    @keyframes fadeDown {
+        from {
+            opacity: 0;
+            transform: translateY(-12px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    @keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<AdminLayout title="Manajemen Survei">
+    <div class="min-h-full">
+        <div data-anim="hero" class="px-8 py-6">
+            <h1 class="text-4xl font-bold uppercase tracking-tight text-ink">
+                Manajemen Survei
+            </h1>
+            <p class="text-sm text-ink/50 mt-1">
+                Kelola pertanyaan SKM, SPKP, SPAK dan pantau rekap nilai bulanan.
+            </p>
+        </div>
+
+        <div data-anim="content" class="px-8 py-6">
+            <AdminSurveiManager
+                client:load
+                questionsUrl="/api/admin/survei/questions"
+                responsesUrl="/api/admin/survei/responses"
+                answersUrl="/api/admin/survei/responses/answers"
+            />
+        </div>
+    </div>
+</AdminLayout>

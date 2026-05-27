@@ -9,7 +9,7 @@
   let result = $state(/** @type {null|{id:string,tipe:string,status:string}} */ (null));
   let copied = $state(false);
 
-  const tipeOptions = ['Layanan', 'Korupsi', 'Isi Manual'];
+  const tipeOptions = ['Layanan', 'Korupsi', 'Lainnya'];
 
   function addFiles(newFiles) {
     const valid = Array.from(newFiles).filter(

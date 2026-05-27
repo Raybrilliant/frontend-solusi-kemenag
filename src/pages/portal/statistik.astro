@@ -1,0 +1,56 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import StatistikPortal from "../../components/Svelte/StatistikPortal.svelte";
+---
+
+<style>
+    [data-anim="down"] { animation: fadeDown 0.5s cubic-bezier(0.16,1,0.3,1) 0.05s both; }
+    [data-anim="up"]   { animation: fadeUp  0.6s cubic-bezier(0.16,1,0.3,1) 0.15s both; }
+
+    @keyframes fadeDown {
+        from { opacity: 0; transform: translateY(-12px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<BaseLayout title="Statistik — Kemenag Kota Probolinggo">
+
+    <!-- ── Page header ────────────────────────────────── -->
+    <div data-anim="down" class="pt-8 pb-6">
+        <a href="/portal"
+           class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink/35 hover:text-green transition-colors mb-4">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+            </svg>
+            Portal
+        </a>
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-1 h-7 bg-green shrink-0"></div>
+            <h1 class="text-4xl font-extrabold uppercase tracking-tight text-ink">Statistik</h1>
+        </div>
+        <p class="text-sm text-ink/45 mt-1 ml-4">
+            Data statistik keagamaan Kantor Kementerian Agama Kota Probolinggo.
+        </p>
+    </div>
+
+    <!-- ── Note ───────────────────────────────────────── -->
+    <div data-anim="up"
+         class="flex items-start gap-3 border border-ink/8 bg-ink/[0.02] px-4 py-3 mb-8 text-xs text-ink/50 leading-relaxed">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"
+             class="shrink-0 text-ink/30 mt-0.5">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+        </svg>
+        Data diambil secara langsung dari Google Sheets Kemenag Kota Probolinggo dan
+        diperbarui otomatis setiap kali halaman dimuat.
+    </div>
+
+    <!-- ── Svelte viewer ──────────────────────────────── -->
+    <div data-anim="up">
+        <StatistikPortal client:load />
+    </div>
+
+</BaseLayout>

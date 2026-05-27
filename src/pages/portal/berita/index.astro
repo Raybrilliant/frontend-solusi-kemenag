@@ -1,0 +1,279 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { toUploadProxyUrl } from "../../../lib/upload-url";
+
+const BACKEND_URL = import.meta.env.BACKEND_URL ?? "http://localhost:3000";
+
+const url = new URL(Astro.request.url);
+const kategori = url.searchParams.get("kategori") ?? "";
+const q = url.searchParams.get("q") ?? "";
+const page = Math.max(1, parseInt(url.searchParams.get("page") ?? "1"));
+const limit = 9;
+
+const qs = new URLSearchParams({ page: String(page), limit: String(limit) });
+if (kategori) qs.set("kategori", kategori);
+if (q) qs.set("q", q);
+
+let berita: any[] = [];
+let totalPages = 1;
+let total = 0;
+
+try {
+    const res = await fetch(`${BACKEND_URL}/api/v1/berita/?${qs}`);
+    if (res.ok) {
+        const data = await res.json();
+        berita = (data?.data ?? []).map((b: any) => ({
+            ...b,
+            thumbnail: toUploadProxyUrl(b.thumbnail) || b.thumbnail,
+        }));
+        const pagination = data?.pagination ?? {};
+        totalPages = pagination.totalPages ?? 1;
+        total = pagination.total ?? berita.length;
+    }
+} catch {}
+
+const categories = [
+    { value: "", label: "Semua" },
+    { value: "umum", label: "Umum" },
+    { value: "pendidikan", label: "Pendidikan" },
+    { value: "bimas", label: "Bimbingan Masyarakat" },
+    { value: "kua", label: "KUA" },
+    { value: "pengumuman", label: "Pengumuman" },
+];
+
+function formatDate(dateStr: string | null) {
+    if (!dateStr) return "";
+    return new Date(dateStr).toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+    });
+}
+
+function categoryColor(cat: string) {
+    switch (cat) {
+        case "pengumuman": return "bg-yellow text-ink";
+        case "kua":        return "bg-green text-white";
+        case "pendidikan": return "bg-green/80 text-white";
+        case "bimas":      return "bg-ink text-cream";
+        default:           return "bg-ink/15 text-ink";
+    }
+}
+
+function categoryAccent(cat: string) {
+    switch (cat) {
+        case "pengumuman": return "bg-yellow";
+        case "kua":
+        case "pendidikan": return "bg-green";
+        case "bimas":      return "bg-ink/40";
+        default:           return "bg-ink/15";
+    }
+}
+
+function buildUrl(params: Record<string, string>) {
+    const p = new URLSearchParams();
+    if (params.kategori) p.set("kategori", params.kategori);
+    if (params.q) p.set("q", params.q);
+    if (params.page && params.page !== "1") p.set("page", params.page);
+    const qs = p.toString();
+    return `/portal/berita${qs ? `?${qs}` : ""}`;
+}
+---
+
+<style>
+    [data-anim="down"] { animation: fadeDown 0.5s cubic-bezier(0.16,1,0.3,1) 0.05s both; }
+    [data-anim="up"]   { animation: fadeUp  0.6s cubic-bezier(0.16,1,0.3,1) 0.15s both; }
+
+    @keyframes fadeDown {
+        from { opacity: 0; transform: translateY(-12px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .news-card {
+        transition: transform 0.22s ease, box-shadow 0.22s ease;
+    }
+    .news-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 28px rgba(0,0,0,0.09);
+    }
+</style>
+
+<BaseLayout title="Berita & Informasi">
+
+    <!-- ── Page header ────────────────────────────────── -->
+    <div data-anim="down" class="pt-8 pb-6">
+        <a href="/portal"
+           class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink/35 hover:text-green transition-colors mb-4">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+            </svg>
+            Beranda
+        </a>
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-1 h-7 bg-green shrink-0"></div>
+            <h1 class="text-4xl font-extrabold uppercase tracking-tight text-ink">
+                Berita & Informasi
+            </h1>
+        </div>
+        <p class="text-sm text-ink/45 mt-1 ml-4">
+            Informasi dan pengumuman resmi terkini dari Kantor Kementerian Agama Kota Probolinggo.
+        </p>
+    </div>
+
+    <!-- ── Filter + Search ───────────────────────────── -->
+    <div data-anim="up" class="flex flex-col sm:flex-row gap-3 mb-8 items-start sm:items-center">
+
+        <!-- Category tabs -->
+        <div class="flex items-center gap-1 flex-wrap">
+            {categories.map((cat) => (
+                <a href={buildUrl({ kategori: cat.value, q })}
+                   class={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider border transition-colors
+                       ${kategori === cat.value
+                           ? "bg-ink text-cream border-ink"
+                           : "bg-transparent text-ink/50 border-ink/15 hover:border-ink/40 hover:text-ink"
+                       }`}>
+                    {cat.label}
+                </a>
+            ))}
+        </div>
+
+        <!-- Search -->
+        <form method="get" action="/portal/berita" class="ml-auto">
+            {kategori && <input type="hidden" name="kategori" value={kategori} />}
+            <div class="flex items-center gap-2 border border-ink/15 bg-cream px-3 py-1.5 focus-within:border-green transition-colors">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                     stroke-width="2" class="text-ink/30 shrink-0">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input
+                    type="text"
+                    name="q"
+                    value={q}
+                    placeholder="Cari berita…"
+                    class="bg-transparent text-[12px] text-ink outline-none placeholder:text-ink/30 w-40"
+                />
+            </div>
+        </form>
+    </div>
+
+    <!-- ── Grid ──────────────────────────────────────── -->
+    {berita.length === 0 ? (
+        <div class="flex flex-col items-center justify-center py-24 text-center">
+            <svg viewBox="0 0 24 24" width="40" height="40" fill="currentColor" class="text-ink/15 mb-4">
+                <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12zM6 10h12v2H6zm0 4h8v2H6z"/>
+            </svg>
+            <p class="text-sm font-semibold text-ink/30 uppercase tracking-wider">Belum ada berita</p>
+            {q && (
+                <a href={buildUrl({ kategori })} class="mt-4 text-xs text-green hover:underline">
+                    Hapus pencarian
+                </a>
+            )}
+        </div>
+    ) : (
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
+            {berita.map((b: any) => (
+                <a href={`/portal/berita/${b.slug}`}
+                   class="news-card bg-cream border border-ink/10 flex flex-col cursor-pointer group overflow-hidden">
+
+                    <!-- Thumbnail -->
+                    <div class="relative overflow-hidden h-44 shrink-0 bg-ink/5">
+                        {b.thumbnail ? (
+                            <img
+                                src={b.thumbnail}
+                                alt={b.judul}
+                                class="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-500 ease-out"
+                                loading="lazy"
+                            />
+                        ) : (
+                            <div class="w-full h-full flex items-center justify-center bg-ink/5">
+                                <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor" class="text-ink/15">
+                                    <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/>
+                                </svg>
+                            </div>
+                        )}
+                        <span class={`absolute top-3 left-3 text-[10px] font-black uppercase tracking-wider px-2 py-1 ${categoryColor(b.kategori)}`}>
+                            {b.kategori}
+                        </span>
+                    </div>
+
+                    <!-- Accent bar -->
+                    <div class={`h-0.5 w-full shrink-0 ${categoryAccent(b.kategori)}`} />
+
+                    <div class="p-5 flex flex-col flex-1">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="text-[11px] text-ink/35 font-medium">
+                                {formatDate(b.publishedAt ?? b.createdAt)}
+                            </span>
+                            {b.views > 0 && (
+                                <span class="flex items-center gap-1 text-[11px] text-ink/30 font-medium ml-auto">
+                                    <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                                        <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                                    </svg>
+                                    {b.views >= 1000 ? `${(b.views / 1000).toFixed(1)}K` : b.views}
+                                </span>
+                            )}
+                        </div>
+
+                        <h3 class="text-sm sm:text-base font-bold text-ink leading-snug mb-2 group-hover:text-green transition-colors flex-1 line-clamp-2">
+                            {b.judul}
+                        </h3>
+
+                        <p class="text-xs sm:text-[13px] text-ink/50 leading-relaxed line-clamp-3">
+                            {b.ringkasan}
+                        </p>
+
+                        <div class="flex items-center gap-1.5 mt-4 text-[11px] font-bold uppercase tracking-wider text-green/60 group-hover:text-green transition-colors">
+                            Baca Selengkapnya
+                            <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"
+                                 class="group-hover:translate-x-1 transition-transform">
+                                <path d="M6.4 18L5 16.6 14.6 7H6V5h12v12h-2V8.4z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </a>
+            ))}
+        </div>
+    )}
+
+    <!-- ── Pagination ─────────────────────────────────── -->
+    {totalPages > 1 && (
+        <div class="flex items-center justify-center gap-2 pb-10">
+            {page > 1 && (
+                <a href={buildUrl({ kategori, q, page: String(page - 1) })}
+                   class="flex items-center gap-1 px-4 py-2 text-[12px] font-bold border border-ink/15 text-ink/50 hover:border-green hover:text-green transition-colors">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                    Sebelumnya
+                </a>
+            )}
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(p => Math.abs(p - page) <= 2)
+                .map(p => (
+                    <a href={buildUrl({ kategori, q, page: String(p) })}
+                       class={`w-9 h-9 flex items-center justify-center text-[12px] font-bold border transition-colors
+                           ${p === page
+                               ? "bg-green text-white border-green"
+                               : "border-ink/15 text-ink/50 hover:border-green hover:text-green"
+                           }`}>
+                        {p}
+                    </a>
+                ))
+            }
+            {page < totalPages && (
+                <a href={buildUrl({ kategori, q, page: String(page + 1) })}
+                   class="flex items-center gap-1 px-4 py-2 text-[12px] font-bold border border-ink/15 text-ink/50 hover:border-green hover:text-green transition-colors">
+                    Selanjutnya
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                        <path d="M6.4 18L5 16.6 14.6 7H6V5h12v12h-2V8.4z"/>
+                    </svg>
+                </a>
+            )}
+        </div>
+    )}
+
+</BaseLayout>

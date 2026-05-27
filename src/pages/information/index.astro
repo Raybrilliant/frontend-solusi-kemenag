@@ -8,16 +8,39 @@ import KategoriPopuler from "../../components/Svelte/KategoriPopuler.svelte";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
-const [statsRes, trendRes] = await Promise.allSettled([
+const [statsRes, trendRes, categoryStatsRes] = await Promise.allSettled([
     fetch(`${BACKEND_URL}/api/v1/dashboard/stats`),
     fetch(`${BACKEND_URL}/api/v1/dashboard/trend?period=3`),
+    fetch(`${BACKEND_URL}/api/v1/dashboard/stats/per-kategori`),
 ]);
 
-const stats = { total: 0, diterima: 0, diproses: 0, selesai: 0, ditolak: 0 };
+const stats = {
+    total: 0,
+    selesai: 0,
+    ditolak: 0,
+    tingkatPenyelesaian: 0,
+};
 if (statsRes.status === "fulfilled" && statsRes.value.ok) {
     try {
         const json = await statsRes.value.json();
         if (json.success && json.data) Object.assign(stats, json.data);
+    } catch {}
+}
+
+const categoryStats: {
+    categoryId: number;
+    categoryTitle: string;
+    total: number;
+    selesai: number;
+    ditolak: number;
+    tingkatPenyelesaian: number;
+}[] = [];
+if (categoryStatsRes.status === "fulfilled" && categoryStatsRes.value.ok) {
+    try {
+        const json = await categoryStatsRes.value.json();
+        if (json.success && Array.isArray(json.data)) {
+            categoryStats.push(...json.data);
+        }
     } catch {}
 }
 
@@ -27,26 +50,38 @@ function calcPct(curr: number, prev: number): number {
 }
 
 let percentTotal = 0,
-    percentDiproses = 0,
-    percentSelesai = 0;
+    percentSelesai = 0,
+    percentDitolak = 0;
 
 if (trendRes.status === "fulfilled" && trendRes.value.ok) {
     try {
         const json = await trendRes.value.json();
         if (json.success && json.data) {
-            const { total, selesai, proses } = json.data as {
-                total: number[];
+            const { masuk, selesai, ditolak } = json.data as {
+                masuk: number[];
                 selesai: number[];
-                proses: number[];
+                ditolak: number[];
             };
-            const n = total?.length ?? 0;
+            const n = masuk?.length ?? 0;
             if (n >= 2) {
-                percentTotal = calcPct(total[n - 1], total[n - 2]);
+                percentTotal = calcPct(masuk[n - 1], masuk[n - 2]);
                 percentSelesai = calcPct(selesai[n - 1], selesai[n - 2]);
-                percentDiproses = calcPct(proses[n - 1], proses[n - 2]);
+                percentDitolak = calcPct(ditolak[n - 1], ditolak[n - 2]);
             }
         }
     } catch {}
+}
+
+function trendTone(percentage: number, positiveIsGood = true): string {
+    const improves = percentage >= 0;
+    if (percentage === 0) return "bg-black/6 text-gray-600";
+    return improves === positiveIsGood
+        ? "bg-green/10 text-green"
+        : "bg-red-100 text-red-600";
+}
+
+function trendIcon(percentage: number): string {
+    return percentage >= 0 ? "mdi:arrow-top-right" : "mdi:arrow-bottom-right";
 }
 
 const cardData = [
@@ -54,19 +89,33 @@ const cardData = [
         title: "Total Layanan Masuk",
         value: stats.total.toLocaleString("id-ID"),
         percentage: percentTotal,
+        positiveIsGood: true,
         icon: "mdi:file-document-multiple-outline",
+        note: "Dari bulan lalu",
     },
     {
-        title: "Sedang Diproses",
-        value: stats.diproses.toLocaleString("id-ID"),
-        percentage: percentDiproses,
-        icon: "mdi:progress-clock",
-    },
-    {
-        title: "Layanan Selesai",
+        title: "Permohonan Selesai",
         value: stats.selesai.toLocaleString("id-ID"),
         percentage: percentSelesai,
+        positiveIsGood: true,
         icon: "mdi:check-all",
+        note: "Dari bulan lalu",
+    },
+    {
+        title: "Permohonan Ditolak",
+        value: stats.ditolak.toLocaleString("id-ID"),
+        percentage: percentDitolak,
+        positiveIsGood: false,
+        icon: "mdi:file-document-remove-outline",
+        note: "Dari bulan lalu",
+    },
+    {
+        title: "Tingkat Penyelesaian",
+        value: `${stats.tingkatPenyelesaian.toLocaleString("id-ID")}%`,
+        badgeLabel: "Selesai",
+        badgeClass: "bg-green/10 text-green",
+        icon: "mdi:chart-donut",
+        note: "Rasio layanan selesai",
     },
 ];
 ---
@@ -100,7 +149,7 @@ const cardData = [
 
     <!-- Card Informasi -->
     <section
-        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5"
+        class="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-4 gap-3 md:gap-5"
     >
         {
             cardData.map((card, index) => (
@@ -109,16 +158,16 @@ const cardData = [
                     style={`animation-delay:${index * 0.12}s`}
                 >
                     <div
-                        class={`w-14 h-14 md:w-20 md:h-20 shrink-0 rounded-lg ${index === 1 ? "bg-yellow" : "bg-green"} flex items-center justify-center transition-transform duration-300 group-hover:scale-110`}
+                        class={`w-14 h-14 md:w-20 md:h-20 shrink-0 rounded-lg ${index === 2 ? "bg-red-400" : index === 3 ? "bg-yellow" : "bg-green"} flex items-center justify-center transition-transform duration-300 group-hover:scale-110`}
                     >
                         <Icon
                             name={card.icon}
-                            class={`${index === 1 ? "text-black" : "text-white"}`}
+                            class={`${index === 3 ? "text-black" : "text-white"}`}
                             width="26"
                             height="26"
                         />
                     </div>
-                    <div>
+                    <div class="min-w-0">
                         <h3 class="text-sm md:text-xl font-bold uppercase">
                             {card.title}
                         </h3>
@@ -127,32 +176,100 @@ const cardData = [
                                 {card.value}
                             </p>
                             <p
-                                class={`text-xs md:text-sm flex items-center gap-1 ${card.percentage > 0 ? "bg-green/10 text-green" : "bg-red-200 text-red-500"} rounded-full py-1 px-2 md:px-3 font-semibold`}
+                                class={`text-xs md:text-sm flex items-center gap-1 ${card.badgeClass ?? trendTone(card.percentage ?? 0, card.positiveIsGood)} rounded-full py-1 px-2 md:px-3 font-semibold`}
                             >
-                                {card.percentage > 0 ? (
-                                    <Icon
-                                        name="mdi:arrow-top-right"
-                                        width="14"
-                                        height="14"
-                                    />
+                                {card.badgeLabel ? (
+                                    <span>{card.badgeLabel}</span>
                                 ) : (
-                                    <Icon
-                                        name="mdi:arrow-bottom-right"
-                                        width="14"
-                                        height="14"
-                                    />
+                                    <>
+                                        <Icon
+                                            name={trendIcon(card.percentage ?? 0)}
+                                            width="14"
+                                            height="14"
+                                        />
+                                        {Math.abs(card.percentage ?? 0)}%
+                                    </>
                                 )}
-                                {Math.abs(card.percentage)}%
                             </p>
                         </div>
                         <p class="text-xs md:text-sm text-gray-600 mt-0.5">
-                            Dari bulan lalu
+                            {card.note}
                         </p>
                     </div>
                 </div>
             ))
         }
     </section>
+
+    {
+        categoryStats.length > 0 && (
+            <section class="my-3 md:my-5 border rounded-lg p-4 md:p-5">
+                <div class="flex items-center justify-between gap-3 mb-4">
+                    <div>
+                        <h2 class="font-bold uppercase text-sm md:text-xl tracking-tight">
+                            Statistik Per Kategori
+                        </h2>
+                        <p class="text-xs md:text-sm text-gray-500 mt-1">
+                            Ringkasan total, selesai, ditolak, dan rasio penyelesaian
+                            berdasarkan kategori layanan.
+                        </p>
+                    </div>
+                    <Icon
+                        name="mdi:shape-outline"
+                        width="22"
+                        height="22"
+                        class="text-green shrink-0"
+                    />
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                    {categoryStats.map((item) => (
+                        <article class="border border-black/10 rounded-lg p-4 bg-white/40">
+                            <div class="flex items-start justify-between gap-3">
+                                <h3 class="font-bold text-sm md:text-base leading-tight">
+                                    {item.categoryTitle}
+                                </h3>
+                                <span class="text-xs font-bold text-green bg-green/10 rounded-full px-2.5 py-1 shrink-0">
+                                    {item.tingkatPenyelesaian.toLocaleString("id-ID")}%
+                                </span>
+                            </div>
+                            <div class="mt-4 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div
+                                    class="h-full bg-green rounded-full"
+                                    style={`width:${Math.min(100, Math.max(0, item.tingkatPenyelesaian))}%`}
+                                />
+                            </div>
+                            <dl class="grid grid-cols-3 gap-2 mt-4 text-center">
+                                <div>
+                                    <dt class="text-[10px] uppercase font-semibold text-gray-400">
+                                        Total
+                                    </dt>
+                                    <dd class="text-lg font-bold">
+                                        {item.total.toLocaleString("id-ID")}
+                                    </dd>
+                                </div>
+                                <div class="border-l border-gray-100">
+                                    <dt class="text-[10px] uppercase font-semibold text-gray-400">
+                                        Selesai
+                                    </dt>
+                                    <dd class="text-lg font-bold text-green">
+                                        {item.selesai.toLocaleString("id-ID")}
+                                    </dd>
+                                </div>
+                                <div class="border-l border-gray-100">
+                                    <dt class="text-[10px] uppercase font-semibold text-gray-400">
+                                        Ditolak
+                                    </dt>
+                                    <dd class="text-lg font-bold text-red-500">
+                                        {item.ditolak.toLocaleString("id-ID")}
+                                    </dd>
+                                </div>
+                            </dl>
+                        </article>
+                    ))}
+                </div>
+            </section>
+        )
+    }
 
     <!-- Statistik -->
     <section
@@ -169,7 +286,7 @@ const cardData = [
     <section
         class="my-3 md:my-5 grid grid-cols-1 md:grid-cols-5 gap-3 md:gap-5"
     >
-        <div class="md:col-span-2 h-full border rounded-lg p-4 md:p-5">
+        <div class="md:col-span-5 h-full border rounded-lg p-4 md:p-5">
             <div class="flex items-center gap-2 md:gap-3 mb-3">
                 <Icon
                     name="mdi:thumb-up"
@@ -180,12 +297,15 @@ const cardData = [
                 <h2
                     class="font-bold uppercase text-sm md:text-xl tracking-tight"
                 >
-                    Survei Kepuasan Masyarakat
+                    Nilai Survei Layanan Publik
                 </h2>
             </div>
-            <KepuasanMasyarakat apiUrl="/api/kepuasan" client:load />
+            <KepuasanMasyarakat
+                apiUrl="/api/survei/public-averages?period=12"
+                client:load
+            />
         </div>
-        <div class="md:col-span-3 h-full border rounded-lg p-4 md:p-5">
+        <div class="md:col-span-5 h-full border rounded-lg p-4 md:p-5">
             <h2
                 class="font-bold uppercase text-sm md:text-xl tracking-tight mb-3"
             >

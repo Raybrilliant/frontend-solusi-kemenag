@@ -1,169 +1,261 @@
 <script>
-  let { apiUrl } = $props();
+  let { apiUrl = "/api/survei/public-averages?period=12" } = $props();
 
-  let data    = $state(null);
+  const surveyTypes = [
+    { value: "SKM", label: "SKM", title: "Kepuasan Masyarakat" },
+    { value: "SPKP", label: "SPKP", title: "Persepsi Kualitas Pelayanan" },
+    { value: "SPAK", label: "SPAK", title: "Persepsi Anti Korupsi" },
+  ];
+
+  const quarters = [
+    { value: 1, label: "Triwulan I", months: [0, 1, 2] },
+    { value: 2, label: "Triwulan II", months: [3, 4, 5] },
+    { value: 3, label: "Triwulan III", months: [6, 7, 8] },
+    { value: 4, label: "Triwulan IV", months: [9, 10, 11] },
+  ];
+
+  let data = $state([]);
   let loading = $state(true);
+  let error = $state("");
 
-  // ── Donut chart constants ───────────────────────────────
-  const R    = 50;
-  const CX   = 64, CY = 64;
-  const CIRC = 2 * Math.PI * R;
+  const currentYear = new Date().getFullYear();
 
-  // Sangat Baik → Baik → Cukup → Kurang
-  const COLORS = ['#0F6B44', '#52A87C', '#F6C744', '#D1D5DB'];
+  const rowsByType = $derived.by(() => {
+    return surveyTypes.map((type) => ({
+      ...type,
+      quarters: quarters.map((quarter) => {
+        const bucket = {
+          scoreTotal: 0,
+          scoreWeight: 0,
+          questionIds: new Set(),
+          monthlyRespondents: new Map(),
+        };
 
-  const segments = $derived(
-    data
-      ? data.breakdown.map((b, i) => ({
-          ...b,
-          color : COLORS[i],
-          len   : (b.pct / 100) * CIRC,
-          // rotation so each segment starts where the previous ended
-          rot   : data.breakdown.slice(0, i).reduce((s, x) => s + x.pct, 0) * 3.6 - 90,
-        }))
-      : []
+        for (const item of data) {
+          if (item.surveyType !== type.value) continue;
+
+          const monthDate = parseMonth(item.month);
+          if (!monthDate || monthDate.getFullYear() !== currentYear) continue;
+          if (!quarter.months.includes(monthDate.getMonth())) continue;
+
+          const average = Number(item.average);
+          const responseCount = Number(item.responseCount) || 0;
+          if (!Number.isFinite(average)) continue;
+
+          bucket.scoreTotal += average * Math.max(responseCount, 1);
+          bucket.scoreWeight += Math.max(responseCount, 1);
+          if (item.questionId) bucket.questionIds.add(item.questionId);
+
+          const monthKey = `${monthDate.getFullYear()}-${monthDate.getMonth()}`;
+          bucket.monthlyRespondents.set(
+            monthKey,
+            Math.max(bucket.monthlyRespondents.get(monthKey) ?? 0, responseCount),
+          );
+        }
+
+        const average = bucket.scoreWeight
+          ? bucket.scoreTotal / bucket.scoreWeight
+          : 0;
+        const respondents = Array.from(bucket.monthlyRespondents.values()).reduce(
+          (sum, value) => sum + value,
+          0,
+        );
+
+        return {
+          ...quarter,
+          average,
+          respondents,
+          questionCount: bucket.questionIds.size,
+          category: scoreCategory(average),
+        };
+      }),
+    }));
+  });
+
+  const totalRespondents = $derived(
+    quarters.reduce((sum, quarter, index) => {
+      const quarterRespondents = rowsByType.map(
+        (type) => type.quarters[index]?.respondents ?? 0,
+      );
+      return sum + Math.max(...quarterRespondents, 0);
+    }, 0),
   );
 
-  function scoreLabel(s) {
-    if (s >= 3.5) return 'Sangat Baik';
-    if (s >= 2.5) return 'Baik';
-    if (s >= 1.5) return 'Cukup';
-    return 'Kurang';
+  const overallAverage = $derived.by(() => {
+    let scoreTotal = 0;
+    let weight = 0;
+    for (const type of rowsByType) {
+      for (const quarter of type.quarters) {
+        if (!quarter.respondents) continue;
+        scoreTotal += quarter.average * quarter.respondents;
+        weight += quarter.respondents;
+      }
+    }
+    return weight ? scoreTotal / weight : 0;
+  });
+
+  function parseMonth(value) {
+    const raw = String(value ?? "").trim();
+    if (!raw) return null;
+
+    const iso = raw.match(/^(\d{4})-(\d{1,2})/);
+    if (iso) {
+      const date = new Date(Number(iso[1]), Number(iso[2]) - 1, 1);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    const date = new Date(raw);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  function scoreCategory(score) {
+    if (!score) return "-";
+    if (score >= 3.5) return "Sangat Baik";
+    if (score >= 2.5) return "Baik";
+    if (score >= 1.5) return "Cukup";
+    return "Kurang";
+  }
+
+  function categoryClass(category) {
+    if (category === "Sangat Baik") return "bg-green/10 text-green";
+    if (category === "Baik") return "bg-sky-100 text-sky-700";
+    if (category === "Cukup") return "bg-amber-100 text-amber-700";
+    if (category === "Kurang") return "bg-red-100 text-red-600";
+    return "bg-black/6 text-gray-500";
+  }
+
+  function formatScore(score) {
+    if (!score) return "-";
+    return score.toLocaleString("id-ID", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
   }
 
   async function load() {
     loading = true;
+    error = "";
     try {
       const res = await fetch(apiUrl);
-      data      = await res.json();
+      const json = await res.json();
+      if (!res.ok || json.success === false) {
+        throw new Error(json.message ?? "Gagal memuat data survei.");
+      }
+      data = Array.isArray(json.data) ? json.data : [];
+    } catch (e) {
+      error = String(e);
+      data = [];
     } finally {
       loading = false;
     }
   }
 
-  $effect(() => { load(); });
+  $effect(() => {
+    load();
+  });
 </script>
 
-
-  <!-- Loading skeleton -->
-  {#if loading}
-    <div class="flex-1 flex items-center gap-6 animate-pulse">
-      <div class="flex-1 space-y-4">
-        <div class="h-14 bg-gray-200 rounded w-1/2"></div>
-        <div class="flex gap-1">
-          {#each [1,2,3,4] as _}
-            <div class="w-6 h-6 rounded bg-gray-200"></div>
+{#if loading}
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 animate-pulse">
+    {#each [1, 2, 3] as _}
+      <div class="border border-black/10 rounded-lg p-4 space-y-4">
+        <div class="h-5 bg-gray-200 rounded w-2/3"></div>
+        <div class="grid grid-cols-2 gap-2">
+          {#each [1, 2, 3, 4] as _}
+            <div class="h-24 bg-gray-100 rounded"></div>
           {/each}
         </div>
-        <div class="h-5 bg-gray-200 rounded w-1/3"></div>
       </div>
-      <div class="w-36 h-36 rounded-full bg-gray-200 shrink-0"></div>
+    {/each}
+  </div>
+{:else if error}
+  <div class="py-10 text-center text-sm text-red-500">
+    {error}
+  </div>
+{:else}
+  <div class="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+    <div class="border border-black/10 rounded-lg p-4 bg-white/40">
+      <p class="text-[10px] uppercase tracking-widest font-semibold text-gray-400">
+        Tahun Berjalan
+      </p>
+      <p class="text-2xl font-bold mt-1">{currentYear}</p>
     </div>
-    <div class="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-gray-100 animate-pulse">
-      {#each [1,2,3] as _}
-        <div class="space-y-2">
-          <div class="h-3 bg-gray-200 rounded w-3/4"></div>
-          <div class="h-5 bg-gray-100 rounded w-1/2"></div>
-        </div>
-      {/each}
+    <div class="border border-black/10 rounded-lg p-4 bg-white/40">
+      <p class="text-[10px] uppercase tracking-widest font-semibold text-gray-400">
+        Rata-rata Gabungan
+      </p>
+      <p class="text-2xl font-bold mt-1">{formatScore(overallAverage)} / 4</p>
     </div>
-
-  <!-- Error state -->
-  {:else if !data || data.error}
-    <div class="flex-1 flex flex-col items-center justify-center gap-2 text-gray-400">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-      <p class="text-sm">Gagal memuat data. Periksa URL spreadsheet.</p>
+    <div class="border border-black/10 rounded-lg p-4 bg-white/40">
+      <p class="text-[10px] uppercase tracking-widest font-semibold text-gray-400">
+        Total Responden
+      </p>
+      <p class="text-2xl font-bold mt-1">
+        {totalRespondents.toLocaleString("id-ID")}
+      </p>
     </div>
+  </div>
 
-  <!-- Data loaded -->
-  {:else}
-    {#key data}
-      <div class="flex-1 flex items-center gap-4">
-
-        <!-- Score + Stars -->
-        <div class="flex-1">
-          <div class="flex items-end gap-2">
-            <span class="text-6xl font-bold leading-none">{data.score.toFixed(2)}</span>
-            <span class="text-2xl text-gray-400 mb-1 font-medium">/ 4</span>
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-3">
+    {#each rowsByType as type}
+      <article class="border border-black/10 rounded-lg p-4 bg-white/40">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <span class="text-[11px] font-bold text-green bg-green/10 rounded-full px-2.5 py-1">
+              {type.label}
+            </span>
+            <h3 class="font-bold text-sm md:text-base mt-2 leading-tight">
+              {type.title}
+            </h3>
           </div>
+        </div>
 
-          <!-- Fractional stars -->
-          <div class="flex items-center gap-0.5 mt-3">
-            {#each [0,1,2,3] as i}
-              {@const fill = Math.min(1, Math.max(0, data.score - i))}
-              <div class="relative w-6 h-6">
-                <svg class="absolute" width="24" height="24" viewBox="0 0 24 24" fill="#E5E7EB">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                </svg>
-                <div class="absolute overflow-hidden" style="width:{fill*100}%">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="#F6C744">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                  </svg>
-                </div>
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-2">
+          {#each type.quarters as quarter}
+            <div class="border border-black/8 rounded-lg p-3">
+              <div class="flex items-center justify-between gap-2">
+                <p class="text-xs font-bold uppercase text-gray-500">
+                  {quarter.label}
+                </p>
+                <span
+                  class={`rounded-full px-2 py-0.5 text-[10px] font-bold ${categoryClass(quarter.category)}`}
+                >
+                  {quarter.category}
+                </span>
               </div>
-            {/each}
-          </div>
-
-          <p class="text-green font-bold text-lg mt-2 uppercase">{scoreLabel(data.score)}</p>
+              <div class="mt-3 flex items-end justify-between gap-3">
+                <div>
+                  <p class="text-[10px] uppercase tracking-widest text-gray-400">
+                    Nilai
+                  </p>
+                  <p class="text-2xl font-bold leading-none">
+                    {formatScore(quarter.average)}
+                  </p>
+                </div>
+                <p class="text-xs text-gray-400">/ 4</p>
+              </div>
+              <dl class="mt-3 grid grid-cols-2 gap-2 border-t border-gray-100 pt-3">
+                <div>
+                  <dt class="text-[10px] uppercase text-gray-400 font-semibold">
+                    Responden
+                  </dt>
+                  <dd class="text-sm font-bold">
+                    {quarter.respondents.toLocaleString("id-ID")}
+                  </dd>
+                </div>
+                <div class="border-l border-gray-100 pl-3">
+                  <dt class="text-[10px] uppercase text-gray-400 font-semibold">
+                    Indikator
+                  </dt>
+                  <dd class="text-sm font-bold">
+                    {quarter.questionCount.toLocaleString("id-ID")}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          {/each}
         </div>
-
-        <!-- Donut chart -->
-        <div class="shrink-0">
-          <svg viewBox="0 0 128 128" class="w-36 h-36" style="overflow:visible">
-            <!-- Track -->
-            <circle cx={CX} cy={CY} r={R} fill="none" stroke="#F3F4F6" stroke-width="16"/>
-
-            <!-- Colored segments — draw-in via SMIL animate -->
-            {#each segments as seg, i}
-              <circle
-                cx={CX} cy={CY} r={R}
-                fill="none"
-                stroke={seg.color}
-                stroke-width="16"
-                stroke-dasharray="{seg.len} {CIRC}"
-                stroke-linecap="butt"
-                transform="rotate({seg.rot} {CX} {CY})"
-              >
-                <animate
-                  attributeName="stroke-dasharray"
-                  from="0 {CIRC}"
-                  to="{seg.len} {CIRC}"
-                  dur="0.45s"
-                  begin="{(i * 0.1).toFixed(2)}s"
-                  fill="freeze"
-                />
-              </circle>
-            {/each}
-
-            <!-- Center: thumbs up -->
-            <g transform="translate(52,52)">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="#0F6B44">
-                <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/>
-              </svg>
-            </g>
-          </svg>
-        </div>
-      </div>
-
-      <!-- Stats row -->
-      <div class="grid grid-cols-3 mt-5 pt-4 border-t border-gray-100">
-        <div class="flex flex-col gap-0.5">
-          <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Responden</p>
-          <p class="text-2xl font-bold tabular-nums">{data.totalResponden.toLocaleString('id-ID')}</p>
-        </div>
-        <div class="flex flex-col gap-0.5 border-l border-gray-100 pl-4">
-          <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Positif</p>
-          <p class="text-2xl font-bold tabular-nums flex items-center gap-0.5 text-green">
-            {data.positifPct}%
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M7 14l5-5 5 5z"/>
-            </svg>
-          </p>
-        </div>
-        <div class="flex flex-col gap-0.5 border-l border-gray-100 pl-4">
-          <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Periode</p>
-          <p class="text-base font-bold leading-tight">{data.periode}</p>
-        </div>
-      </div>
-    {/key}
-  {/if}
+      </article>
+    {/each}
+  </div>
+{/if}

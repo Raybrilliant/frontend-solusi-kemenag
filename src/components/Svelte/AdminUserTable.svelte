@@ -64,6 +64,8 @@
         switch (role) {
             case "admin":
                 return { cls: "bg-red-50 text-red-700", label: "Admin" };
+            case "humas":
+                return { cls: "bg-green/10 text-green", label: "Humas" };
             case "operator":
                 return { cls: "bg-blue-50 text-blue-700", label: "Operator" };
             case "asn":

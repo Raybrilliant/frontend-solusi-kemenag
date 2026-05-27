@@ -1,0 +1,766 @@
+---
+import { Icon } from "astro-icon/components";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { toUploadProxyUrl } from "../../lib/upload-url";
+
+const BACKEND_URL = import.meta.env.BACKEND_URL ?? "http://localhost:3000";
+
+// Hierarchy order — strongest to weakest
+const TYPE_ORDER = [
+    "UU", "PERPU", "PP", "PERPRES", "INPRES",
+    "PERMEN", "PMA", "KMA", "PERDIRJEN", "SE", "SKB",
+];
+
+// Fetch berita (6 terbaru) dan regulasi secara paralel
+const [beritaRaw, regulasiRaw] = await Promise.allSettled([
+    fetch(`${BACKEND_URL}/api/v1/berita/?limit=6`).then(r => r.ok ? r.json() : { data: [] }),
+    fetch(`${BACKEND_URL}/api/v1/regulasi/?limit=100`).then(r => r.ok ? r.json() : { data: [] }),
+]);
+
+const berita = ((beritaRaw.status === "fulfilled" ? beritaRaw.value?.data : null) ?? [])
+    .map((b: any) => ({
+        ...b,
+        thumbnail: toUploadProxyUrl(b.thumbnail) || b.thumbnail,
+    }));
+
+const regulasiAll = ((regulasiRaw.status === "fulfilled" ? regulasiRaw.value?.data : null) ?? [])
+    .map((r: any) => ({ ...r, fileUrl: toUploadProxyUrl(r.fileUrl) || r.fileUrl }));
+
+// Sort by legal hierarchy then take 6
+const regulasi = [...regulasiAll].sort((a: any, b: any) => {
+    const ai = TYPE_ORDER.indexOf((a.type ?? "").toUpperCase());
+    const bi = TYPE_ORDER.indexOf((b.type ?? "").toUpperCase());
+    if (ai === -1 && bi === -1) return 0;
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+}).slice(0, 6);
+
+function formatDate(dateStr: string | null) {
+    if (!dateStr) return "";
+    return new Date(dateStr).toLocaleDateString("id-ID", {
+        day: "numeric", month: "long", year: "numeric",
+    });
+}
+
+function categoryBadge(cat: string) {
+    switch (cat) {
+        case "pengumuman": return "bg-yellow text-ink";
+        case "kua":        return "bg-green text-white";
+        case "pendidikan": return "bg-green/80 text-white";
+        case "bimas":      return "bg-ink text-cream";
+        default:           return "bg-ink/15 text-ink";
+    }
+}
+
+function categoryAccentBar(cat: string) {
+    switch (cat) {
+        case "pengumuman": return "bg-yellow";
+        case "kua":
+        case "pendidikan": return "bg-green";
+        case "bimas":      return "bg-ink/40";
+        default:           return "bg-ink/15";
+    }
+}
+
+function regulasiBadge(type: string) {
+    const t = type.toUpperCase();
+    switch (t) {
+        case "PMA":
+        case "PERMEN":  return "bg-green/20 text-green";
+        case "KMA":     return "bg-yellow/20 text-yellow";
+        case "PP":
+        case "PERPRES":
+        case "INPRES":  return "bg-white/15 text-white/70";
+        case "UU":
+        case "PERPU":   return "bg-white/20 text-white";
+        default:        return "bg-white/10 text-white/50";
+    }
+}
+---
+
+<style is:global>
+    /*
+     * Extend hero dark background up into the navbar area.
+     * Navbar gets full-bleed (mirrors body padding as negative margin)
+     * so the dark bg covers the full page width — no cream strips on sides.
+     * Only the navbar + hero are dark; everything else stays cream (global CSS).
+     */
+    body:has(#hero-section) #site-header {
+        background-color: #0a1a0c;
+        color: white;
+        /* full-bleed: cancel out body padding (px-4) */
+        margin-left: -1rem;
+        margin-right: -1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    @media (min-width: 640px) {
+        body:has(#hero-section) #site-header {
+            margin-left: -2rem;
+            margin-right: -2rem;
+            padding-left: 2rem;
+            padding-right: 2rem;
+        }
+    }
+    @media (min-width: 768px) {
+        body:has(#hero-section) #site-header {
+            margin-left: -3.5rem;
+            margin-right: -3.5rem;
+            padding-left: 3.5rem;
+            padding-right: 3.5rem;
+        }
+    }
+    @media (min-width: 1024px) {
+        body:has(#hero-section) #site-header {
+            margin-left: -5rem;
+            margin-right: -5rem;
+            padding-left: 5rem;
+            padding-right: 5rem;
+        }
+    }
+    body:has(#hero-section) #site-header .ham-line {
+        background-color: white;
+    }
+    /* Keep ASN button text dark (readable on yellow bg) */
+    body:has(#hero-section) #site-header .btn-asn {
+        color: #111111;
+    }
+    /* Mobile drawer dark bg */
+    body:has(#hero-section) #mobile-menu {
+        background-color: #0b1e0d;
+    }
+    body:has(#hero-section) #mobile-menu .border-t {
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+    body:has(#hero-section) #mobile-menu a:not(.btn-asn) {
+        color: rgba(255, 255, 255, 0.6);
+    }
+    body:has(#hero-section) #mobile-menu a:not(.btn-asn):hover {
+        color: white;
+        background-color: rgba(255, 255, 255, 0.06);
+    }
+    body:has(#hero-section) #mobile-menu a.text-green {
+        color: #0f6b44;
+    }
+</style>
+
+<style>
+    /* ── Dot grid hero ───────────────────────────────────── */
+    .hero-dots {
+        background-image: radial-gradient(
+            circle,
+            rgba(255, 255, 255, 0.16) 1px,
+            transparent 1px
+        );
+        background-size: 28px 28px;
+    }
+
+    /* ── Scroll hint bounce ──────────────────────────────── */
+    @keyframes bounce-y {
+        0%,
+        100% { transform: translateY(0); }
+        50%   { transform: translateY(6px); }
+    }
+    .bounce-arrow { animation: bounce-y 1.6s ease-in-out infinite; }
+
+    /* ── Hero entrance animations ────────────────────────── */
+    [data-hero="badge"]   { animation: fadeDown 0.6s cubic-bezier(0.16,1,0.3,1) 0.1s  both; }
+    [data-hero="h1"]      { animation: fadeUp   0.8s cubic-bezier(0.16,1,0.3,1) 0.2s  both; }
+    [data-hero="sub"]     { animation: fadeUp   0.7s cubic-bezier(0.16,1,0.3,1) 0.35s both; }
+    [data-hero="hint"]    { animation: fadeUp   0.6s cubic-bezier(0.16,1,0.3,1) 0.5s  both; }
+
+    /* ── Scroll reveal ───────────────────────────────────── */
+    [data-reveal] {
+        opacity: 0;
+        transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1),
+                    transform 0.7s cubic-bezier(0.16,1,0.3,1);
+        will-change: transform, opacity;
+    }
+    [data-reveal="up"]   { transform: translateY(32px); }
+    [data-reveal="left"] { transform: translateX(-32px); }
+    [data-reveal].revealed { opacity: 1; transform: none; }
+    [data-delay="1"] { transition-delay: 0.08s; }
+    [data-delay="2"] { transition-delay: 0.16s; }
+    [data-delay="3"] { transition-delay: 0.24s; }
+    [data-delay="4"] { transition-delay: 0.32s; }
+    [data-delay="5"] { transition-delay: 0.40s; }
+    [data-delay="6"] { transition-delay: 0.48s; }
+
+    @keyframes fadeDown {
+        from { opacity: 0; transform: translateY(-14px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(24px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── News card hover ─────────────────────────────────── */
+    .news-card {
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .news-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 32px rgba(0,0,0,0.1);
+    }
+</style>
+
+<BaseLayout title="Portal">
+
+    <!-- ══ HERO ════════════════════════════════════════════ -->
+    <section
+        id="hero-section"
+        class="-mx-4 sm:-mx-8 md:-mx-14 lg:-mx-20"
+        style="height: 190vh;"
+    >
+        <div
+            class="sticky top-0 h-screen overflow-hidden flex flex-col"
+            style="background:#0a1a0c;"
+        >
+            <!-- Background patterns -->
+            <div class="absolute inset-0 hero-dots pointer-events-none"></div>
+            <div class="absolute -bottom-32 -left-32 w-[500px] h-[500px] bg-green/15 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute top-1/4 right-0 w-80 h-80 bg-green/8 rounded-full blur-3xl pointer-events-none"></div>
+
+            <!-- ── Welcome text ───────────────────────── -->
+            <div class="relative z-10 flex flex-col items-center text-center pt-16 sm:pt-20 md:pt-24 px-4 sm:px-8 md:px-16 lg:px-24">
+
+                <!-- <div data-hero="badge"
+                     class="inline-flex items-center gap-2 bg-green/20 border border-green/30 rounded-full px-4 py-1.5 mb-5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green animate-pulse shrink-0"></span>
+                    <span class="text-[11px] font-bold text-green/80 uppercase tracking-[0.16em]">
+                        Portal Resmi — Kemenag Kota Probolinggo
+                    </span>
+                </div> -->
+
+                <h1 data-hero="h1"
+                    class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white uppercase leading-tight tracking-tight max-w-5xl">
+                    Selamat Datang di<br/>
+                    <span class="text-green">Portal Resmi</span><br/>
+                    Kementerian Agama <br> Kota Probolinggo
+                </h1>
+
+                <p data-hero="sub"
+                   class="mt-4 text-sm sm:text-base text-white/45 max-w-xl leading-relaxed">
+                    Informasi resmi, berita terkini, regulasi, dan layanan publik
+                    Kantor Kementerian Agama Kota Probolinggo dalam satu portal.
+                </p>
+
+                <div data-hero="hint" id="scroll-hint"
+                     class="mt-8 flex flex-col items-center gap-2 transition-opacity duration-300">
+                    <span class="text-[11px] font-semibold text-white/25 uppercase tracking-widest">
+                        Scroll untuk menjelajahi
+                    </span>
+                    <div class="bounce-arrow">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
+                             stroke="currentColor" stroke-width="2" class="text-white/25">
+                            <path d="m6 9 6 6 6-6"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Parallax image ─────────────────────── -->
+            <img
+                id="parallax-img"
+                src="/kemenag.png"
+                alt="Kantor Kementerian Agama Kota Probolinggo"
+                class="absolute left-0 right-0 bottom-0 w-full object-cover object-bottom pointer-events-none select-none"
+                style="filter: grayscale(100%) brightness(0.5); will-change: transform;"
+            />
+
+            <!-- Fade to dark at bottom -->
+            <div class="absolute bottom-0 left-0 right-0 h-36 pointer-events-none"
+                 style="background: linear-gradient(to bottom, transparent, #0a1a0c);">
+            </div>
+        </div>
+    </section>
+
+    <!-- ══ INFORMASI KELEMBAGAAN ════════════════════════════ -->
+    <section class="py-14 md:py-20">
+
+        <div class="mb-10 md:mb-12">
+            <div data-reveal="up" class="flex items-center gap-3 mb-3">
+                <div class="w-1 h-6 bg-green"></div>
+                <span class="text-[11px] font-black uppercase tracking-[0.18em] text-green">
+                    Informasi Kelembagaan
+                </span>
+            </div>
+            <h2 data-reveal="up" data-delay="1"
+                class="text-3xl sm:text-4xl md:text-5xl font-extrabold uppercase tracking-tight text-ink">
+                Informasi Tersedia
+            </h2>
+            <p data-reveal="up" data-delay="2"
+               class="text-sm text-ink/50 mt-2 max-w-lg">
+                Akses berbagai informasi resmi seputar kelembagaan, layanan, dan program
+                Kantor Kementerian Agama Kota Probolinggo.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+            <!-- Sejarah -->
+            <a href="/portal/profil#sejarah"
+               data-reveal="up" data-delay="1"
+               class="group flex items-start gap-4 border border-ink/10 bg-cream p-5 hover:border-green transition-colors">
+                <div class="w-12 h-12 shrink-0 bg-ink/5 border border-ink/10 flex items-center justify-center group-hover:bg-green group-hover:border-green transition-colors">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"
+                         class="text-ink/40 group-hover:text-white transition-colors">
+                        <path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+                    </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-ink uppercase tracking-wide mb-1 group-hover:text-green transition-colors">
+                        Sejarah
+                    </h3>
+                    <p class="text-xs text-ink/50 leading-relaxed line-clamp-2">
+                        Sejarah dan latar belakang berdirinya Kantor Kementerian Agama Kota Probolinggo.
+                    </p>
+                </div>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"
+                     class="shrink-0 text-ink/20 group-hover:text-green transition-colors mt-1 group-hover:translate-x-0.5 transition-transform">
+                    <path d="M6.4 18L5 16.6 14.6 7H6V5h12v12h-2V8.4z"/>
+                </svg>
+            </a>
+
+            <!-- Visi & Misi -->
+            <a href="/portal/profil#visi-misi"
+               data-reveal="up" data-delay="2"
+               class="group flex items-start gap-4 border border-ink/10 bg-cream p-5 hover:border-green transition-colors">
+                <div class="w-12 h-12 shrink-0 bg-ink/5 border border-ink/10 flex items-center justify-center group-hover:bg-green group-hover:border-green transition-colors">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"
+                         class="text-ink/40 group-hover:text-white transition-colors">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm0-12.5c-2.49 0-4.5 2.01-4.5 4.5s2.01 4.5 4.5 4.5 4.5-2.01 4.5-4.5-2.01-4.5-4.5-4.5zm0 5.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/>
+                    </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-ink uppercase tracking-wide mb-1 group-hover:text-green transition-colors">
+                        Visi &amp; Misi
+                    </h3>
+                    <p class="text-xs text-ink/50 leading-relaxed line-clamp-2">
+                        Arah, tujuan, dan komitmen pelayanan keagamaan Kemenag Kota Probolinggo.
+                    </p>
+                </div>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"
+                     class="shrink-0 text-ink/20 group-hover:text-green transition-colors mt-1 group-hover:translate-x-0.5 transition-transform">
+                    <path d="M6.4 18L5 16.6 14.6 7H6V5h12v12h-2V8.4z"/>
+                </svg>
+            </a>
+
+            <!-- Struktur Organisasi -->
+            <a href="/portal/profil#struktur-organisasi"
+               data-reveal="up" data-delay="3"
+               class="group flex items-start gap-4 border border-ink/10 bg-cream p-5 hover:border-green transition-colors">
+                <div class="w-12 h-12 shrink-0 bg-ink/5 border border-ink/10 flex items-center justify-center group-hover:bg-green group-hover:border-green transition-colors">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"
+                         class="text-ink/40 group-hover:text-white transition-colors">
+                        <path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/>
+                        <path d="M10 7H7v3h3V7zm7 0h-3v3h3V7zm-7 5H7v3h3v-3z"/>
+                    </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-ink uppercase tracking-wide mb-1 group-hover:text-green transition-colors">
+                        Struktur Organisasi
+                    </h3>
+                    <p class="text-xs text-ink/50 leading-relaxed line-clamp-2">
+                        Susunan pejabat dan unit kerja di lingkungan Kemenag Kota Probolinggo.
+                    </p>
+                </div>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"
+                     class="shrink-0 text-ink/20 group-hover:text-green transition-colors mt-1 group-hover:translate-x-0.5 transition-transform">
+                    <path d="M6.4 18L5 16.6 14.6 7H6V5h12v12h-2V8.4z"/>
+                </svg>
+            </a>
+
+            <!-- PPID -->
+            <a href="/portal/ppid"
+               data-reveal="up" data-delay="4"
+               class="group flex items-start gap-4 border border-ink/10 bg-cream p-5 hover:border-green transition-colors">
+                <div class="w-12 h-12 shrink-0 bg-ink/5 border border-ink/10 flex items-center justify-center group-hover:bg-green group-hover:border-green transition-colors">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"
+                         class="text-ink/40 group-hover:text-white transition-colors">
+                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4a3 3 0 0 1 3 3 3 3 0 0 1-3 3 3 3 0 0 1-3-3 3 3 0 0 1 3-3zm0 14c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08C16.71 17.72 14.5 19 12 19z"/>
+                    </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-ink uppercase tracking-wide mb-1 group-hover:text-green transition-colors">
+                        PPID
+                    </h3>
+                    <p class="text-xs text-ink/50 leading-relaxed line-clamp-2">
+                        Pejabat Pengelola Informasi dan Dokumentasi — akses informasi publik resmi.
+                    </p>
+                </div>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"
+                     class="shrink-0 text-ink/20 group-hover:text-green transition-colors mt-1 group-hover:translate-x-0.5 transition-transform">
+                    <path d="M6.4 18L5 16.6 14.6 7H6V5h12v12h-2V8.4z"/>
+                </svg>
+            </a>
+            
+            <!-- Statistik -->
+            <a href="/portal/statistik"
+               data-reveal="up" data-delay="4"
+               class="group flex items-start gap-4 border border-ink/10 bg-cream p-5 hover:border-green transition-colors">
+                <div class="w-12 h-12 shrink-0 bg-ink/5 border border-ink/10 flex items-center justify-center group-hover:bg-green group-hover:border-green transition-colors">
+                    <Icon name="mdi:bar-chart" class="text-ink/40 group-hover:text-white transition-colors" />
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-ink uppercase tracking-wide mb-1 group-hover:text-green transition-colors">
+                        Statistik
+                    </h3>
+                    <p class="text-xs text-ink/50 leading-relaxed line-clamp-2">
+                        Berbagai jenis data statistik yang tersedia untuk umum.
+                    </p>
+                </div>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"
+                     class="shrink-0 text-ink/20 group-hover:text-green transition-colors mt-1 group-hover:translate-x-0.5 transition-transform">
+                    <path d="M6.4 18L5 16.6 14.6 7H6V5h12v12h-2V8.4z"/>
+                </svg>
+            </a>
+
+            <!-- Informasi Madrasah -->
+            <a href="/portal/madrasah"
+               data-reveal="up" data-delay="5"
+               class="group flex items-start gap-4 border border-ink/10 bg-cream p-5 hover:border-green transition-colors">
+                <div class="w-12 h-12 shrink-0 bg-ink/5 border border-ink/10 flex items-center justify-center group-hover:bg-green group-hover:border-green transition-colors">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"
+                         class="text-ink/40 group-hover:text-white transition-colors">
+                        <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3 1 9l11 6 9-4.91V17h2V9L12 3z"/>
+                    </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-ink uppercase tracking-wide mb-1 group-hover:text-green transition-colors">
+                        Informasi Madrasah
+                    </h3>
+                    <p class="text-xs text-ink/50 leading-relaxed line-clamp-2">
+                        Data dan informasi seputar madrasah di wilayah Kota Probolinggo.
+                    </p>
+                </div>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"
+                     class="shrink-0 text-ink/20 group-hover:text-green transition-colors mt-1 group-hover:translate-x-0.5 transition-transform">
+                    <path d="M6.4 18L5 16.6 14.6 7H6V5h12v12h-2V8.4z"/>
+                </svg>
+            </a>
+
+            <!-- Informasi KUA -->
+            <a href="/portal/kua"
+               data-reveal="up" data-delay="6"
+               class="group flex items-start gap-4 border border-ink/10 bg-cream p-5 hover:border-green transition-colors">
+                <div class="w-12 h-12 shrink-0 bg-ink/5 border border-ink/10 flex items-center justify-center group-hover:bg-green group-hover:border-green transition-colors">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"
+                         class="text-ink/40 group-hover:text-white transition-colors">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        <path d="M12 1v3M12 20v3M1 12h3M20 12h3" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                    </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-ink uppercase tracking-wide mb-1 group-hover:text-green transition-colors">
+                        Informasi KUA
+                    </h3>
+                    <p class="text-xs text-ink/50 leading-relaxed line-clamp-2">
+                        Layanan dan informasi Kantor Urusan Agama di Kota Probolinggo.
+                    </p>
+                </div>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"
+                     class="shrink-0 text-ink/20 group-hover:text-green transition-colors mt-1 group-hover:translate-x-0.5 transition-transform">
+                    <path d="M6.4 18L5 16.6 14.6 7H6V5h12v12h-2V8.4z"/>
+                </svg>
+            </a>
+
+        </div>
+    </section>
+
+    <!-- ══ BERITA TERBARU ══════════════════════════════════ -->
+    <section class="py-14 md:py-20">
+
+        <div class="mb-10 md:mb-12">
+            <div data-reveal="up" class="flex items-center gap-3 mb-3">
+                <div class="w-1 h-6 bg-green"></div>
+                <span class="text-[11px] font-black uppercase tracking-[0.18em] text-green">
+                    Berita & Informasi
+                </span>
+            </div>
+            <h2 data-reveal="up" data-delay="1"
+                class="text-3xl sm:text-4xl md:text-5xl font-extrabold uppercase tracking-tight text-ink">
+                Berita Terbaru
+            </h2>
+            <p data-reveal="up" data-delay="2"
+               class="text-sm text-ink/50 mt-2 max-w-lg">
+                Informasi dan pengumuman resmi terkini dari Kantor Kementerian Agama Kota Probolinggo.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {berita.length === 0 ? (
+                <p class="col-span-3 text-center py-16 text-sm text-ink/30 font-medium uppercase tracking-wider">
+                    Belum ada berita
+                </p>
+            ) : berita.map((b: any, i: number) => (
+                <a
+                    href={`/portal/berita/${b.slug}`}
+                    data-reveal="up"
+                    data-delay={String((i % 3) + 1)}
+                    class="news-card bg-cream border border-ink/10 flex flex-col cursor-pointer group overflow-hidden"
+                >
+                    <!-- Thumbnail -->
+                    <div class="relative overflow-hidden h-44 shrink-0 bg-ink/5">
+                        {b.thumbnail ? (
+                            <img
+                                src={b.thumbnail}
+                                alt={b.judul}
+                                class="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-500 ease-out"
+                                loading="lazy"
+                            />
+                        ) : (
+                            <div class="w-full h-full flex items-center justify-center">
+                                <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor" class="text-ink/10">
+                                    <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                                </svg>
+                            </div>
+                        )}
+                        <span class={`absolute top-3 left-3 text-[10px] font-black uppercase tracking-wider px-2 py-1 ${categoryBadge(b.kategori)}`}>
+                            {b.kategori}
+                        </span>
+                    </div>
+
+                    <!-- Color accent bar -->
+                    <div class={`h-0.5 w-full shrink-0 ${categoryAccentBar(b.kategori)}`} />
+
+                    <div class="p-5 md:p-6 flex flex-col flex-1">
+                        <span class="text-[11px] text-ink/35 font-medium mb-3 block">
+                            {formatDate(b.publishedAt ?? b.createdAt)}
+                        </span>
+
+                        <h3 class="text-sm sm:text-base font-bold text-ink leading-snug mb-2 group-hover:text-green transition-colors flex-1">
+                            {b.judul}
+                        </h3>
+
+                        <p class="text-xs sm:text-[13px] text-ink/50 leading-relaxed line-clamp-3">
+                            {b.ringkasan}
+                        </p>
+
+                        <div class="flex items-center gap-1.5 mt-4 text-[11px] font-bold uppercase tracking-wider text-green/60 group-hover:text-green transition-colors">
+                            Selengkapnya
+                            <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"
+                                 class="group-hover:translate-x-1 transition-transform">
+                                <path d="M6.4 18L5 16.6 14.6 7H6V5h12v12h-2V8.4z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </a>
+            ))}
+        </div>
+
+        <div data-reveal="up" class="mt-8 text-center">
+            <a href="/portal/berita"
+               class="inline-flex items-center gap-2 border border-ink/20 bg-cream px-6 py-3 text-sm font-bold uppercase tracking-wide hover:border-green hover:text-green transition-colors">
+                Lihat Semua Berita
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                    <path d="M6.4 18L5 16.6 14.6 7H6V5h12v12h-2V8.4z"/>
+                </svg>
+            </a>
+        </div>
+    </section>
+
+    <!-- ══ REGULASI ════════════════════════════════════════ -->
+    <section
+        class="-mx-4 sm:-mx-8 md:-mx-14 lg:-mx-20 px-4 sm:px-8 md:px-14 lg:px-20 py-14 md:py-20"
+        style="background:#111111; color:#f6f1e8;"
+    >
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-10 lg:gap-16 items-start">
+
+            <!-- Left: heading -->
+            <div class="lg:col-span-2 lg:sticky lg:top-10">
+                <div data-reveal="left" class="flex items-center gap-3 mb-3">
+                    <div class="w-1 h-6 bg-yellow"></div>
+                    <span class="text-[11px] font-black uppercase tracking-[0.18em] text-yellow">
+                        Hukum & Kebijakan
+                    </span>
+                </div>
+                <h2 data-reveal="left" data-delay="1"
+                    class="text-3xl sm:text-4xl md:text-5xl font-extrabold uppercase tracking-tight leading-tight mb-4">
+                    Regulasi &<br/>Peraturan
+                </h2>
+                <p data-reveal="left" data-delay="2"
+                   class="text-sm text-white/45 leading-relaxed max-w-sm">
+                    Kumpulan peraturan perundang-undangan yang menjadi landasan hukum
+                    pelaksanaan tugas Kementerian Agama.
+                </p>
+                <a data-reveal="left" data-delay="3"
+                   href="/portal/regulasi"
+                   class="inline-flex items-center gap-2 mt-6 border border-white/15 px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-white/60 hover:border-yellow hover:text-yellow transition-colors">
+                    Lihat Semua Regulasi
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                        <path d="M6.4 18L5 16.6 14.6 7H6V5h12v12h-2V8.4z"/>
+                    </svg>
+                </a>
+            </div>
+
+            <!-- Right: list -->
+            <div class="lg:col-span-3 flex flex-col divide-y divide-white/8">
+                {regulasi.length === 0 ? (
+                    <p class="py-10 text-sm text-white/25 font-medium uppercase tracking-wider">
+                        Belum ada regulasi
+                    </p>
+                ) : regulasi.map((r: any, i: number) => (
+                    <a href={r.fileUrl} target="_blank" rel="noopener noreferrer"
+                       data-reveal="up" data-delay={String((i % 3) + 1)}
+                       class="group flex items-start gap-4 py-4 md:py-5 hover:bg-white/3 -mx-2 px-2 transition-colors cursor-pointer">
+
+                        <span class={`text-[10px] font-black uppercase tracking-wider px-2 py-1 shrink-0 mt-0.5 ${regulasiBadge(r.type)}`}>
+                            {r.type}
+                        </span>
+
+                        <div class="flex-1 min-w-0">
+                            <p class="text-[11px] text-white/30 font-mono mb-0.5">{r.label}</p>
+                            <h3 class="text-sm sm:text-base font-bold text-white group-hover:text-yellow transition-colors leading-snug">
+                                {r.title}
+                            </h3>
+                            {r.description && (
+                                <p class="text-xs text-white/40 mt-0.5 leading-snug line-clamp-1">{r.description}</p>
+                            )}
+                        </div>
+
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"
+                             class="shrink-0 text-white/15 group-hover:text-yellow/60 transition-colors mt-1">
+                            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                        </svg>
+                    </a>
+                ))}
+            </div>
+        </div>
+    </section>
+
+    <!-- ══ TOLAK GRATIFIKASI ═══════════════════════════════ -->
+    <section
+        class="-mx-4 sm:-mx-8 md:-mx-14 lg:-mx-20 px-4 sm:px-8 md:px-14 lg:px-20 py-14 md:py-20 relative overflow-hidden"
+        style="background:#F6C744;"
+    >
+        <!-- Diagonal stripe pattern -->
+        <div class="absolute inset-0 pointer-events-none"
+             style="background: repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(0,0,0,0.03) 20px, rgba(0,0,0,0.03) 40px);">
+        </div>
+        <!-- Giant watermark "0" -->
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden"
+             style="opacity:0.05;">
+            <span style="font-size:22rem; font-weight:900; line-height:1; color:#111;">0</span>
+        </div>
+
+        <div class="relative z-10 max-w-3xl mx-auto text-center">
+
+            <div data-reveal="up" class="inline-flex mb-6">
+                <div class="w-16 h-16 bg-ink/10 border-2 border-ink/20 flex items-center justify-center">
+                    <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor" class="text-ink">
+                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                    </svg>
+                </div>
+            </div>
+
+            <h2 data-reveal="up" data-delay="1"
+                class="text-3xl sm:text-4xl md:text-5xl font-extrabold uppercase tracking-tight text-ink mb-4 leading-tight">
+                Tolak Gratifikasi.<br/>
+                Lawan Korupsi.
+            </h2>
+
+            <p data-reveal="up" data-delay="2"
+               class="text-sm sm:text-base text-ink/60 max-w-xl mx-auto leading-relaxed mb-8">
+                Kantor Kementerian Agama Kota Probolinggo berkomitmen
+                <strong class="text-ink">nol toleransi</strong> terhadap segala bentuk
+                gratifikasi, pungutan liar, dan korupsi. Jika Anda menemukan pelanggaran,
+                segera laporkan.
+            </p>
+
+            <!-- What to report -->
+            <div data-reveal="up" data-delay="3"
+                 class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-10 text-left">
+                {[
+                    { icon: "💸", label: "Pungutan Liar (Pungli)" },
+                    { icon: "🤝", label: "Permintaan Gratifikasi" },
+                    { icon: "⚖️", label: "Penyalahgunaan Jabatan" },
+                ].map((p) => (
+                    <div class="flex items-center gap-3 bg-ink/8 border border-ink/15 px-4 py-3">
+                        <span class="text-xl shrink-0">{p.icon}</span>
+                        <span class="text-xs font-bold text-ink uppercase tracking-wide">{p.label}</span>
+                    </div>
+                ))}
+            </div>
+
+            <!-- CTA buttons -->
+            <div data-reveal="up" data-delay="4"
+                 class="flex flex-col sm:flex-row gap-3 justify-center">
+                <a href="/pengaduan"
+                   class="inline-flex items-center justify-center gap-2 bg-ink text-cream font-bold text-sm uppercase tracking-wider px-8 py-4 hover:bg-ink/90 active:scale-[0.98] transition-all">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+                    </svg>
+                    Laporkan Sekarang
+                </a>
+                <a href="https://gol.kpk.go.id"
+                   target="_blank" rel="noopener noreferrer"
+                   class="inline-flex items-center justify-center gap-2 bg-ink/10 border-2 border-ink/30 text-ink font-bold text-sm uppercase tracking-wider px-8 py-4 hover:bg-ink/20 active:scale-[0.98] transition-all">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                        <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
+                    </svg>
+                    Lapor ke KPK
+                </a>
+            </div>
+
+            <p data-reveal="up" data-delay="5"
+               class="mt-6 text-[11px] text-ink/40 font-medium">
+                Identitas pelapor dijaga kerahasiaannya sesuai peraturan perundang-undangan.
+            </p>
+        </div>
+    </section>
+
+</BaseLayout>
+
+<script>
+{
+    // ── Parallax scroll ───────────────────────────────────
+    const section = document.getElementById("hero-section") as HTMLElement | null;
+    const img     = document.getElementById("parallax-img") as HTMLImageElement | null;
+    const hint    = document.getElementById("scroll-hint") as HTMLElement | null;
+
+    function updateParallax() {
+        if (!section || !img) return;
+        const rect       = section.getBoundingClientRect();
+        const scrolled   = Math.max(0, -rect.top);
+        const scrollable = section.offsetHeight - window.innerHeight;
+        const progress   = scrollable > 0 ? Math.min(1, scrolled / scrollable) : 0;
+
+        // Image rises from 65% of viewport height → 0
+        const startY = window.innerHeight * 0.65;
+        img.style.transform = `translateY(${startY * (1 - progress)}px)`;
+
+        // Scroll hint fades out quickly as user scrolls
+        if (hint) hint.style.opacity = String(Math.max(0, 1 - progress * 8));
+    }
+
+    // ── Scroll reveal ─────────────────────────────────────
+    const revealObs = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((e) => {
+                if (e.isIntersecting) {
+                    e.target.classList.add("revealed");
+                    revealObs.unobserve(e.target);
+                }
+            });
+        },
+        { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
+    );
+
+    function init() {
+        window.addEventListener("scroll", updateParallax, { passive: true });
+        window.addEventListener("resize", updateParallax);
+        updateParallax();
+        document.querySelectorAll("[data-reveal]").forEach((el) => revealObs.observe(el));
+    }
+
+    init();
+    document.addEventListener("astro:page-load", () => {
+        window.removeEventListener("scroll", updateParallax);
+        window.removeEventListener("resize", updateParallax);
+        init();
+    });
+}
+</script>

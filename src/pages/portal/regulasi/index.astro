@@ -1,0 +1,305 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { toUploadProxyUrl } from "../../../lib/upload-url";
+
+const BACKEND_URL = import.meta.env.BACKEND_URL ?? "http://localhost:3000";
+
+const url = new URL(Astro.request.url);
+const typeFilter = url.searchParams.get("type") ?? "";
+const q = url.searchParams.get("q") ?? "";
+
+let regulasi: any[] = [];
+
+try {
+    const qs = new URLSearchParams({ limit: "200" });
+    if (typeFilter) qs.set("type", typeFilter);
+    if (q) qs.set("q", q);
+    const res = await fetch(`${BACKEND_URL}/api/v1/regulasi/?${qs}`);
+    if (res.ok) {
+        const data = await res.json();
+        regulasi = (data?.data ?? []).map((r: any) => ({
+            ...r,
+            fileUrl: toUploadProxyUrl(r.fileUrl) || r.fileUrl,
+        }));
+    }
+} catch {}
+
+// Legal hierarchy — highest authority first
+const TYPE_ORDER = [
+    "UU", "PERPU", "PP", "PERPRES", "INPRES",
+    "PERMEN", "PMA", "KMA", "PERDIRJEN", "SE", "SKB",
+];
+
+const TYPE_FULL: Record<string, string> = {
+    UU: "Undang-Undang",
+    PERPU: "Peraturan Pemerintah Pengganti UU",
+    PP: "Peraturan Pemerintah",
+    PERPRES: "Peraturan Presiden",
+    INPRES: "Instruksi Presiden",
+    PERMEN: "Peraturan Menteri",
+    PMA: "Peraturan Menteri Agama",
+    KMA: "Keputusan Menteri Agama",
+    PERDIRJEN: "Peraturan Direktur Jenderal",
+    SE: "Surat Edaran",
+    SKB: "Surat Keputusan Bersama",
+};
+
+function typeBadgeClass(type: string): string {
+    switch (type) {
+        case "UU":
+        case "PERPU":     return "bg-ink text-cream";
+        case "PP":
+        case "PERPRES":
+        case "INPRES":    return "bg-ink/75 text-cream";
+        case "PMA":
+        case "PERMEN":    return "bg-green text-white";
+        case "KMA":       return "bg-yellow text-ink";
+        case "PERDIRJEN": return "bg-green/70 text-white";
+        default:          return "bg-ink/15 text-ink";
+    }
+}
+
+function typeAccentClass(type: string): string {
+    switch (type) {
+        case "UU":
+        case "PERPU":     return "border-ink";
+        case "PP":
+        case "PERPRES":
+        case "INPRES":    return "border-ink/50";
+        case "PMA":
+        case "PERMEN":    return "border-green";
+        case "KMA":       return "border-yellow";
+        default:          return "border-ink/20";
+    }
+}
+
+function typeRank(type: string): string {
+    const i = TYPE_ORDER.indexOf(type);
+    return i === -1 ? "Peraturan Lainnya" : `Hierarki ${i + 1}`;
+}
+
+// Group by type (normalised to uppercase)
+const grouped: Record<string, any[]> = {};
+for (const r of regulasi) {
+    const t = (r.type ?? "Lainnya").toUpperCase();
+    if (!grouped[t]) grouped[t] = [];
+    grouped[t].push(r);
+}
+
+// Sort group keys by hierarchy
+const sortedTypes = Object.keys(grouped).sort((a, b) => {
+    const ai = TYPE_ORDER.indexOf(a);
+    const bi = TYPE_ORDER.indexOf(b);
+    if (ai === -1 && bi === -1) return a.localeCompare(b);
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+});
+
+// All unique types present (for filter tabs)
+const presentTypes = [...sortedTypes];
+
+function buildUrl(params: { type?: string; q?: string }) {
+    const p = new URLSearchParams();
+    if (params.type) p.set("type", params.type);
+    if (params.q) p.set("q", params.q);
+    const s = p.toString();
+    return `/portal/regulasi${s ? `?${s}` : ""}`;
+}
+---
+
+<style>
+    [data-anim="down"] { animation: fadeDown 0.5s cubic-bezier(0.16,1,0.3,1) 0.05s both; }
+    [data-anim="up"]   { animation: fadeUp  0.6s cubic-bezier(0.16,1,0.3,1) 0.15s both; }
+
+    @keyframes fadeDown {
+        from { opacity: 0; transform: translateY(-12px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .reg-item {
+        transition: background-color 0.15s ease;
+    }
+    .reg-item:hover {
+        background-color: rgba(15, 107, 68, 0.04);
+    }
+</style>
+
+<BaseLayout title="Regulasi & Peraturan">
+
+    <!-- ── Page header ───────────────────────────────── -->
+    <div data-anim="down" class="pt-8 pb-6">
+        <a href="/portal"
+           class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink/35 hover:text-green transition-colors mb-4">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+            </svg>
+            Beranda
+        </a>
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-1 h-7 bg-yellow shrink-0"></div>
+            <h1 class="text-4xl font-extrabold uppercase tracking-tight text-ink">
+                Regulasi & Peraturan
+            </h1>
+        </div>
+        <p class="text-sm text-ink/45 mt-1 ml-4">
+            Kumpulan peraturan perundang-undangan landasan hukum Kementerian Agama,
+            diurutkan dari tingkat kekuatan hukum tertinggi.
+        </p>
+    </div>
+
+    <!-- ── Hierarchy legend ───────────────────────────── -->
+    <div data-anim="up" class="mb-6 flex flex-wrap items-center gap-2">
+        <span class="text-[10px] text-ink/30 font-bold uppercase tracking-wider mr-1">Tingkatan:</span>
+        {[
+            { label: "UU / PerPu",   cls: "bg-ink text-cream" },
+            { label: "PP / Perpres", cls: "bg-ink/75 text-cream" },
+            { label: "PMA / Permen", cls: "bg-green text-white" },
+            { label: "KMA",          cls: "bg-yellow text-ink" },
+            { label: "Lainnya",      cls: "bg-ink/15 text-ink" },
+        ].map(l => (
+            <span class={`text-[10px] px-2 py-0.5 font-black uppercase tracking-wider ${l.cls}`}>
+                {l.label}
+            </span>
+        ))}
+        <span class="text-[10px] text-ink/25 font-medium ml-1">← Kuat → Lemah</span>
+    </div>
+
+    <!-- ── Filter + Search ───────────────────────────── -->
+    <div data-anim="up" class="flex flex-col sm:flex-row gap-3 mb-8 items-start sm:items-center border-b border-ink/8 pb-5">
+
+        <div class="flex items-center gap-1 flex-wrap">
+            <a href={buildUrl({ q })}
+               class={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider border transition-colors
+                   ${!typeFilter ? "bg-ink text-cream border-ink" : "bg-transparent text-ink/50 border-ink/15 hover:border-ink/40 hover:text-ink"}`}>
+                Semua
+            </a>
+            {presentTypes.map(t => (
+                <a href={buildUrl({ type: t, q })}
+                   class={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider border transition-colors
+                       ${typeFilter.toUpperCase() === t
+                           ? "bg-ink text-cream border-ink"
+                           : "bg-transparent text-ink/50 border-ink/15 hover:border-ink/40 hover:text-ink"
+                       }`}>
+                    {t}
+                </a>
+            ))}
+        </div>
+
+        <form method="get" action="/portal/regulasi" class="ml-auto flex-shrink-0">
+            {typeFilter && <input type="hidden" name="type" value={typeFilter} />}
+            <div class="flex items-center gap-2 border border-ink/15 bg-cream px-3 py-1.5 focus-within:border-green transition-colors">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                     stroke-width="2" class="text-ink/30 shrink-0">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input
+                    type="text"
+                    name="q"
+                    value={q}
+                    placeholder="Cari regulasi…"
+                    class="bg-transparent text-[12px] text-ink outline-none placeholder:text-ink/30 w-40"
+                />
+            </div>
+        </form>
+    </div>
+
+    <!-- ── Empty state ───────────────────────────────── -->
+    {regulasi.length === 0 && (
+        <div class="flex flex-col items-center justify-center py-24 text-center">
+            <svg viewBox="0 0 24 24" width="40" height="40" fill="currentColor" class="text-ink/15 mb-4">
+                <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zm-1 7.5c-2.1 0-3.9-1.1-4.9-2.7l1.7-1c.6 1 1.8 1.7 3.2 1.7s2.6-.7 3.2-1.7l1.7 1c-1 1.6-2.8 2.7-4.9 2.7z"/>
+            </svg>
+            <p class="text-sm font-semibold text-ink/30 uppercase tracking-wider">Regulasi tidak ditemukan</p>
+            {(q || typeFilter) && (
+                <a href="/portal/regulasi" class="mt-4 text-xs text-green hover:underline">
+                    Tampilkan semua regulasi
+                </a>
+            )}
+        </div>
+    )}
+
+    <!-- ── Content ────────────────────────────────────── -->
+    {regulasi.length > 0 && (
+        <div class="flex flex-col gap-10 mb-12">
+            {(typeFilter
+                ? [[typeFilter.toUpperCase(), grouped[typeFilter.toUpperCase()] ?? regulasi]]
+                : sortedTypes.map(t => [t, grouped[t]])
+            ).map(([type, items]: any) => (
+                <section>
+                    <!-- Group header -->
+                    <div class={`flex items-center gap-3 pb-4 mb-1 border-b-2 ${typeAccentClass(type)}`}>
+                        <span class={`text-[12px] font-black uppercase tracking-wider px-3 py-1.5 shrink-0 ${typeBadgeClass(type)}`}>
+                            {type}
+                        </span>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-[15px] font-extrabold text-ink leading-tight">
+                                {TYPE_FULL[type] ?? type}
+                            </p>
+                            <p class="text-[10px] text-ink/30 font-semibold uppercase tracking-wider mt-0.5">
+                                {typeRank(type)}
+                            </p>
+                        </div>
+                        <span class="text-[11px] text-ink/30 font-medium shrink-0">
+                            {items.length} dokumen
+                        </span>
+                    </div>
+
+                    <!-- Items -->
+                    <div class="flex flex-col divide-y divide-ink/6">
+                        {items.map((r: any) => (
+                            <div class="reg-item group flex items-start gap-4 py-4 md:py-5 -mx-3 px-3 cursor-pointer"
+                                 onclick={`window.open('${r.fileUrl}', '_blank')`}>
+
+                                <div class="shrink-0 mt-0.5 pt-0.5">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"
+                                         class="text-ink/15 group-hover:text-green transition-colors">
+                                        <path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm10 5.5h1v-3h-1v3z"/>
+                                    </svg>
+                                </div>
+
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-[11px] text-ink/35 font-mono mb-0.5">{r.label}</p>
+                                    <h3 class="text-sm sm:text-[15px] font-bold text-ink group-hover:text-green transition-colors leading-snug">
+                                        {r.title}
+                                    </h3>
+                                    {r.description && (
+                                        <p class="text-xs text-ink/45 mt-1 leading-snug line-clamp-2">
+                                            {r.description}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <a href={r.fileUrl}
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 border border-ink/15 text-[11px] font-bold text-ink/50 hover:border-green hover:text-green transition-colors"
+                                   onclick="event.stopPropagation()">
+                                    <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                                    </svg>
+                                    PDF
+                                </a>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            ))}
+        </div>
+    )}
+
+    <!-- ── Disclaimer ─────────────────────────────────── -->
+    {regulasi.length > 0 && (
+        <div class="border-t border-ink/8 pt-6 pb-10 text-center">
+            <p class="text-[11px] text-ink/25 font-medium">
+                Dokumen regulasi bersifat informatif. Untuk keperluan resmi, gunakan dokumen yang diterbitkan
+                langsung oleh instansi berwenang.
+            </p>
+        </div>
+    )}
+
+</BaseLayout>

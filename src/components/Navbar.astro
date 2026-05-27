@@ -9,7 +9,7 @@ function isActive(href: string) {
 }
 
 const navLinks = [
-    { href: "https://portal.kemenagkotaprobolinggo.id", label: "Portal" },
+    { href: "/portal", label: "Portal" },
     { href: "/", label: "Layanan" },
     { href: "/check-progress", label: "Cek Progress" },
     { href: "/pengaduan", label: "Pengaduan" },
@@ -33,7 +33,7 @@ const navButtons = [
 ---
 
 <!-- ── Desktop & mobile wrapper ──────────────────────────────── -->
-<header class="relative">
+<header id="site-header" class="relative">
     <nav class="flex justify-between items-center py-4 lg:py-5">
         <!-- Logo -->
         <div class="flex gap-3 items-center">

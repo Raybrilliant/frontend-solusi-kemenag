@@ -1,0 +1,279 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const kategoris = [
+    {
+        label: "Informasi Berkala",
+        desc: "Informasi yang wajib disediakan dan diumumkan secara berkala.",
+        icon: `<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>`,
+        contoh: ["Profil dan struktur organisasi", "Program dan kegiatan", "Laporan keuangan", "Perjanjian dengan pihak ketiga"],
+    },
+    {
+        label: "Informasi Serta Merta",
+        desc: "Informasi yang harus diumumkan seketika karena menyangkut kepentingan umum.",
+        icon: `<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>`,
+        contoh: ["Informasi bencana/kedaruratan", "Kebijakan mendesak", "Informasi yang mempengaruhi hajat hidup orang banyak"],
+    },
+    {
+        label: "Informasi Setiap Saat",
+        desc: "Informasi yang dapat diakses publik kapan saja sesuai permintaan.",
+        icon: `<path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/>`,
+        contoh: ["Daftar dokumen kebijakan", "Rencana kerja dan anggaran", "Data pegawai (non-rahasia)", "Prosedur pelayanan publik"],
+    },
+    {
+        label: "Informasi Dikecualikan",
+        desc: "Informasi yang dikecualikan berdasarkan UU KIP dan peraturan terkait.",
+        icon: `<path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>`,
+        contoh: ["Informasi rahasia negara", "Data pribadi yang dilindungi", "Informasi yang melanggar hak kekayaan intelektual"],
+    },
+];
+
+const alurPermohonan = [
+    { step: "01", judul: "Ajukan Permohonan", desc: "Isi formulir permohonan informasi secara tertulis atau datang langsung ke kantor." },
+    { step: "02", judul: "Registrasi & Tanda Terima", desc: "PPID mencatat dan memberikan tanda terima permohonan informasi." },
+    { step: "03", judul: "Pemrosesan (5 Hari Kerja)", desc: "PPID memproses permohonan dan menentukan ketersediaan informasi." },
+    { step: "04", judul: "Penyampaian Informasi", desc: "Informasi disampaikan sesuai format yang diminta pemohon." },
+];
+
+const statistik = [
+    { label: "Total Permohonan", value: "13" },
+    { label: "Dipenuhi",          value: "13" },
+    { label: "Ditolak",           value: "0" },
+    { label: "Dalam Proses",      value: "0" },
+];
+---
+
+<style>
+    [data-anim="down"] { animation: fadeDown 0.5s cubic-bezier(0.16,1,0.3,1) 0.05s both; }
+    [data-anim="up"]   { animation: fadeUp  0.6s cubic-bezier(0.16,1,0.3,1) 0.15s both; }
+
+    @keyframes fadeDown {
+        from { opacity: 0; transform: translateY(-12px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    [data-reveal] {
+        opacity: 0;
+        transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1),
+                    transform 0.6s cubic-bezier(0.16,1,0.3,1);
+    }
+    [data-reveal="up"] { transform: translateY(24px); }
+    [data-reveal].revealed { opacity: 1; transform: none; }
+    [data-delay="1"] { transition-delay: 0.06s; }
+    [data-delay="2"] { transition-delay: 0.12s; }
+    [data-delay="3"] { transition-delay: 0.18s; }
+    [data-delay="4"] { transition-delay: 0.24s; }
+</style>
+
+<BaseLayout title="PPID — Kemenag Kota Probolinggo">
+
+    <!-- ── Page header ────────────────────────────────── -->
+    <div data-anim="down" class="pt-8 pb-6">
+        <a href="/portal"
+           class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink/35 hover:text-green transition-colors mb-4">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+            </svg>
+            Portal
+        </a>
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-1 h-7 bg-green shrink-0"></div>
+            <h1 class="text-4xl font-extrabold uppercase tracking-tight text-ink">PPID</h1>
+        </div>
+        <p class="text-sm text-ink/45 mt-1 ml-4">
+            Pejabat Pengelola Informasi dan Dokumentasi — Kemenag Kota Probolinggo.
+        </p>
+    </div>
+
+    <!-- ── Apa itu PPID ────────────────────────────────── -->
+    <section class="mb-14">
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-14 items-start">
+
+            <div data-anim="up" class="lg:col-span-3">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-1 h-5 bg-green shrink-0"></div>
+                    <span class="text-[11px] font-black uppercase tracking-[0.18em] text-green">Tentang PPID</span>
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-extrabold uppercase tracking-tight text-ink mb-4 leading-tight">
+                    Keterbukaan Informasi Publik
+                </h2>
+                <p class="text-sm text-ink/60 leading-relaxed mb-4">
+                    PPID (Pejabat Pengelola Informasi dan Dokumentasi) adalah pejabat yang bertugas
+                    menyimpan, mendokumentasikan, menyediakan, dan memberikan pelayanan informasi
+                    publik di lingkungan Kantor Kementerian Agama Kota Probolinggo.
+                </p>
+                <p class="text-sm text-ink/60 leading-relaxed">
+                    Dasar hukum: <strong class="text-ink">UU Nomor 14 Tahun 2008</strong> tentang Keterbukaan
+                    Informasi Publik dan <strong class="text-ink">PP Nomor 61 Tahun 2010</strong> tentang
+                    Pelaksanaan UU KIP.
+                </p>
+            </div>
+
+            <!-- Kontak PPID -->
+            <div data-anim="up" data-delay="1" class="lg:col-span-2">
+                <div class="border border-ink/10 bg-cream p-6">
+                    <h3 class="text-[11px] font-black uppercase tracking-wider text-ink/40 mb-4">Kontak PPID</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-start gap-3">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"
+                                 class="shrink-0 text-green mt-0.5">
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                            </svg>
+                            <div>
+                                <p class="text-[10px] text-ink/35 font-semibold uppercase tracking-wider mb-0.5">Alamat</p>
+                                <p class="text-xs text-ink/70 leading-relaxed">Jl. Mastrip No 323, Kanigaran<br/>Kota Probolinggo, Jawa Timur 67213</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"
+                                 class="shrink-0 text-green mt-0.5">
+                                <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+                            </svg>
+                            <div>
+                                <p class="text-[10px] text-ink/35 font-semibold uppercase tracking-wider mb-0.5">Telepon</p>
+                                <p class="text-xs text-ink/70">(0335) 421784</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"
+                                 class="shrink-0 text-green mt-0.5">
+                                <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/>
+                            </svg>
+                            <div>
+                                <p class="text-[10px] text-ink/35 font-semibold uppercase tracking-wider mb-0.5">Email</p>
+                                <p class="text-xs text-ink/70">kotaprobolinggo@kemenag.go.id</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"
+                                 class="shrink-0 text-green mt-0.5">
+                                <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/>
+                            </svg>
+                            <div>
+                                <p class="text-[10px] text-ink/35 font-semibold uppercase tracking-wider mb-0.5">Jam Pelayanan</p>
+                                <p class="text-xs text-ink/70">Senin – Jumat, 08.00 – 15.00 WIB</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Kategori Informasi ──────────────────────────── -->
+    <section class="mb-14">
+        <div class="mb-8">
+            <div data-reveal="up" class="flex items-center gap-3 mb-3">
+                <div class="w-1 h-5 bg-green"></div>
+                <span class="text-[11px] font-black uppercase tracking-[0.18em] text-green">Kategori Informasi</span>
+            </div>
+            <h2 data-reveal="up" data-delay="1"
+                class="text-2xl sm:text-3xl font-extrabold uppercase tracking-tight text-ink">
+                Jenis Informasi Publik
+            </h2>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {kategoris.map((k, i) => (
+                <div data-reveal="up" data-delay={String((i % 2) + 1)}
+                     class="border border-ink/10 bg-cream p-5">
+                    <div class="flex items-start gap-3 mb-3">
+                        <div class="w-10 h-10 shrink-0 bg-ink/5 flex items-center justify-center">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" class="text-green/70">
+                                <Fragment set:html={k.icon} />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-ink mb-0.5">{k.label}</h3>
+                            <p class="text-xs text-ink/50 leading-relaxed">{k.desc}</p>
+                        </div>
+                    </div>
+                    <ul class="space-y-1 pl-1">
+                        {k.contoh.map(c => (
+                            <li class="flex items-start gap-2 text-xs text-ink/50">
+                                <span class="shrink-0 w-1 h-1 rounded-full bg-ink/25 mt-[5px]"></span>
+                                {c}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            ))}
+        </div>
+    </section>
+
+    <!-- ── Alur Permohonan ────────────────────────────── -->
+    <section class="mb-14">
+        <div class="mb-8">
+            <div data-reveal="up" class="flex items-center gap-3 mb-3">
+                <div class="w-1 h-5 bg-green"></div>
+                <span class="text-[11px] font-black uppercase tracking-[0.18em] text-green">Cara Mengajukan</span>
+            </div>
+            <h2 data-reveal="up" data-delay="1"
+                class="text-2xl sm:text-3xl font-extrabold uppercase tracking-tight text-ink">
+                Alur Permohonan Informasi
+            </h2>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {alurPermohonan.map((a, i) => (
+                <div data-reveal="up" data-delay={String(i + 1)}
+                     class="border border-ink/10 bg-cream p-5 relative overflow-hidden">
+                    <span class="absolute top-3 right-4 text-5xl font-black text-ink/5 leading-none select-none">
+                        {a.step}
+                    </span>
+                    <div class="w-8 h-8 bg-green text-white text-xs font-black flex items-center justify-center mb-3">
+                        {a.step}
+                    </div>
+                    <h3 class="text-sm font-bold text-ink mb-1.5 leading-snug">{a.judul}</h3>
+                    <p class="text-xs text-ink/50 leading-relaxed">{a.desc}</p>
+                </div>
+            ))}
+        </div>
+    </section>
+
+    <!-- ── Statistik (kosong) ─────────────────────────── -->
+    <section
+        class="-mx-4 sm:-mx-8 md:-mx-14 lg:-mx-20 px-4 sm:px-8 md:px-14 lg:px-20 py-12 mb-0"
+        style="background:#f0ebe0;">
+        <div class="mb-6">
+            <div data-reveal="up" class="flex items-center gap-3 mb-2">
+                <div class="w-1 h-5 bg-green"></div>
+                <span class="text-[11px] font-black uppercase tracking-[0.18em] text-green">Statistik</span>
+            </div>
+            <h2 data-reveal="up" data-delay="1"
+                class="text-2xl font-extrabold uppercase tracking-tight text-ink">
+                Statistik Permohonan
+            </h2>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {statistik.map((s, i) => (
+                <div data-reveal="up" data-delay={String(i + 1)}
+                     class="bg-cream border border-ink/10 p-5 text-center">
+                    <p class="text-3xl font-black text-ink/20 mb-1">{s.value}</p>
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-ink/40">{s.label}</p>
+                </div>
+            ))}
+        </div>
+        <p data-reveal="up" class="mt-4 text-[11px] text-ink/30 text-center">
+            Data statistik akan diupdate setiap triwulan.
+        </p>
+    </section>
+
+</BaseLayout>
+
+<script>
+{
+    const obs = new IntersectionObserver(
+        entries => entries.forEach(e => {
+            if (e.isIntersecting) { e.target.classList.add("revealed"); obs.unobserve(e.target); }
+        }),
+        { threshold: 0.1, rootMargin: "0px 0px -30px 0px" }
+    );
+    document.querySelectorAll("[data-reveal]").forEach(el => obs.observe(el));
+}
+</script>

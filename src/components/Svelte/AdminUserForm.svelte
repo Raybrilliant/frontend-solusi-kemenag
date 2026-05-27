@@ -270,6 +270,7 @@
                         class="w-full border bg-white/50 border-black/10 rounded-lg py-2.5 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors"
                     >
                         <option value="admin">Admin</option>
+                        <option value="humas">Humas</option>
                         <option value="operator">Operator</option>
                         <option value="asn">ASN</option>
                     </select>

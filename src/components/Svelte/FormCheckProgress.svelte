@@ -715,13 +715,44 @@
                     Cari tiket lain
                 </button>
 
-                {#if data.status === "Selesai" && data.fileUrl}
-                    <a href={data.fileUrl} download class="inline-flex items-center gap-2 px-5 py-2.5 bg-green text-white text-sm font-bold hover:bg-green/90 active:scale-95 transition-all">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-                        </svg>
-                        Unduh Dokumen
-                    </a>
+                {#if data.status === "Selesai"}
+                    <div class="flex flex-wrap items-center gap-2">
+                        <a
+                            href={`/survei?ticket=${encodeURIComponent(data.kode)}`}
+                            class="inline-flex items-center gap-2 px-5 py-2.5 bg-yellow text-ink text-sm font-bold hover:bg-yellow/90 active:scale-95 transition-all"
+                        >
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                            >
+                                <path
+                                    d="M9 11H7v2h2v-2m4 0h-2v2h2v-2m4 0h-2v2h2v-2M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m0 16H5V8h14v11Z"
+                                ></path>
+                            </svg>
+                            Isi Survei
+                        </a>
+                        {#if data.fileUrl}
+                            <a
+                                href={data.fileUrl}
+                                download
+                                class="inline-flex items-center gap-2 px-5 py-2.5 bg-green text-white text-sm font-bold hover:bg-green/90 active:scale-95 transition-all"
+                            >
+                                <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                >
+                                    <path
+                                        d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"
+                                    />
+                                </svg>
+                                Unduh Dokumen
+                            </a>
+                        {/if}
+                    </div>
                 {:else if data.status === "Diproses"}
                     <p class="text-xs text-gray-400">Dokumen tersedia setelah layanan selesai</p>
                 {/if}

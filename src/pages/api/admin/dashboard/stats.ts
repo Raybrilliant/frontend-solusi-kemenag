@@ -29,12 +29,11 @@ export const GET: APIRoute = async ({ cookies }) => {
         const stats = entry
           ? {
               total: entry.total,
-              diterima: entry.diterima,
-              diproses: entry.diproses,
               selesai: entry.selesai,
               ditolak: entry.ditolak,
+              tingkatPenyelesaian: entry.tingkatPenyelesaian,
             }
-          : { total: 0, diterima: 0, diproses: 0, selesai: 0, ditolak: 0 };
+          : { total: 0, selesai: 0, ditolak: 0, tingkatPenyelesaian: 0 };
 
         return new Response(
           JSON.stringify({ success: true, data: stats }),

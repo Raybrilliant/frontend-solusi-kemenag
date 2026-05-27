@@ -1,0 +1,299 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const kuaList = [
+    {
+        no: 1,
+        kecamatan: "Mayangan",
+        nama: "KUA Kecamatan Mayangan",
+        kepala: "Yusron Siswanto S Ag",
+        alamat: "Jl. WR. Supratman No.69, Jati, Kec. Mayangan",
+        telp: "-",
+        kelurahan: ["Mayangan", "Mangunharjo", "Sukabumi", "Wiroborang", "Jati"],
+        layanan: ["Pencatatan Nikah", "Penerbitan Buku Nikah", "Mediasi Perceraian", "Wakaf & Zakat"],
+    },
+    {
+        no: 2,
+        kecamatan: "Kanigaran",
+        nama: "KUA Kecamatan Kanigaran",
+        kepala: "Mohammad Anwar Sadad S.Th.I.",
+        alamat: "Jl. Slamet Riyadi, Kanigaran, Kec. Kanigaran",
+        telp: "(0335) 427550",
+        kelurahan: ["Kanigaran", "Kebonsari Kulon", "Kebonsari Wetan", "Curah Grinting", "Tisnonegaran"],
+        layanan: ["Pencatatan Nikah", "Penerbitan Buku Nikah", "Konsultasi Keagamaan", "Mediasi Keluarga"],
+    },
+    {
+        no: 3,
+        kecamatan: "Kedopok",
+        nama: "KUA Kecamatan Kedopok",
+        kepala: "Kusnandar S.Ag",
+        alamat: "Jl. Mastrip No.20, Kedopok, Kec. Kedopok",
+        telp: "-",
+        kelurahan: ["Kedopok", "Kareng Lor", "Jrebeng Lor", "Jrebeng Wetan", "Jrebeng Kulon", "Sumber Taman"],
+        layanan: ["Pencatatan Nikah", "Penerbitan Buku Nikah", "Penyuluhan Agama", "Wakaf"],
+    },
+    {
+        no: 4,
+        kecamatan: "Kademangan",
+        nama: "KUA Kecamatan Kademangan",
+        kepala: "Ainul Kamal Rofiqi S.H.I",
+        alamat: "Jl. Brantas No.50, Kademangan, Kec. Kademangan",
+        telp: "-",
+        kelurahan: ["Kademangan", "Triwung Kidul", "Triwung Lor", "Pohsangit Kidul", "Pilang"],
+        layanan: ["Pencatatan Nikah", "Penerbitan Buku Nikah", "Bimbingan Pranikah", "Pengesahan Wakaf"],
+    },
+    {
+        no: 5,
+        kecamatan: "Wonoasih",
+        nama: "KUA Kecamatan Wonoasih",
+        kepala: "Hasbi Sidiq S. SOS. I",
+        alamat: "Jl. Anggur No.119, Wonoasih, Kec. Wonoasih",
+        telp: "(0335) 428217",
+        kelurahan: ["Wonoasih", "Kedunggaleng", "Pakistaji", "Sumber Taman", "Jrebeng Kidul"],
+        layanan: ["Pencatatan Nikah", "Penerbitan Buku Nikah", "Penyuluhan Agama", "Mediasi Keluarga"],
+    },
+];
+
+const layananUtama = [
+    {
+        icon: `<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>`,
+        label: "Pencatatan Nikah",
+        desc: "Pendaftaran dan pencatatan pernikahan resmi sesuai hukum Islam dan negara.",
+    },
+    {
+        icon: `<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>`,
+        label: "Penerbitan Buku Nikah",
+        desc: "Penerbitan dokumen nikah sebagai bukti sah pernikahan yang diakui negara.",
+    },
+    {
+        icon: `<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>`,
+        label: "Bimbingan Pranikah",
+        desc: "Program kursus pranikah untuk calon pengantin agar siap dalam membina rumah tangga.",
+    },
+    {
+        icon: `<path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4a3 3 0 0 1 3 3 3 3 0 0 1-3 3 3 3 0 0 1-3-3 3 3 0 0 1 3-3zm0 14c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08C16.71 17.72 14.5 19 12 19z"/>`,
+        label: "Konsultasi Keagamaan",
+        desc: "Layanan konsultasi masalah keagamaan, keluarga, dan pernikahan.",
+    },
+];
+---
+
+<style>
+    [data-anim="down"] { animation: fadeDown 0.5s cubic-bezier(0.16,1,0.3,1) 0.05s both; }
+    [data-anim="up"]   { animation: fadeUp  0.6s cubic-bezier(0.16,1,0.3,1) 0.15s both; }
+
+    @keyframes fadeDown {
+        from { opacity: 0; transform: translateY(-12px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    [data-reveal] {
+        opacity: 0;
+        transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1),
+                    transform 0.6s cubic-bezier(0.16,1,0.3,1);
+    }
+    [data-reveal="up"] { transform: translateY(24px); }
+    [data-reveal].revealed { opacity: 1; transform: none; }
+    [data-delay="1"] { transition-delay: 0.06s; }
+    [data-delay="2"] { transition-delay: 0.12s; }
+    [data-delay="3"] { transition-delay: 0.18s; }
+    [data-delay="4"] { transition-delay: 0.24s; }
+    [data-delay="5"] { transition-delay: 0.30s; }
+
+    .kua-card {
+        transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+    .kua-card:hover { transform: translateY(-2px); }
+</style>
+
+<BaseLayout title="Informasi KUA — Kemenag Kota Probolinggo">
+
+    <!-- ── Page header ────────────────────────────────── -->
+    <div data-anim="down" class="pt-8 pb-6">
+        <a href="/portal"
+           class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink/35 hover:text-green transition-colors mb-4">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+            </svg>
+            Portal
+        </a>
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-1 h-7 bg-green shrink-0"></div>
+            <h1 class="text-4xl font-extrabold uppercase tracking-tight text-ink">
+                Informasi KUA
+            </h1>
+        </div>
+        <p class="text-sm text-ink/45 mt-1 ml-4">
+            Kantor Urusan Agama di 5 kecamatan wilayah Kota Probolinggo.
+        </p>
+    </div>
+
+    <!-- ── Layanan Utama KUA ──────────────────────────── -->
+    <section class="mb-12">
+        <div class="mb-6">
+            <div data-reveal="up" class="flex items-center gap-3 mb-2">
+                <div class="w-1 h-5 bg-green"></div>
+                <span class="text-[11px] font-black uppercase tracking-[0.18em] text-green">Layanan KUA</span>
+            </div>
+            <h2 data-reveal="up" data-delay="1"
+                class="text-2xl font-extrabold uppercase tracking-tight text-ink">
+                Layanan yang Tersedia
+            </h2>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {layananUtama.map((l, i) => (
+                <div data-reveal="up" data-delay={String(i + 1)}
+                     class="border border-ink/10 bg-cream p-4">
+                    <div class="w-9 h-9 bg-green/10 flex items-center justify-center mb-3">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" class="text-green">
+                            <Fragment set:html={l.icon} />
+                        </svg>
+                    </div>
+                    <h3 class="text-xs font-bold text-ink uppercase tracking-wide mb-1">{l.label}</h3>
+                    <p class="text-[11px] text-ink/50 leading-relaxed">{l.desc}</p>
+                </div>
+            ))}
+        </div>
+    </section>
+
+    <!-- ── Daftar KUA ──────────────────────────────────── -->
+    <section class="pb-10">
+        <div class="mb-8">
+            <div data-reveal="up" class="flex items-center gap-3 mb-2">
+                <div class="w-1 h-5 bg-green"></div>
+                <span class="text-[11px] font-black uppercase tracking-[0.18em] text-green">5 Kecamatan</span>
+            </div>
+            <h2 data-reveal="up" data-delay="1"
+                class="text-2xl font-extrabold uppercase tracking-tight text-ink">
+                Daftar Kantor Urusan Agama
+            </h2>
+        </div>
+
+        <div class="space-y-4">
+            {kuaList.map((kua, i) => (
+                <div data-reveal="up" data-delay={String((i % 3) + 1)}
+                     class="kua-card border border-ink/10 bg-cream overflow-hidden">
+
+                    <div class="flex items-stretch">
+
+                        <!-- Nomor & kecamatan block -->
+                        <div class="w-20 sm:w-24 shrink-0 bg-ink text-cream flex flex-col items-center justify-center p-3 text-center">
+                            <span class="text-2xl font-black leading-none">{String(kua.no).padStart(2, "0")}</span>
+                            <span class="text-[9px] font-bold uppercase tracking-wider opacity-40 mt-1 leading-tight">
+                                KUA
+                            </span>
+                        </div>
+
+                        <!-- Content -->
+                        <div class="flex-1 p-5 sm:p-6 min-w-0">
+                            <div class="flex flex-wrap items-start gap-2 mb-3">
+                                <h2 class="text-base sm:text-lg font-extrabold text-ink leading-tight">{kua.nama}</h2>
+                                <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 bg-ink/8 text-ink/50 shrink-0">
+                                    Kec. {kua.kecamatan}
+                                </span>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 mb-4">
+                                <!-- Kepala -->
+                                <div class="flex items-start gap-2">
+                                    <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"
+                                         class="shrink-0 text-green/60 mt-0.5">
+                                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                                    </svg>
+                                    <div>
+                                        <p class="text-[10px] text-ink/35 font-semibold uppercase tracking-wider">Kepala KUA</p>
+                                        <p class="text-xs text-ink/70 font-medium leading-snug">{kua.kepala}</p>
+                                    </div>
+                                </div>
+                                <!-- Telepon -->
+                                <div class="flex items-start gap-2">
+                                    <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"
+                                         class="shrink-0 text-green/60 mt-0.5">
+                                        <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+                                    </svg>
+                                    <div>
+                                        <p class="text-[10px] text-ink/35 font-semibold uppercase tracking-wider">Telepon</p>
+                                        <p class="text-xs text-ink/70 font-medium">{kua.telp}</p>
+                                    </div>
+                                </div>
+                                <!-- Alamat -->
+                                <div class="flex items-start gap-2 sm:col-span-2">
+                                    <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"
+                                         class="shrink-0 text-green/60 mt-0.5">
+                                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                                    </svg>
+                                    <div>
+                                        <p class="text-[10px] text-ink/35 font-semibold uppercase tracking-wider">Alamat</p>
+                                        <p class="text-xs text-ink/70 leading-relaxed">{kua.alamat}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Wilayah kelurahan -->
+                            <div>
+                                <p class="text-[10px] font-bold uppercase tracking-wider text-ink/30 mb-1.5">Wilayah Kelurahan</p>
+                                <div class="flex flex-wrap gap-1.5">
+                                    {kua.kelurahan.map(kel => (
+                                        <span class="text-[10px] font-semibold px-2 py-0.5 bg-ink/6 text-ink/50 border border-ink/8">
+                                            {kel}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom: layanan tags -->
+                    <div class="border-t border-ink/8 px-5 sm:px-6 py-3 flex flex-wrap items-center gap-2">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-ink/30 mr-1">Layanan:</span>
+                        {kua.layanan.map(l => (
+                            <span class="text-[10px] font-semibold text-green/70 flex items-center gap-1">
+                                <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
+                                    <path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                                </svg>
+                                {l}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            ))}
+        </div>
+    </section>
+
+    <!-- ── Info jam operasional ─────────────────────────── -->
+    <div
+        class="-mx-4 sm:-mx-8 md:-mx-14 lg:-mx-20 px-4 sm:px-8 md:px-14 lg:px-20 py-8"
+        style="background:#f0ebe0;">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div class="w-10 h-10 shrink-0 bg-ink/8 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" class="text-ink/40">
+                    <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/>
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-sm font-bold text-ink mb-0.5 uppercase tracking-wide">Jam Operasional KUA</h3>
+                <p class="text-xs text-ink/55 leading-relaxed">
+                    Senin – Kamis: 08.00 – 16.00 WIB &nbsp;|&nbsp; Jumat: 08.00 – 16.30 WIB
+                    &nbsp;|&nbsp; Sabtu – Minggu: Tutup (kecuali pelayanan akad nikah yang telah terjadwal)
+                </p>
+            </div>
+        </div>
+    </div>
+
+</BaseLayout>
+
+<script>
+{
+    const obs = new IntersectionObserver(
+        entries => entries.forEach(e => {
+            if (e.isIntersecting) { e.target.classList.add("revealed"); obs.unobserve(e.target); }
+        }),
+        { threshold: 0.08, rootMargin: "0px 0px -20px 0px" }
+    );
+    document.querySelectorAll("[data-reveal]").forEach(el => obs.observe(el));
+}
+</script>

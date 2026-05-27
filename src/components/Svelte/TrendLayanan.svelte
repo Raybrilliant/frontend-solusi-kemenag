@@ -4,7 +4,7 @@
     let { apiUrl, periods = ["3 Bulan", "6 Bulan", "1 Tahun"] } = $props();
 
     let cache = {};
-    let period = $state(untrack(() => periods[1] ?? periods[0]));
+    let period = $state(untrack(() => periods[0] ?? periods[0]));
     let d = $state(null);
     let loading = $state(true);
     let dropOpen = $state(false);
@@ -26,8 +26,13 @@
         return 10 * mag;
     }
 
+    const masukSeries = $derived(d ? (d.masuk ?? d.total ?? []) : []);
+    const selesaiSeries = $derived(d ? (d.selesai ?? []) : []);
+    const ditolakSeries = $derived(d ? (d.ditolak ?? d.proses ?? []) : []);
     const n = $derived(d ? d.labels.length : 0);
-    const rawMax = $derived(d ? Math.max(...d.total) : 0);
+    const rawMax = $derived(
+        d ? Math.max(0, ...masukSeries, ...selesaiSeries, ...ditolakSeries) : 0,
+    );
     const step = $derived(rawMax > 0 ? niceStep(rawMax) : 100);
     const yMax = $derived(Math.ceil(rawMax / step) * step + step);
     const yTicks = $derived(
@@ -70,39 +75,39 @@
         return (0.05 + (i / Math.max(n - 1, 1)) * 0.65).toFixed(2) + "s";
     }
 
-    const totalLine = $derived(d ? linePath(d.total) : "");
-    const selesaiLine = $derived(d ? linePath(d.selesai) : "");
-    const prosesLine = $derived(d ? linePath(d.proses) : "");
-    const totalArea = $derived(d ? areaPath(d.total) : "");
-    const selesaiArea = $derived(d ? areaPath(d.selesai) : "");
+    const masukLine = $derived(d ? linePath(masukSeries) : "");
+    const selesaiLine = $derived(d ? linePath(selesaiSeries) : "");
+    const ditolakLine = $derived(d ? linePath(ditolakSeries) : "");
+    const masukArea = $derived(d ? areaPath(masukSeries) : "");
+    const selesaiArea = $derived(d ? areaPath(selesaiSeries) : "");
 
-    const lastTotal = $derived(
-        d
+    const lastMasuk = $derived(
+        d && n > 0 && masukSeries.length
             ? {
                   x: xp(n - 1),
-                  y: yp(d.total[n - 1]),
-                  v: d.total[n - 1],
-                  bw: badgeW(d.total[n - 1]),
+                  y: yp(masukSeries[n - 1]),
+                  v: masukSeries[n - 1],
+                  bw: badgeW(masukSeries[n - 1]),
               }
             : null,
     );
     const lastSelesai = $derived(
-        d
+        d && n > 0 && selesaiSeries.length
             ? {
                   x: xp(n - 1),
-                  y: yp(d.selesai[n - 1]),
-                  v: d.selesai[n - 1],
-                  bw: badgeW(d.selesai[n - 1]),
+                  y: yp(selesaiSeries[n - 1]),
+                  v: selesaiSeries[n - 1],
+                  bw: badgeW(selesaiSeries[n - 1]),
               }
             : null,
     );
-    const lastProses = $derived(
-        d
+    const lastDitolak = $derived(
+        d && n > 0 && ditolakSeries.length
             ? {
                   x: xp(n - 1),
-                  y: yp(d.proses[n - 1]),
-                  v: d.proses[n - 1],
-                  bw: badgeW(d.proses[n - 1]),
+                  y: yp(ditolakSeries[n - 1]),
+                  v: ditolakSeries[n - 1],
+                  bw: badgeW(ditolakSeries[n - 1]),
               }
             : null,
     );
@@ -212,7 +217,7 @@
     <div class="flex items-center gap-4 mb-2 text-xs text-gray-600">
         <span class="flex items-center gap-1.5">
             <span class="w-3 h-3 rounded-full bg-green inline-block"
-            ></span>Total Layanan
+            ></span>Layanan Masuk
         </span>
         <span class="flex items-center gap-1.5">
             <span
@@ -221,8 +226,8 @@
             ></span>Selesai
         </span>
         <span class="flex items-center gap-1.5">
-            <span class="w-3 h-3 rounded-full bg-yellow inline-block"
-            ></span>Proses
+            <span class="w-3 h-3 rounded-full bg-red-400 inline-block"
+            ></span>Ditolak
         </span>
     </div>
 
@@ -340,7 +345,7 @@
                 {/each}
 
                 <!-- Area fills — fade in after lines are drawn -->
-                <path class="area-anim" d={totalArea} fill="url(#grad-total)" />
+                    <path class="area-anim" d={masukArea} fill="url(#grad-total)" />
                 <path
                     class="area-anim"
                     d={selesaiArea}
@@ -360,7 +365,7 @@
                 />
                 <path
                     class="line-anim"
-                    d={totalLine}
+                    d={masukLine}
                     fill="none"
                     stroke="#0F6B44"
                     stroke-width="2.5"
@@ -370,9 +375,9 @@
                 />
                 <path
                     class="line-anim"
-                    d={prosesLine}
+                    d={ditolakLine}
                     fill="none"
-                    stroke="#F6C744"
+                    stroke="#F87171"
                     stroke-width="2"
                     stroke-linejoin="round"
                     pathLength="1"
@@ -380,7 +385,7 @@
                 />
 
                 <!-- Selesai dots + labels — pop in as line reaches them -->
-                {#each d.selesai as v, i}
+                {#each selesaiSeries as v, i}
                     {@const cx = xp(i)}
                     {@const cy = yp(v)}
                     <circle
@@ -408,7 +413,7 @@
                 {/each}
 
                 <!-- Total dots + labels -->
-                {#each d.total as v, i}
+                {#each masukSeries as v, i}
                     {@const cx = xp(i)}
                     {@const cy = yp(v)}
                     <circle
@@ -435,8 +440,8 @@
                     {/if}
                 {/each}
 
-                <!-- Proses dots + labels -->
-                {#each d.proses as v, i}
+                <!-- Ditolak dots + labels -->
+                {#each ditolakSeries as v, i}
                     {@const cx = xp(i)}
                     {@const cy = yp(v)}
                     <circle
@@ -444,7 +449,7 @@
                         {cx}
                         {cy}
                         r="4"
-                        fill="#F6C744"
+                        fill="#F87171"
                         stroke="white"
                         stroke-width="1.5"
                         style="animation-delay:{dotDelay(i)}"
@@ -457,35 +462,38 @@
                             text-anchor="middle"
                             font-size="10"
                             font-weight="600"
-                            fill="#92400E"
+                            fill="#DC2626"
                             style="animation-delay:{dotDelay(i)}">{fmt(v)}</text
                         >
                     {/if}
                 {/each}
 
                 <!-- Last-point badges — spring pop-in at the very end -->
+                {#if lastMasuk}
                 <g
                     class="badge-anim"
-                    style="transform-origin:{lastTotal.x}px {lastTotal.y -
+                    style="transform-origin:{lastMasuk.x}px {lastMasuk.y -
                         17}px"
                 >
                     <rect
-                        x={lastTotal.x - lastTotal.bw / 2}
-                        y={lastTotal.y - 26}
-                        width={lastTotal.bw}
+                        x={lastMasuk.x - lastMasuk.bw / 2}
+                        y={lastMasuk.y - 26}
+                        width={lastMasuk.bw}
                         height={18}
                         rx="4"
                         fill="#0F6B44"
                     />
                     <text
-                        x={lastTotal.x}
-                        y={lastTotal.y - 13}
+                        x={lastMasuk.x}
+                        y={lastMasuk.y - 13}
                         text-anchor="middle"
                         font-size="11"
                         font-weight="700"
-                        fill="white">{fmt(lastTotal.v)}</text
+                        fill="white">{fmt(lastMasuk.v)}</text
                     >
                 </g>
+                {/if}
+                {#if lastSelesai}
                 <g
                     class="badge-anim"
                     style="transform-origin:{lastSelesai.x}px {lastSelesai.y -
@@ -508,28 +516,31 @@
                         fill="white">{fmt(lastSelesai.v)}</text
                     >
                 </g>
+                {/if}
+                {#if lastDitolak}
                 <g
                     class="badge-anim"
-                    style="transform-origin:{lastProses.x}px {lastProses.y -
+                    style="transform-origin:{lastDitolak.x}px {lastDitolak.y -
                         17}px; animation-delay:0.88s"
                 >
                     <rect
-                        x={lastProses.x - lastProses.bw / 2}
-                        y={lastProses.y - 26}
-                        width={lastProses.bw}
+                        x={lastDitolak.x - lastDitolak.bw / 2}
+                        y={lastDitolak.y - 26}
+                        width={lastDitolak.bw}
                         height={18}
                         rx="4"
-                        fill="#F6C744"
+                        fill="#F87171"
                     />
                     <text
-                        x={lastProses.x}
-                        y={lastProses.y - 13}
+                        x={lastDitolak.x}
+                        y={lastDitolak.y - 13}
                         text-anchor="middle"
                         font-size="11"
                         font-weight="700"
-                        fill="#92400E">{fmt(lastProses.v)}</text
+                        fill="white">{fmt(lastDitolak.v)}</text
                     >
                 </g>
+                {/if}
 
                 <!-- X-axis labels -->
                 {#each d.labels as label, i}

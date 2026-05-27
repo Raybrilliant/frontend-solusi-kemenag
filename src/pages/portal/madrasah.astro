@@ -1,0 +1,235 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const madrasah = [
+    // {
+    //     jenjang: "MI",
+    //     label: "Madrasah Ibtidaiyah Negeri",
+    //     nama: "MIN 1 Kota Probolinggo",
+    //     npsn: "60714972",
+    //     akreditasi: "A",
+    //     alamat: "Jl. Mawar No. 27, Kelurahan Triwung Kidul, Kecamatan Kademangan",
+    //     kodePos: "67213",
+    //     telp: "(0335) 426318",
+    //     kepala: "Hj. Umi Salamah, S.Pd.I, M.Pd",
+    //     siswa: 420,
+    //     guru: 28,
+    //     warna: "bg-green/10 border-green/20 text-green",
+    //     aksenWarna: "bg-green",
+    // },
+    {
+        jenjang: "MTs",
+        label: "Madrasah Tsanawiyah Negeri",
+        nama: "MTsN Kota Probolinggo",
+        nsm: "-",
+        akreditasi: "A",
+        alamat: "Jl. Citarum No. 09, Curahgrinting, Kec. Kanigaran",
+        kodePos: "67212",
+        telp: "-",
+        kepala: "Abd. Manaf S.Pd.I",
+        siswa: 0,
+        guru: 0,
+        warna: "bg-green/10 border-green/20 text-green",
+        aksenWarna: "bg-green",
+    },
+    {
+        jenjang: "MA",
+        label: "Madrasah Aliyah Negeri",
+        nama: "MAN 1 Kota Probolinggo",
+        nsm: "131135740001",
+        akreditasi: "A",
+        alamat: "Jl. Jeruk No.07, Jrebeng Kidul, Kec. Wonoasih ",
+        kodePos: "67233",
+        telp: "-",
+        kepala: "Drs. Mohammad Alfan Makmur, M.M.",
+        siswa: 273,
+        guru: 56,
+        warna: "bg-ink/8 border-ink/15 text-ink",
+        aksenWarna: "bg-ink",
+    },
+    {
+        jenjang: "MA",
+        label: "Madrasah Aliyah Negeri",
+        nama: "MAN 2 Kota Probolinggo",
+        nsm: "131135740002",
+        akreditasi: "A",
+        alamat: "Jl. Soekarno Hatta No. 255, Curahgrinting, Kec. Kanigaran",
+        kodePos: "67212",
+        telp: "(0335) 421842",
+        kepala: "Abd. Ghofur, S.Ag.",
+        siswa: 1171,
+        guru: 61,
+        warna: "bg-ink/8 border-ink/15 text-ink",
+        aksenWarna: "bg-ink",
+    },
+];
+
+const summaryStats = [
+    { label: "Total Madrasah", value: madrasah.length },
+    { label: "Siswa", value: madrasah.reduce((acc, m) => acc + m.siswa, 0) },
+    { label: "Guru", value: madrasah.reduce((acc, m) => acc + m.guru, 0) },
+];
+---
+
+<style>
+    [data-anim="down"] { animation: fadeDown 0.5s cubic-bezier(0.16,1,0.3,1) 0.05s both; }
+    [data-anim="up"]   { animation: fadeUp  0.6s cubic-bezier(0.16,1,0.3,1) 0.15s both; }
+
+    @keyframes fadeDown {
+        from { opacity: 0; transform: translateY(-12px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    [data-reveal] {
+        opacity: 0;
+        transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1),
+                    transform 0.6s cubic-bezier(0.16,1,0.3,1);
+    }
+    [data-reveal="up"] { transform: translateY(24px); }
+    [data-reveal].revealed { opacity: 1; transform: none; }
+    [data-delay="1"] { transition-delay: 0.08s; }
+    [data-delay="2"] { transition-delay: 0.16s; }
+    [data-delay="3"] { transition-delay: 0.24s; }
+</style>
+
+<BaseLayout title="Informasi Madrasah — Kemenag Kota Probolinggo">
+
+    <!-- ── Page header ────────────────────────────────── -->
+    <div data-anim="down" class="pt-8 pb-6">
+        <a href="/portal"
+           class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink/35 hover:text-green transition-colors mb-4">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+            </svg>
+            Portal
+        </a>
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-1 h-7 bg-green shrink-0"></div>
+            <h1 class="text-4xl font-extrabold uppercase tracking-tight text-ink">
+                Informasi Madrasah
+            </h1>
+        </div>
+        <p class="text-sm text-ink/45 mt-1 ml-4">
+            Daftar madrasah negeri di bawah naungan Kemenag Kota Probolinggo.
+        </p>
+    </div>
+
+    <!-- ── Summary stats ──────────────────────────────── -->
+    <div data-anim="up" class="grid grid-cols-3 gap-3 mb-12">
+        {summaryStats.map(s => (
+            <div class="border border-ink/10 bg-cream p-4 text-center">
+                <p class="text-2xl sm:text-3xl font-black text-ink mb-0.5">{s.value}</p>
+                <p class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-ink/40">{s.label}</p>
+            </div>
+        ))}
+    </div>
+
+    <!-- ── Madrasah cards ─────────────────────────────── -->
+    <div class="space-y-5 pb-10">
+        {madrasah.map((m, i) => (
+            <div data-reveal="up" data-delay={String(i + 1)}
+                 class="border border-ink/10 bg-cream overflow-hidden">
+
+                <!-- Top accent bar -->
+                <div class={`h-1 w-full ${m.aksenWarna}`}></div>
+
+                <div class="p-6 sm:p-7">
+                    <div class="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
+
+                        <!-- Jenjang badge -->
+                        <div class={`w-16 h-16 shrink-0 border flex flex-col items-center justify-center ${m.warna}`}>
+                            <span class="text-lg font-black leading-none">{m.jenjang}</span>
+                            <span class="text-[9px] font-bold uppercase tracking-wide opacity-60 mt-0.5">Negeri</span>
+                        </div>
+
+                        <!-- Main info -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex flex-wrap items-center gap-2 mb-1">
+                                <h2 class="text-lg sm:text-xl font-extrabold text-ink">{m.nama}</h2>
+                                <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 bg-green text-white">
+                                    Akreditasi {m.akreditasi}
+                                </span>
+                            </div>
+                            <p class="text-xs text-ink/40 font-medium mb-3">{m.label}</p>
+
+                            <!-- Detail grid -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
+                                <div class="flex items-start gap-2">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"
+                                         class="shrink-0 text-green/60 mt-0.5">
+                                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                                    </svg>
+                                    <span class="text-xs text-ink/60 leading-relaxed">{m.alamat}, {m.kodePos}</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"
+                                         class="shrink-0 text-green/60">
+                                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                                        <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+                                    </svg>
+                                    <span class="text-xs text-ink/60">{m.telp}</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"
+                                         class="shrink-0 text-green/60">
+                                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                                    </svg>
+                                    <span class="text-xs text-ink/60">{m.kepala}</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"
+                                         class="shrink-0 text-green/60">
+                                        <path d="M14 6l-1-2H5v17h2v-7h5l1 2h7V6h-6zm4 8h-4l-1-2H7V6h5l1 2h5v6z"/>
+                                    </svg>
+                                    <span class="text-xs text-ink/60">NSM: {m.nsm}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Stats mini -->
+                        <div class="flex sm:flex-col gap-4 sm:gap-2 sm:items-end shrink-0">
+                            <div class="text-right">
+                                <p class="text-xl font-black text-ink">{m.siswa.toLocaleString("id-ID")}</p>
+                                <p class="text-[10px] font-bold uppercase tracking-wider text-ink/35">Siswa</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xl font-black text-ink">{m.guru}</p>
+                                <p class="text-[10px] font-bold uppercase tracking-wider text-ink/35">Guru</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        ))}
+    </div>
+
+    <!-- ── Catatan ─────────────────────────────────────── -->
+    <div class="border border-ink/8 bg-ink/3 p-4 flex items-start gap-3 mb-10">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"
+             class="shrink-0 text-ink/30 mt-0.5">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+        </svg>
+        <p class="text-xs text-ink/50 leading-relaxed">
+            Data jumlah siswa dan guru merupakan data estimasi. Untuk informasi terkini dan
+            madrasah swasta di Kota Probolinggo, silakan hubungi Seksi Pendidikan Islam
+            Kemenag Kota Probolinggo.
+        </p>
+    </div>
+
+</BaseLayout>
+
+<script>
+{
+    const obs = new IntersectionObserver(
+        entries => entries.forEach(e => {
+            if (e.isIntersecting) { e.target.classList.add("revealed"); obs.unobserve(e.target); }
+        }),
+        { threshold: 0.08, rootMargin: "0px 0px -20px 0px" }
+    );
+    document.querySelectorAll("[data-reveal]").forEach(el => obs.observe(el));
+}
+</script>

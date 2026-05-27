@@ -1,0 +1,611 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const kepalaSatker = [
+    { no: 1,  nama: "Buchori",             periode: "1981 – 1986", current: false, foto: "/kepala-kantor/BUCHORI.webp" },
+    { no: 2,  nama: "Mohammad Saleh",               periode: "1986 – 1996", current: false, foto: "/kepala-kantor/M SALEH.webp" },
+    { no: 3,  nama: "Tauchid",                periode: "1996 – 1997", current: false, foto: "/kepala-kantor/TAUCHID.webp" },
+    { no: 4,  nama: "Sudjoko Santosa",               periode: "1997 – 2002", current: false, foto: "/kepala-kantor/SUDJOKO.webp" },
+    { no: 5,  nama: "Nazli Idris",             periode: "2005 – 2008", current: false, foto: "/kepala-kantor/NAZLI.webp" },
+    { no: 6,  nama: "Marsuwi",          periode: "2008 – 2012", current: false, foto: "/kepala-kantor/MARSUWI.webp" },
+    { no: 7,  nama: "Muhammad",                 periode: "2012 – 2017", current: false, foto: "/kepala-kantor/MUHAMMAD.webp" },
+    { no: 8,  nama: "Mufi Imron Rosyadi",    periode: "2017 – 2021", current: false, foto: "/kepala-kantor/MUFI.webp" },
+    { no: 9,  nama: "Samsur",    periode: "2021 – 2023", current: false, foto: "/kepala-kantor/SAMSUR.webp" },
+    { no: 10, nama: "Fausi", periode: "2023 – 2024", current: false, foto: "/kepala-kantor/FAUSI.webp" },
+    { no: 11, nama: "Didik Kurniawan", periode: "2024 – Sekarang", current: true, foto: "/kepala-kantor/DIDIK.webp" },
+];
+
+const struktur = [
+    {
+        id: "s1",
+        nama: "Didik Kurniawan",
+        jabatan: "Kepala Kantor",
+        foto: "/pejabat-struktural/didik-kurniawan.webp",
+        ringkasan:
+            "Lahir di Denpasar pada 26 Oktober 1971. Ia menyelesaikan pendidikan S-1 di jurusan Qadla (Peradilan Agama) di IAIN Sunan Ampel pada tahun 1995, dan melanjutkan studi S-2 Magister Pemikiran Hukum Islam di Universitas Muhammadiyah Yogyakarta yang diselesaikannya pada tahun 2008. Kariernya dimulai sebagai Penghulu Pertama di KUA Kecamatan Denpasar Timur, Kota Denpasar pada tahun 2006. Saat ini, Didik Kurniawan menjabat sebagai Kepala Kantor",
+        tugasFungsi: [
+            "Memimpin dan mengkoordinasikan seluruh kegiatan Kantor Kemenag Kota Probolinggo",
+            "Menetapkan kebijakan teknis di bidang urusan keagamaan",
+            "Membina dan mengevaluasi kinerja seluruh pegawai",
+            "Mewakili Kemenag dalam hubungan dengan instansi pemerintah dan masyarakat",
+            "Melaporkan pelaksanaan tugas kepada Kepala Kanwil Kemenag Provinsi Jawa Timur",
+        ],
+    },
+    {
+        id: "s2",
+        nama: "Ahmad Zaini",
+        jabatan: "Kepala Sub Bagian Tata Usaha",
+        foto: "/pejabat-struktural/ahmad-zaini.webp",
+        ringkasan:
+            "Lahir di Probolinggo pada 24 Desember 1968. Ia menempuh pendidikan S-1 di jurusan Pendidikan Agama Islam di STAIPANA dan lulus pada tahun 1997. Gelar S-2 Magister Manajemen Pendidikan diraihnya dari UNIPA Adi Buana pada tahun 2007. Mengawali karier sebagai Guru Pendidikan Agama Islam di SD Negeri Curahgrinting IV pada tahun 2000, Ahmad Zaini dikenal sebagai pribadi yang disiplin dan berdedikasi. Saat ini, ia menjabat sebagai Kepala Sub Bagian Tata Usaha dan berperan penting dalam mendukung kelancaran administrasi dan pelayanan di instansinya.",
+        tugasFungsi: [
+          "Koordinasi penyusunan rencana, program, perjanjian kinerja, kegiatan dan anggaran, evaluasi, serta laporan;",
+          "Pelaksanaan urusan keuangan dan perbendaharaan, verifikasi akuntansi instansi dan sistem informasi manajemen dan akuntansi barang milik negara, serta pelaporan keuangan dan barang milik negara;",
+          "Penyusunan rencana kebutuhan dan penataan pegawai, pengelolaan data dan administrasi kepegawaian, fasilitasi asesmen, dan pengembangan pegawai;",
+          "Penyusunan analisis organisasi, analisis jabatan dan beban kerja, sistem, standar, dan prosedur kerja, laporan kinerja, tindak lanjut hasil pengawasan, pelaksanaan pelayanan publik, fasilitasi pelaksanaan reformasi birokrasi, dan zona integritas;",
+          "Penyusunan keputusan dan instrumen hukum lainnya, analisis, advokasi, dan penyuluhan hukum, serta kerja sama dan pengawasan orang asing;",
+          "Pelaksanaan bina lembaga kerukunan umat beragama dan lembaga keagamaan, serta harmonisasi umat beragama;",
+          "Pengelolaan data, pengembangan sistem informasi, hubungan masyarakat, dan publikasi; serta pelaksanaan urusan ketatausahaan, kerumahtanggaan, perlengkapan, pengadaan, dan pemeliharaan barang milik negara, serta fasilitasi pelayanan terpadu"
+        ],
+    },
+    {
+        id: "s3",
+        nama: "Muhammad Zainullah",
+        jabatan: "Kepala Seksi Pendidikan Madrasah",
+        foto: "/pejabat-struktural/muhammad-zainullah.webp",
+        ringkasan:
+            "lahir di Probolinggo pada 17 Februari 1971. Ia memperoleh gelar S-1 Pendidikan Agama Islam dari Universitas Islam Malang pada tahun 2004, dan melanjutkan studi S-2 di Institut Agama Islam Nurul Jadid dengan gelar Magister Pendidikan Agama Islam yang diraihnya pada tahun 2013. Kariernya dimulai sebagai Guru Pendidikan Agama Islam di SD Negeri Kedunggaleng II pada tahun 2000. Berkat komitmen dan pengalamannya, saat ini ia menjabat sebagai Kepala Seksi Pendidikan Madrasah dan aktif dalam peningkatan mutu serta pengelolaan pendidikan madrasah.",
+        tugasFungsi: [
+          "Penyiapan bahan perencanaan, penyusunan, dan pelaksanaan kebijakan teknis di bidang kurikulum, sarana dan prasarana, kelembagaan, dan kesiswaan, serta guru dan tenaga kependidikan madrasah;",
+          "Pelayanan dan pemenuhan standar nasional pendidikan madrasah;",
+          "Bimbingan teknis dan supervisi di bidang kurikulum dan evaluasi, sarana dan prasarana, kelembagaan dan kerja sama, serta kesiswaan madrasah;",
+          "Pembinaan, bimbingan teknis, dan supervisi guru dan tenaga kependidikan madrasah"
+        ],
+    },
+    {
+        id: "s4",
+        nama: "Mad Shodiq",
+        jabatan: "Kepala Seksi Pendidikan Agama Islam",
+        foto: "/pejabat-struktural/mad-shodiq.webp",
+        ringkasan:
+            "lahir di Sidoarjo pada 6 Desember 1970. Ia menyelesaikan pendidikan S-1 pada jurusan Muamalat Jinayat di IAIN Sunan Kalijaga tahun 1996, kemudian meraih gelar S-2 Magister Pendidikan Islam dari IAI Nurul Jadid pada tahun 2013. Kariernya dimulai sebagai Pegawai Pencatat Nikah (PPN) pada tahun 1999. Dengan pengalaman dan komitmen di bidang keagamaan dan pendidikan, Mad Shodiq saat ini menjabat sebagai Kepala Seksi Pendidikan Agama Islam dan berperan dalam pembinaan serta pengembangan pendidikan agama di satuan pendidikan formal dan nonformal.",
+        tugasFungsi: [
+          "Penyiapan bahan perencanaan, penyusunan, dan pelaksanaan kebijakan teknis di bidang pendidikan agama Islam",
+          "Pelayanan dan pemenuhan standar nasional pendidikan agama Islam",
+          "Bimbingan teknis dan supervisi di bidang pendidikan agama Islam pada pendidikan anak usia dini, taman kanak-kanak, sekolah dasar/sekolah dasar luar biasa, sekolah menengah pertama/sekolah menengah pertama luar biasa, dan sekolah menengah atas/sekolah menengah atas luar biasa/sekolah menengah kejuruan",
+          "Pengelolaan data dan sistem informasi pendidikan agama Islam",
+          "Evaluasi dan penyusunan laporan di bidang pendidikan agama Islam",
+        ],
+    },
+    {
+        id: "s5",
+        nama: "Arifin Budianto",
+        jabatan: "Kepala Seksi Bimbingan Masyarakat Islam",
+        foto: "/pejabat-struktural/arifin-budianto.webp",
+        ringkasan:
+            "lahir di Probolinggo pada 19 Agustus 1979. Ia menyelesaikan pendidikan S-1 Sarjana Ahwal Al-Syakhshiyyah di IAI Nurul Jadid Paiton Probolinggo pada tahun 2006. Kariernya dimulai sebagai Penghulu Pertama di KUA Kecamatan Kanigaran, Kota Probolinggo pada tahun 2011. Dengan pengalaman dan dedikasi dalam pelayanan keagamaan, saat ini Arifin Budianto menjabat sebagai Kepala Seksi Bimbingan Masyarakat Islam, bertugas membina dan mengembangkan kerukunan serta pelayanan umat Islam di wilayah kota probolinggo",
+        tugasFungsi: [
+          "Penyiapan bahan perencanaan, penyusunan, dan pelaksanaan kebijakan teknis dan perencanaan di bidang urusan agama Islam",
+          "Pelayanan dan pemenuhan standar nasional urusan agama Islam",
+          "Bimbingan teknis dan supervisi di bidang kemasjidan, hisab rukyat dan bina syariah, bina paham keagamaan dan kepustakaan Islam, kepenghuluan dan fasilitasi keluarga sakinah, fasilitasi bina lembaga dan sarana prasarana kantor urusan agama, serta pengelolaan sistem informasi urusan agama Islam",
+          "Evaluasi dan penyusunan laporan di bidang urusan agama Islam",
+        ],
+    },
+    // {
+    //     id: "s6",
+    //     nama: "H. Muchamad Syukron, S.Ag",
+    //     jabatan: "Kasi Pendidikan Diniyah dan Pontren",
+    //     foto: "/pejabat-struktural/MUCHAMAD.webp",
+    //     ringkasan:
+    //         "lahir di Sumenep pada 4 Juni 1973. Ia menempuh pendidikan S-1 IPS Sejarah di Universitas Jember (UNEJ) dan lulus pada tahun 2002, kemudian meraih gelar S-2 Magister dari Universitas Muhammadiyah Malang pada tahun 2013. Kariernya dimulai sebagai Guru Sejarah Nasional di MAN 1 Kota Probolinggo sejak tahun 2005. Saat ini, Abdur Rahman menjabat sebagai Kepala Penyelenggara Zakat dan Wakaf, dengan tanggung jawab mengelola dan mengembangkan program zakat serta wakaf untuk kesejahteraan masyarakat di wilayah kota Probolinggo.",
+    //     tugasFungsi: [
+    //       "Penyiapan bahan penyusunan dan pelaksanaan kebijakan teknis dan perencanaan di bidang penerangan agama Islam, dan pemberdayaan zakat dan wakaf",
+    //       "Pelayanan dan pemenuhan standar nasional penerangan agama Islam, dan pemberdayaan zakat dan wakaf",
+    //       "Bimbingan teknis dan supervisi di bidang penerangan dan penyuluhan agama Islam, kemitraan umat, publikasi dakwah, dan hari besar Islam, seni budaya Islam, musabaqah Al-Quran dan Al-Hadits, pemberdayaan, pemantauan, dan evaluasi lembaga pengelola zakat dan harta benda wakaf, serta pengelolaan sistem informasi penerangan agama Islam, dan pemberdayaan zakat dan wakaf",
+    //       "Evaluasi dan penyusunan laporan di bidang penerangan agama Islam, dan pemberdayaan zakat dan wakaf",
+    //     ],
+    // },
+    {
+        id: "s6",
+        nama: "Abdur Rahman",
+        jabatan: "Penyelenggara Zakat dan Wakaf",
+        foto: "/pejabat-struktural/abdur-rahman.webp",
+        ringkasan:
+            "lahir di Sumenep pada 4 Juni 1973. Ia menempuh pendidikan S-1 IPS Sejarah di Universitas Jember (UNEJ) dan lulus pada tahun 2002, kemudian meraih gelar S-2 Magister dari Universitas Muhammadiyah Malang pada tahun 2013. Kariernya dimulai sebagai Guru Sejarah Nasional di MAN 1 Kota Probolinggo sejak tahun 2005. Saat ini, Abdur Rahman menjabat sebagai Kepala Penyelenggara Zakat dan Wakaf, dengan tanggung jawab mengelola dan mengembangkan program zakat serta wakaf untuk kesejahteraan masyarakat di wilayah kota Probolinggo.",
+        tugasFungsi: [
+          "Penyiapan bahan penyusunan dan pelaksanaan kebijakan teknis dan perencanaan di bidang penerangan agama Islam, dan pemberdayaan zakat dan wakaf",
+          "Pelayanan dan pemenuhan standar nasional penerangan agama Islam, dan pemberdayaan zakat dan wakaf",
+          "Bimbingan teknis dan supervisi di bidang penerangan dan penyuluhan agama Islam, kemitraan umat, publikasi dakwah, dan hari besar Islam, seni budaya Islam, musabaqah Al-Quran dan Al-Hadits, pemberdayaan, pemantauan, dan evaluasi lembaga pengelola zakat dan harta benda wakaf, serta pengelolaan sistem informasi penerangan agama Islam, dan pemberdayaan zakat dan wakaf",
+          "Evaluasi dan penyusunan laporan di bidang penerangan agama Islam, dan pemberdayaan zakat dan wakaf",
+        ],
+    },
+];
+
+const misi = [
+    "Meningkatkan kualitas kehidupan beragama yang rukun dan berorientasi pada kemaslahatan",
+    "Meningkatkan akses dan kualitas Pendidikan umum dengan kekhasan agama, pesantren, Pendidikan keagamaan",
+    "Meningkatkan tata kelola pemerintahan yang baik (Good Governance)",
+];
+
+---
+
+<style>
+    [data-anim="down"] { animation: fadeDown 0.5s cubic-bezier(0.16,1,0.3,1) 0.05s both; }
+    [data-anim="up"]   { animation: fadeUp  0.6s cubic-bezier(0.16,1,0.3,1) 0.15s both; }
+
+    @keyframes fadeDown {
+        from { opacity: 0; transform: translateY(-12px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    [data-reveal] {
+        opacity: 0;
+        transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1),
+                    transform 0.6s cubic-bezier(0.16,1,0.3,1);
+    }
+    [data-reveal="up"] { transform: translateY(24px); }
+    [data-reveal].revealed { opacity: 1; transform: none; }
+    [data-delay="1"] { transition-delay: 0.06s; }
+    [data-delay="2"] { transition-delay: 0.12s; }
+    [data-delay="3"] { transition-delay: 0.18s; }
+    [data-delay="4"] { transition-delay: 0.24s; }
+    [data-delay="5"] { transition-delay: 0.30s; }
+
+    .section-anchor { scroll-margin-top: 5rem; }
+
+    .pejabat-card {
+        transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .pejabat-card:hover {
+        border-color: #0f6b44;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.07);
+    }
+
+    .modal-hidden {
+        visibility: hidden;
+    }
+    .modal-hidden .modal-panel,
+    .modal-hidden .modal-backdrop {
+        pointer-events: none;
+    }
+
+    .modal-panel {
+        transform: translateY(16px);
+        opacity: 0;
+        transition: transform 0.28s cubic-bezier(0.16,1,0.3,1),
+                    opacity 0.22s ease;
+    }
+    #modal-overlay:not(.modal-hidden) .modal-panel {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    .modal-backdrop {
+        opacity: 0;
+        transition: opacity 0.22s ease;
+    }
+    #modal-overlay:not(.modal-hidden) .modal-backdrop {
+        opacity: 1;
+    }
+</style>
+
+<BaseLayout title="Profil Kantor — Kemenag Kota Probolinggo">
+
+    <!-- ── Page header ────────────────────────────────── -->
+    <div data-anim="down" class="pt-8 pb-6">
+        <a href="/portal"
+           class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink/35 hover:text-green transition-colors mb-4">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+            </svg>
+            Portal
+        </a>
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-1 h-7 bg-green shrink-0"></div>
+            <h1 class="text-4xl font-extrabold uppercase tracking-tight text-ink">
+                Profil Kantor
+            </h1>
+        </div>
+        <p class="text-sm text-ink/45 mt-1 ml-4">
+            Informasi kelembagaan Kantor Kementerian Agama Kota Probolinggo.
+        </p>
+    </div>
+
+    <!-- ── Section nav ────────────────────────────────── -->
+    <div data-anim="up" class="flex items-center gap-2 flex-wrap mb-12 pb-6 border-b border-ink/8">
+        {[
+            { href: "#sejarah",             label: "Sejarah" },
+            { href: "#visi-misi",           label: "Visi & Misi" },
+            { href: "#struktur-organisasi", label: "Struktur Organisasi" },
+        ].map(({ href, label }) => (
+            <a href={href}
+               class="px-4 py-2 text-[11px] font-bold uppercase tracking-wider border border-ink/15 text-ink/50 hover:border-green hover:text-green transition-colors">
+                {label}
+            </a>
+        ))}
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SEJARAH -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section id="sejarah" class="section-anchor pb-16 mb-2 border-b border-ink/8">
+
+        <div class="mb-10">
+            <div data-reveal="up" class="flex items-center gap-3 mb-3">
+                <div class="w-1 h-6 bg-green"></div>
+                <span class="text-[11px] font-black uppercase tracking-[0.18em] text-green">Sejarah</span>
+            </div>
+            <h2 data-reveal="up" data-delay="1"
+                class="text-3xl sm:text-4xl font-extrabold uppercase tracking-tight text-ink mb-3">
+                Kemenag Kota Probolinggo<br/>dari Masa ke Masa
+            </h2>
+            <p data-reveal="up" data-delay="2"
+               class="text-sm text-ink/50 leading-relaxed">
+                   Sebelum tahun 1981 Kementerian Agama Kota Probolinggo telah ada dengan sebutan nama Departemen Agama Kota Madya Probolinggo, pada waktu itu Departemen Agama Kodya Probolinggo masih menjadi satu dengan Departemen Agama Kabupaten Probolinggo
+                   <br> <br>
+                   Pada tahun 1981 sampai dengan tahun 1986 Departemen Agama Kota Madya Probolinggo dipimpin oleh Bpk. H. Buhori. Karena adanya pemekaran (pemisahan) wilayah Probolinggo menjadi Kodya dan Kabupaten, Departemen Agama Kodya Probolinggo mengikuti alur perubahan kepemerintahan tersebut dan dipisah menjadi 2 (dua) bagian yaitu Departemen Agama Kodya Probolinggo dan Departemen Agama Kabupaten Probolinggo.
+                   <br><br>
+                   Pada tahun 2002 Departemen Agama Kodya Probolinggo berubah nama menjadi Departemen Agama Kota Probolinggo dan pada tahun 2010 sesuai dengan Peraturan Presiden Nomor 47 Tahun 2009 dan KMA Nomor 1 Tahun 2010 Departemen Agama berubah nama menjadi Kementerian Agama. Seiring dengan perubahan tersebut Departemen Agama Kota Probolinggo berubah nama kembali menjadi Kementerian Agama Kota Probolinggo.
+                   <br><br>
+                   Lokasi awal Kantor Kementerian Agama Kota Probolinggo berlokasi di Jl. Panglima Sudirman, yang sebelumnya merupakan rumah Keluarga Zulkifli Choliq. Kini Kementerian Agama Kota Probolinggo telah memiliki kantor tersendiri yang berlokasi di Jl. Mastrip No 323 Kel. Kanigaran Kec. Kanigaran Kota Probolinggo. Kantor ini dibangun pada tahun 1983/1984 dan diresmikan pada tanggal 6 Januari 1986 oleh Bpk. Drs. Latief Anwar, yang pada saat itu menjabat sebagai Walikotamadya KDH. Tk. II Probolinggo.
+                   <br><br>
+                   Sejak tahun 1981 hingga saat ini, kepemimpinan Kantor Kementerian Agama Kota Probolinggo telah dipimpin oleh 11 orang Kepala Kantor di antaranya:
+            </p>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {kepalaSatker.map((k, i) => (
+                <div data-reveal="up" data-delay={String((i % 5) + 1)}
+                     class={`flex flex-col items-center text-center p-4 border relative
+                         ${k.current
+                             ? "border-green/30 bg-green/5"
+                             : "border-ink/10 bg-cream"
+                         }`}>
+
+                    <!-- Photo placeholder -->
+                    <div class={`w-20 h-24 mb-3 flex items-center justify-center relative overflow-hidden
+                        ${k.current ? "bg-green/8 border border-green/15" : "bg-ink/5 border border-ink/8"}`}>
+                        <span class={`absolute top-1.5 left-1.5 text-[9px] font-black w-5 h-5 flex items-center justify-center
+                            ${k.current ? "bg-green text-white" : "bg-ink/10 text-ink/40"}`}>
+                            {k.no}
+                        </span>
+                        <img src={k.foto} alt={k.nama} class="w-full h-full object-cover"/>
+                    </div>
+
+                    <h3 class={`text-[11px] font-bold leading-snug mb-1
+                        ${k.current ? "text-green" : "text-ink"}`}>
+                        {k.nama}
+                    </h3>
+                    <p class="text-[10px] text-ink/40 font-mono tracking-wide">{k.periode}</p>
+
+                    {k.current && (
+                        <span class="mt-2 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 bg-green text-white">
+                            Petahana
+                        </span>
+                    )}
+                </div>
+            ))}
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- VISI & MISI -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section id="visi-misi" class="section-anchor py-16 border-b border-ink/8">
+
+        <div class="mb-10">
+            <div data-reveal="up" class="flex items-center gap-3 mb-3">
+                <div class="w-1 h-6 bg-green"></div>
+                <span class="text-[11px] font-black uppercase tracking-[0.18em] text-green">Visi & Misi</span>
+            </div>
+            <h2 data-reveal="up" data-delay="1"
+                class="text-3xl sm:text-4xl font-extrabold uppercase tracking-tight text-ink">
+                Arah &amp; Komitmen Kami
+            </h2>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-14">
+
+            <!-- Visi -->
+            <div data-reveal="up" class="lg:col-span-2">
+                <div class="flex items-center gap-2 mb-5">
+                    <div class="w-1 h-5 bg-yellow shrink-0"></div>
+                    <span class="text-[11px] font-black uppercase tracking-[0.18em] text-yellow">Visi</span>
+                </div>
+                <div class="relative border-l-2 border-yellow pl-5">
+                    <p class="text-base sm:text-lg font-bold text-ink leading-relaxed">
+                        "Terwujudnya Masyarakat yang Rukun, Maslahat, dan Cerdas
+                        Bersama Indonesia Maju Menuju Indonesia Emas 2045"
+                    </p>
+                </div>
+            </div>
+
+            <!-- Misi -->
+            <div data-reveal="up" data-delay="1" class="lg:col-span-3">
+                <div class="flex items-center gap-2 mb-5">
+                    <div class="w-1 h-5 bg-green shrink-0"></div>
+                    <span class="text-[11px] font-black uppercase tracking-[0.18em] text-green">Misi</span>
+                </div>
+                <ol class="space-y-3">
+                    {misi.map((m, i) => (
+                        <li class="flex items-start gap-3">
+                            <span class="shrink-0 w-6 h-6 bg-ink text-cream text-[11px] font-black flex items-center justify-center mt-0.5">
+                                {i + 1}
+                            </span>
+                            <span class="text-sm text-ink/70 leading-relaxed pt-0.5">{m}</span>
+                        </li>
+                    ))}
+                </ol>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- STRUKTUR ORGANISASI -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section id="struktur-organisasi" class="section-anchor py-16">
+
+        <div class="mb-10">
+            <div data-reveal="up" class="flex items-center gap-3 mb-3">
+                <div class="w-1 h-6 bg-green"></div>
+                <span class="text-[11px] font-black uppercase tracking-[0.18em] text-green">Struktur Organisasi</span>
+            </div>
+            <h2 data-reveal="up" data-delay="1"
+                class="text-3xl sm:text-4xl font-extrabold uppercase tracking-tight text-ink mb-3">
+                Pejabat &amp; Unit Kerja
+            </h2>
+            <p data-reveal="up" data-delay="2"
+               class="text-sm text-ink/50 max-w-lg leading-relaxed">
+                Klik pada kartu pejabat untuk melihat uraian tugas dan fungsi jabatan.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {struktur.map((p, i) => (
+                <button
+                    type="button"
+                    data-reveal="up"
+                    data-delay={String((i % 3) + 1)}
+                    class="pejabat-card text-left border border-ink/10 bg-cream p-5 flex items-start gap-4 w-full group cursor-pointer focus:outline-none focus:ring-2 focus:ring-green/30"
+                    data-pejabat={JSON.stringify({ nama: p.nama, jabatan: p.jabatan, foto: p.foto, ringkasan: p.ringkasan, tugasFungsi: p.tugasFungsi })}
+                    role="button"
+                    tabindex="0"
+                >
+                    <!-- Photo placeholder -->
+                    <div class="w-16 h-20 shrink-0 bg-ink/5 border border-ink/8 flex items-center justify-center group-hover:bg-green/8 group-hover:border-green/20 transition-colors">
+                        <img src={p.foto} alt={p.nama} class="w-full h-full object-cover" />
+                    </div>
+
+                    <div class="flex-1 min-w-0">
+                        <span class="text-[10px] font-black uppercase tracking-wider text-green/70 block mb-1 group-hover:text-green transition-colors">
+                            {p.jabatan}
+                        </span>
+                        <h3 class="text-sm font-bold text-ink leading-snug mb-3 group-hover:text-ink transition-colors">
+                            {p.nama}
+                        </h3>
+                        <span class="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-ink/30 group-hover:text-green transition-colors">
+                            <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                            </svg>
+                            Tugas &amp; Fungsi
+                        </span>
+                    </div>
+
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"
+                         class="shrink-0 text-ink/15 group-hover:text-green/50 transition-colors mt-1">
+                        <path d="M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
+                    </svg>
+                </button>
+            ))}
+        </div>
+    </section>
+
+    <!-- ══ MODAL TUGAS & FUNGSI ══════════════════════════════ -->
+<div id="modal-overlay"
+     class="modal-hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6 pointer-events-none"
+     aria-modal="true" role="dialog" aria-labelledby="modal-nama">
+
+    <!-- Backdrop -->
+    <div class="modal-backdrop absolute inset-0 bg-ink/60 backdrop-blur-sm cursor-pointer pointer-events-auto"
+         id="modal-backdrop"></div>
+
+    <!-- Panel -->
+    <div class="modal-panel relative bg-cream w-full sm:max-w-lg max-h-[88vh] sm:max-h-[80vh] overflow-y-auto shadow-2xl pointer-events-auto">
+
+        <!-- Close -->
+        <button id="modal-close"
+                class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center border border-ink/15 text-ink/40 hover:border-ink/40 hover:text-ink transition-colors z-10"
+                aria-label="Tutup">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+                <path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+            </svg>
+        </button>
+
+        <div class="p-6 sm:p-8">
+
+            <!-- Header profil -->
+            <div class="mb-6 pr-10 text-center">
+                <p id="modal-jabatan" class="text-[11px] font-black uppercase tracking-wider text-green mb-2"></p>
+                <h2 id="modal-nama" class="text-xl sm:text-2xl font-extrabold text-ink leading-snug max-w-md mx-auto"></h2>
+
+                <div class="mt-5 flex justify-center">
+                    <div class="w-28 h-36 sm:w-32 sm:h-40 bg-ink/5 border border-ink/8 overflow-hidden rounded-xl shadow-sm">
+                        <img
+                            id="modal-foto"
+                            src="/kepala-kantor/DIDIK.webp"
+                            alt="Foto pejabat"
+                            class="w-full h-full object-cover"
+                        />
+                    </div>
+                </div>
+            </div>
+
+    
+                <p class="text-[11px] font-black uppercase tracking-wider text-ink/35 mb-2">
+                    Ringkasan Profil
+                </p>
+                <p id="modal-ringkasan" class="text-sm text-ink/70 text-justify leading-relaxed mb-3"></p>
+
+            <div class="border-t border-ink/8 mb-5"></div>
+
+            <!-- Tugas & Fungsi -->
+            <h3 class="text-[11px] font-black uppercase tracking-wider text-ink/35 mb-3">
+                Tugas &amp; Fungsi
+            </h3>
+            <ul id="modal-tugas" class="space-y-2.5"></ul>
+        </div>
+    </div>
+</div>
+
+</BaseLayout>
+
+<script>
+    type PejabatModalData = {
+        nama?: string;
+        jabatan?: string;
+        foto?: string;
+        ringkasan?: string;
+        tugasFungsi?: string[];
+    };
+
+    function initProfilPage() {
+        const overlayEl = document.getElementById("modal-overlay");
+        const backdropEl = document.getElementById("modal-backdrop");
+        const closeBtnEl = document.getElementById("modal-close");
+        const elNamaEl = document.getElementById("modal-nama");
+        const elJabatanEl = document.getElementById("modal-jabatan");
+        const elFotoEl = document.getElementById("modal-foto");
+        const elRingkasanEl = document.getElementById("modal-ringkasan");
+        const elTugasEl = document.getElementById("modal-tugas");
+
+        if (
+            !(overlayEl instanceof HTMLElement) ||
+            !(backdropEl instanceof HTMLElement) ||
+            !(closeBtnEl instanceof HTMLElement) ||
+            !(elNamaEl instanceof HTMLElement) ||
+            !(elJabatanEl instanceof HTMLElement) ||
+            !(elFotoEl instanceof HTMLImageElement) ||
+            !(elRingkasanEl instanceof HTMLElement) ||
+            !(elTugasEl instanceof HTMLElement)
+        ) {
+            return;
+        }
+
+        const overlay = overlayEl;
+        const backdrop = backdropEl;
+        const closeBtn = closeBtnEl;
+        const elNama = elNamaEl;
+        const elJabatan = elJabatanEl;
+        const elFoto = elFotoEl;
+        const elRingkasan = elRingkasanEl;
+        const elTugas = elTugasEl;
+
+        let lastFocused: HTMLElement | null = null;
+
+        function clearTugas() {
+            while (elTugas.firstChild) {
+                elTugas.removeChild(elTugas.firstChild);
+            }
+        }
+
+        function openModal(data: PejabatModalData, trigger: HTMLElement) {
+            lastFocused = trigger;
+            elNama.textContent = data.nama ?? "";
+            elJabatan.textContent = data.jabatan ?? "";
+            elFoto.src = data.foto || "/kepala-kantor/DIDIK.webp";
+            elFoto.alt = data.nama ? `Foto ${data.nama}` : "Foto pejabat";
+            elRingkasan.textContent = data.ringkasan ?? "";
+
+            clearTugas();
+            (data.tugasFungsi ?? []).forEach((item: string) => {
+                const li = document.createElement("li");
+                li.className = "flex items-start gap-2.5";
+
+                const dot = document.createElement("span");
+                dot.className = "shrink-0 w-1.5 h-1.5 rounded-full bg-green mt-[6px]";
+
+                const text = document.createElement("span");
+                text.className = "text-sm text-ink/70 leading-relaxed";
+                text.textContent = item;
+
+                li.append(dot, text);
+                elTugas.appendChild(li);
+            });
+
+            overlay.classList.remove("modal-hidden");
+            overlay.style.pointerEvents = "auto";
+            document.body.style.overflow = "hidden";
+            closeBtn.focus();
+        }
+
+        function closeModal() {
+            overlay.classList.add("modal-hidden");
+            overlay.style.pointerEvents = "none";
+            document.body.style.overflow = "";
+            lastFocused?.focus();
+        }
+
+        document
+            .querySelectorAll<HTMLButtonElement>("[data-pejabat]")
+            .forEach((card) => {
+                if (card.dataset.modalBound === "true") return;
+                card.dataset.modalBound = "true";
+
+                const trigger = card;
+                const handleOpen = () => {
+                    try {
+                        const data = JSON.parse(
+                            trigger.dataset.pejabat || "{}",
+                        ) as PejabatModalData;
+                        openModal(data, trigger);
+                    } catch (error) {
+                        console.error("Gagal membuka modal pejabat:", error);
+                    }
+                };
+
+                trigger.addEventListener("click", handleOpen);
+                trigger.addEventListener("keydown", (event: KeyboardEvent) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        handleOpen();
+                    }
+                });
+            });
+
+        if (backdrop.dataset.modalBound !== "true") {
+            backdrop.dataset.modalBound = "true";
+            backdrop.addEventListener("click", closeModal);
+        }
+
+        if (closeBtn.dataset.modalBound !== "true") {
+            closeBtn.dataset.modalBound = "true";
+            closeBtn.addEventListener("click", closeModal);
+        }
+
+        if (document.body.dataset.profilEscapeBound !== "true") {
+            document.body.dataset.profilEscapeBound = "true";
+            document.addEventListener("keydown", (event: KeyboardEvent) => {
+                if (event.key === "Escape") closeModal();
+            });
+        }
+
+        const obs = new IntersectionObserver(
+            (entries) =>
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add("revealed");
+                        obs.unobserve(entry.target);
+                    }
+                }),
+            { threshold: 0.1, rootMargin: "0px 0px -30px 0px" },
+        );
+        document.querySelectorAll("[data-reveal]").forEach((el) => obs.observe(el));
+    }
+
+    initProfilPage();
+    document.addEventListener("astro:page-load", initProfilPage);
+</script>

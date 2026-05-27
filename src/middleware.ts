@@ -105,16 +105,35 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // ── Role-based access ─────────────────────────────────
 
-  // Admin routes: hanya super_admin, admin, atau operator
+  // Admin routes: hanya role panel admin yang bisa masuk
   if (
     isAdminRoute &&
-    !["super_admin", "admin", "operator"].includes(user?.role)
+    !["super_admin", "admin", "operator", "humas"].includes(user?.role)
   ) {
     console.log(
       "[middleware] Non-admin role cannot access admin routes:",
       user?.role,
     );
     return redirect("/admin/login");
+  }
+
+  if (isAdminRoute && user?.role === "humas") {
+    const allowedHumasPaths = [
+      "/admin/berita",
+      "/admin/pengaduan",
+      "/admin/survei",
+      "/admin/profil",
+      "/api/admin/auth/logout",
+    ];
+
+    if (url.pathname === "/admin" || url.pathname === "/admin/") {
+      return redirect("/admin/berita");
+    }
+
+    if (!allowedHumasPaths.some((path) => url.pathname.startsWith(path))) {
+      console.log("[middleware] Humas cannot access admin route:", url.pathname);
+      return redirect("/admin/berita");
+    }
   }
 
   // Internal routes: semua pegawai bisa akses (semua role adalah ASN)

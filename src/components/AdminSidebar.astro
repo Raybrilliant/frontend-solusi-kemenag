@@ -8,6 +8,8 @@ const user = Astro.locals.user ?? null;
 const userName = user?.nama ?? "Admin";
 const userEmail = user?.email ?? "";
 const userRole = user?.role ?? "";
+const isHumas = userRole === "humas";
+const isAdminManager = userRole === "super_admin" || userRole === "admin";
 const userInitials = userName
     .split(" ")
     .map((n: string) => n[0])
@@ -15,29 +17,56 @@ const userInitials = userName
     .toUpperCase()
     .slice(0, 2);
 
+const humasItems = [
+    {
+        href: "/admin/berita",
+        icon: "mdi:newspaper-variant-outline",
+        label: "Manajemen Berita",
+    },
+    {
+        href: "/admin/pengaduan",
+        icon: "mdi:message-alert-outline",
+        label: "Pengaduan",
+    },
+    {
+        href: "/admin/survei",
+        icon: "mdi:clipboard-check-outline",
+        label: "Manajemen Survei",
+    },
+];
+
 const navItems = [
-    { href: "/admin", icon: "mdi:view-dashboard-outline", label: "Dashboard" },
-    {
-        href: "/admin/permohonan",
-        icon: "mdi:clipboard-list-outline",
-        label: "Permohonan",
-    },
-    {
-        href: "/admin/layanan",
-        icon: "mdi:file-document-outline",
-        label: "Layanan",
-    },
-    ...(userRole === "super_admin" || userRole === "admin"
+    ...(isHumas
+        ? humasItems
+        : [
+              {
+                  href: "/admin",
+                  icon: "mdi:view-dashboard-outline",
+                  label: "Dashboard",
+              },
+              {
+                  href: "/admin/permohonan",
+                  icon: "mdi:clipboard-list-outline",
+                  label: "Permohonan",
+              },
+              {
+                  href: "/admin/layanan",
+                  icon: "mdi:file-document-outline",
+                  label: "Layanan",
+              },
+          ]),
+    ...(isAdminManager ? humasItems : []),
+    ...(isAdminManager
         ? [
+              {
+                  href: "/admin/regulasi",
+                  icon: "mdi:file-document-multiple-outline",
+                  label: "Regulasi",
+              },
               {
                   href: "/admin/kategori",
                   icon: "mdi:shape-outline",
                   label: "Kategori Layanan",
-              },
-              {
-                  href: "/admin/pengaduan",
-                  icon: "mdi:message-alert-outline",
-                  label: "Pengaduan",
               },
           ]
         : []),

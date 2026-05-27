@@ -1,4 +1,8 @@
 import type { APIRoute } from "astro";
+import {
+  collectUploadFilenames,
+  deleteUploadedFiles,
+} from "../../../../lib/upload-cleanup";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
@@ -69,12 +73,27 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
 // Proxy: DELETE /api/v1/pengaduan/:id
 export const DELETE: APIRoute = async ({ params, cookies }) => {
   try {
+    const headers = getAuthHeaders(cookies);
+    const detailRes = await fetch(
+      `${BACKEND_URL}/api/v1/pengaduan/${params.id}`,
+      { headers },
+    );
+    const detail = (await safeJson(detailRes)) as any;
+    const filenames = detailRes.ok
+      ? collectUploadFilenames(detail?.data ?? detail)
+      : [];
+
     const res = await fetch(
       `${BACKEND_URL}/api/v1/pengaduan/${params.id}`,
-      { method: "DELETE", headers: getAuthHeaders(cookies) },
+      { method: "DELETE", headers },
     );
-    const data = await safeJson(res);
-    return new Response(JSON.stringify(data), {
+    const data = (await safeJson(res)) as any;
+    const storageCleanup =
+      res.ok && data?.success !== false
+        ? await deleteUploadedFiles(filenames, headers)
+        : [];
+
+    return new Response(JSON.stringify({ ...data, storageCleanup }), {
       status: res.ok ? 200 : res.status,
       headers: { "Content-Type": "application/json" },
     });

@@ -2,7 +2,9 @@
 import '../styles/global.css'
 import Navbar from '../components/Navbar.astro'
 import FloatingActions from '../components/Svelte/FloatingActions.svelte'
+import { Icon } from 'astro-icon/components'
 let { title } = Astro.props
+
 ---
 
 <html lang="en" class="scroll-smooth">
@@ -16,9 +18,35 @@ let { title } = Astro.props
 		<meta name="generator" content={Astro.generator} />
 		<title>{title ? `${title} - ` : ""} Kantor Kementerian Agama Kota Probolinggo</title>
 	</head>
-	<body class="px-4 sm:px-8 md:px-14 lg:px-20 mb-10 md:mb-20 bg-cream">
+	<body class="px-4 sm:px-8 md:px-14 lg:px-20 bg-cream">
 		<Navbar />
 		<slot></slot>
+		<footer class="-mx-4 sm:-mx-8 md:-mx-14 lg:-mx-20 px-4 sm:px-8 md:px-14 lg:px-20 mt-10 md:mt-20 py-7 bg-cream border-t border-ink/8">
+			<div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+				<p class="text-[11px] text-ink/35 font-medium">
+					© {new Date().getFullYear()} Kantor Kementerian Agama Kota Probolinggo
+				</p>
+				<div class="flex items-center gap-2">
+					<!-- Instagram -->
+					<a href="https://www.instagram.com/kemenagkoprob/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"
+					   class="w-8 h-8 flex items-center justify-center text-ink/30 hover:text-ink border border-ink/10 hover:border-ink/30 transition-colors">
+						<Icon name="mdi:instagram" width="16" height="16" />
+					</a>
+					<!-- TikTok (inline SVG — tidak tersedia di MDI) -->
+					<a href="#" target="_blank" rel="noopener noreferrer" aria-label="TikTok"
+					   class="w-8 h-8 flex items-center justify-center text-ink/30 hover:text-ink border border-ink/10 hover:border-ink/30 transition-colors">
+						<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true">
+							<path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.95a8.28 8.28 0 0 0 4.84 1.55V7.05a4.85 4.85 0 0 1-1.07-.36z"/>
+						</svg>
+					</a>
+					<!-- Facebook -->
+					<a href="https://www.facebook.com/kemenagkoprob/" target="_blank" rel="noopener noreferrer" aria-label="Facebook"
+					   class="w-8 h-8 flex items-center justify-center text-ink/30 hover:text-ink border border-ink/10 hover:border-ink/30 transition-colors">
+						<Icon name="mdi:facebook" width="16" height="16" />
+					</a>
+				</div>
+			</div>
+		</footer>
 		<FloatingActions client:load />
 	</body>
 </html>

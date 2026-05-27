@@ -15,6 +15,7 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     optimizeDeps: {
+      include: ["@tanstack/table-core"],
       exclude: ["@tanstack/svelte-table"],
     },
   },
