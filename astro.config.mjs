@@ -11,7 +11,14 @@ import node from "@astrojs/node";
 
 // https://astro.build/config
 export default defineConfig({
+  site: "https://kemenagkotaprobolinggo.id",
   output: "server",
+  security: {
+    allowedDomains: [
+      { hostname: "kemenagkotaprobolinggo.id", protocol: "https" },
+      { hostname: "www.kemenagkotaprobolinggo.id", protocol: "https" },
+    ],
+  },
   vite: {
     plugins: [tailwindcss()],
     optimizeDeps: {
