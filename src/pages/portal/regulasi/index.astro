@@ -2,7 +2,7 @@
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import { toUploadProxyUrl } from "../../../lib/upload-url";
 
-const BACKEND_URL = import.meta.env.BACKEND_URL ?? "http://localhost:3000";
+const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
 const url = new URL(Astro.request.url);
 const typeFilter = url.searchParams.get("type") ?? "";
