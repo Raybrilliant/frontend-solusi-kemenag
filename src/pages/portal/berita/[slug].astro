@@ -31,7 +31,10 @@ try {
                                   ...block.data,
                                   file: {
                                       ...block.data.file,
-                                      url: toUploadProxyUrl(block.data.file.url) || block.data.file.url,
+                                      url:
+                                          toUploadProxyUrl(
+                                              block.data.file.url,
+                                          ) || block.data.file.url,
                                   },
                               },
                           };
@@ -51,7 +54,10 @@ try {
         related = (relData?.data ?? [])
             .filter((b: any) => b.slug !== slug)
             .slice(0, 3)
-            .map((b: any) => ({ ...b, thumbnail: toUploadProxyUrl(b.thumbnail) || b.thumbnail }));
+            .map((b: any) => ({
+                ...b,
+                thumbnail: toUploadProxyUrl(b.thumbnail) || b.thumbnail,
+            }));
     }
 } catch {
     return Astro.redirect("/portal/berita");
@@ -105,10 +111,12 @@ function renderBlock(block: any): string {
 
         case "list": {
             const tag = d.style === "ordered" ? "ol" : "ul";
-            const listCls = d.style === "ordered" ? "list-decimal" : "list-disc";
+            const listCls =
+                d.style === "ordered" ? "list-decimal" : "list-disc";
             const items = (d.items ?? [])
                 .map((item: any) => {
-                    const text = typeof item === "string" ? item : item?.content ?? "";
+                    const text =
+                        typeof item === "string" ? item : (item?.content ?? "");
                     return `<li class="mb-1.5">${text}</li>`;
                 })
                 .join("");
@@ -149,7 +157,10 @@ function renderBlock(block: any): string {
                 .map((row: string[], i: number) => {
                     const tag = hasHeader && i === 0 ? "th" : "td";
                     const cells = row
-                        .map((cell: string) => `<${tag} class="border border-ink/10 px-3 py-2 text-[13px]">${cell}</${tag}>`)
+                        .map(
+                            (cell: string) =>
+                                `<${tag} class="border border-ink/10 px-3 py-2 text-[13px]">${cell}</${tag}>`,
+                        )
                         .join("");
                     return `<tr>${cells}</tr>`;
                 })
@@ -177,25 +188,25 @@ const waUrl = `https://wa.me/?text=${shareText}`;
 const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`;
 
 const ogImage = article.thumbnail
-    ? (article.thumbnail.startsWith("http")
+    ? article.thumbnail.startsWith("http")
         ? article.thumbnail
-        : `${Astro.url.origin}${article.thumbnail}`)
+        : `${Astro.url.origin}${article.thumbnail}`
     : undefined;
 ---
 
 <style>
-    /* Reading progress — 4 edges */
-    .prog-edge {
+    /* Reading progress — top only */
+    .prog-top {
         position: fixed;
+        top: 0;
+        left: 0;
         z-index: 9999;
-        background: #0F6B44;
+        width: 0%;
+        height: 5px;
+        background: #0f6b44;
         pointer-events: none;
-        transition: width 0.06s linear, height 0.06s linear;
+        transition: width 0.06s linear;
     }
-    #bar-top    { top: 0;    left: 0;  height: 3px; width: 0%; }
-    #bar-right  { top: 0;    right: 0; width: 3px;  height: 0%; }
-    #bar-bottom { bottom: 0; right: 0; height: 3px; width: 0%; }
-    #bar-left   { left: 0;   bottom: 0; width: 3px; height: 0%; }
 </style>
 
 <BaseLayout
@@ -204,28 +215,33 @@ const ogImage = article.thumbnail
     ogDescription={article.ringkasan ?? undefined}
     ogImage={ogImage}
 >
-
-    <!-- Progress edges -->
-    <div id="bar-top"    class="prog-edge"></div>
-    <div id="bar-right"  class="prog-edge"></div>
-    <div id="bar-bottom" class="prog-edge"></div>
-    <div id="bar-left"   class="prog-edge"></div>
+    <!-- Progress top -->
+    <div id="bar-top" class="prog-top"></div>
 
     <!-- ── Breadcrumb ───────────────────────────────── -->
     <div class="pt-6 pb-4">
-        <nav class="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-ink/30">
-            <a href="/portal" class="hover:text-green transition-colors">Beranda</a>
+        <nav
+            class="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-ink/30"
+        >
+            <a href="/portal" class="hover:text-green transition-colors"
+                >Beranda</a
+            >
             <span>/</span>
-            <a href="/portal/berita" class="hover:text-green transition-colors">Berita</a>
+            <a href="/portal/berita" class="hover:text-green transition-colors"
+                >Berita</a
+            >
             <span>/</span>
-            <span class="text-ink/50 normal-case line-clamp-1">{article.judul}</span>
+            <span class="text-ink/50 normal-case line-clamp-1"
+                >{article.judul}</span
+            >
         </nav>
     </div>
 
     <!-- ── Thumbnail hero ──────────────────────────── -->
-    {article.thumbnail && (
-        <>
-            {/*
+    {
+        article.thumbnail && (
+            <>
+                {/*
                 ── VERSI BARU: foto penuh tanpa crop ──
                 Untuk mengaktifkan: uncomment blok ini, comment VERSI LAMA di bawah.
 
@@ -248,62 +264,95 @@ const ogImage = article.thumbnail
                 </div>
             */}
 
-            {/* ── VERSI LAMA: fixed height 420px, object-cover (aktif) ── */}
-            <div class="-mx-4 sm:-mx-8 md:-mx-14 lg:-mx-20 mb-8 relative overflow-hidden" style="height: 420px;">
-                <img
-                    src={article.thumbnail}
-                    alt={article.judul}
-                    class="w-full h-full object-cover object-[center_20%]"
-                    loading="eager"
-                />
-                <div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.72));"></div>
-                <div class="absolute bottom-0 left-0 right-0 px-4 sm:px-8 md:px-14 lg:px-20 pb-8">
-                    <span class={`inline-block text-[10px] font-black uppercase tracking-wider px-2 py-1 mb-3 ${categoryColor(article.kategori)}`}>
+                {/* ── VERSI LAMA: fixed height 420px, object-cover (aktif) ── */}
+                <div
+                    class="-mx-4 sm:-mx-8 md:-mx-14 lg:-mx-20 mb-8 relative overflow-hidden"
+                    style="height: 420px;"
+                >
+                    <img
+                        src={article.thumbnail}
+                        alt={article.judul}
+                        class="w-full h-full object-cover object-[center_20%]"
+                        loading="eager"
+                    />
+                    <div
+                        class="absolute inset-0"
+                        style="background: linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.72));"
+                    />
+                    <div class="absolute bottom-0 left-0 right-0 px-4 sm:px-8 md:px-14 lg:px-20 pb-8">
+                        <span
+                            class={`inline-block text-[10px] font-black uppercase tracking-wider px-2 py-1 mb-3 ${categoryColor(article.kategori)}`}
+                        >
+                            {article.kategori}
+                        </span>
+                        <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white leading-tight max-w-3xl">
+                            {article.judul}
+                        </h1>
+                    </div>
+                </div>
+            </>
+        )
+    }
+
+    <div class="max-w-3xl mx-auto">
+        <!-- ── Title (no thumbnail) ─────────────────── -->
+        {
+            !article.thumbnail && (
+                <div class="mb-8">
+                    <span
+                        class={`inline-block text-[10px] font-black uppercase tracking-wider px-2 py-1 mb-4 ${categoryColor(article.kategori)}`}
+                    >
                         {article.kategori}
                     </span>
-                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white leading-tight max-w-3xl">
+                    <h1 class="text-3xl sm:text-4xl font-extrabold text-ink leading-tight">
                         {article.judul}
                     </h1>
                 </div>
-            </div>
-        </>
-    )}
-
-    <div class="max-w-3xl mx-auto">
-
-        <!-- ── Title (no thumbnail) ─────────────────── -->
-        {!article.thumbnail && (
-            <div class="mb-8">
-                <span class={`inline-block text-[10px] font-black uppercase tracking-wider px-2 py-1 mb-4 ${categoryColor(article.kategori)}`}>
-                    {article.kategori}
-                </span>
-                <h1 class="text-3xl sm:text-4xl font-extrabold text-ink leading-tight">
-                    {article.judul}
-                </h1>
-            </div>
-        )}
+            )
+        }
 
         <!-- ── Meta row ─────────────────────────────── -->
-        <div class="flex flex-wrap items-center gap-x-5 gap-y-2 pb-5 mb-8 border-b border-ink/8 text-[12px] text-ink/40 font-medium">
+        <div
+            class="flex flex-wrap items-center gap-x-5 gap-y-2 pb-5 mb-8 border-b border-ink/8 text-[12px] text-ink/40 font-medium"
+        >
             <span class="flex items-center gap-1.5">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
-                    <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+                <svg
+                    viewBox="0 0 24 24"
+                    width="13"
+                    height="13"
+                    fill="currentColor"
+                >
+                    <path
+                        d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"
+                    ></path>
                 </svg>
                 {formatDate(article.publishedAt ?? article.createdAt)}
             </span>
             <span class="flex items-center gap-1.5">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
-                    <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                <svg
+                    viewBox="0 0 24 24"
+                    width="13"
+                    height="13"
+                    fill="currentColor"
+                >
+                    <path
+                        d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
+                    ></path>
                 </svg>
                 {formatViews(article.views)} kali dibaca
             </span>
-            <span class="flex items-center gap-1.5 ml-auto" id="reading-time-label">
+            <span
+                class="flex items-center gap-1.5 ml-auto"
+                id="reading-time-label"
+            >
                 <!-- filled by JS -->
             </span>
         </div>
 
         <!-- ── Ringkasan ─────────────────────────────── -->
-        <p class="text-base sm:text-lg text-ink/55 leading-relaxed mb-8 font-medium italic border-l-4 border-green pl-5">
+        <p
+            class="text-base sm:text-lg text-ink/55 leading-relaxed mb-8 font-medium italic border-l-4 border-green pl-5"
+        >
             {article.ringkasan}
         </p>
 
@@ -314,33 +363,66 @@ const ogImage = article.thumbnail
 
         <!-- ── Share ─────────────────────────────────── -->
         <div class="border-t border-b border-ink/8 py-6 mb-10">
-            <p class="text-[11px] font-black uppercase tracking-[0.15em] text-ink/30 mb-4">
+            <p
+                class="text-[11px] font-black uppercase tracking-[0.15em] text-ink/30 mb-4"
+            >
                 Bagikan Artikel
             </p>
             <div class="flex items-center gap-3 flex-wrap">
                 <!-- WhatsApp -->
-                <a href={waUrl} target="_blank" rel="noopener noreferrer"
-                   class="flex items-center gap-2 px-4 py-2.5 bg-[#25D366] text-white text-[12px] font-bold hover:opacity-90 transition-opacity">
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
-                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/>
+                <a
+                    href={waUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="flex items-center gap-2 px-4 py-2.5 bg-[#25D366] text-white text-[12px] font-bold hover:opacity-90 transition-opacity"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        width="15"
+                        height="15"
+                        fill="currentColor"
+                    >
+                        <path
+                            d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"
+                        ></path>
                     </svg>
                     WhatsApp
                 </a>
 
                 <!-- Facebook -->
-                <a href={fbUrl} target="_blank" rel="noopener noreferrer"
-                   class="flex items-center gap-2 px-4 py-2.5 bg-[#1877F2] text-white text-[12px] font-bold hover:opacity-90 transition-opacity">
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
-                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                <a
+                    href={fbUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="flex items-center gap-2 px-4 py-2.5 bg-[#1877F2] text-white text-[12px] font-bold hover:opacity-90 transition-opacity"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        width="15"
+                        height="15"
+                        fill="currentColor"
+                    >
+                        <path
+                            d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
+                        ></path>
                     </svg>
                     Facebook
                 </a>
 
                 <!-- Copy link (Instagram) -->
-                <button id="copy-link-btn"
-                        class="flex items-center gap-2 px-4 py-2.5 border border-ink/15 text-ink/60 text-[12px] font-bold hover:border-ink/40 hover:text-ink transition-colors">
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
-                        <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                <button
+                    id="copy-link-btn"
+                    class="flex items-center gap-2 px-4 py-2.5 border border-ink/15 text-ink/60 text-[12px] font-bold hover:border-ink/40 hover:text-ink transition-colors"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        width="15"
+                        height="15"
+                        fill="currentColor"
+                    >
+                        <path
+                            d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"
+                        ></path>
                     </svg>
                     <span id="copy-link-label">Salin Tautan</span>
                 </button>
@@ -348,138 +430,166 @@ const ogImage = article.thumbnail
         </div>
 
         <!-- ── Author card ────────────────────────────── -->
-        <div class="flex items-center gap-4 bg-ink/3 border border-ink/8 p-5 mb-10">
-            <div class="w-12 h-12 rounded-full bg-green flex items-center justify-center shrink-0">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" class="text-white">
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+        <div
+            class="flex items-center gap-4 bg-ink/3 border border-ink/8 p-5 mb-10"
+        >
+            <div
+                class="w-12 h-12 rounded-full bg-green flex items-center justify-center shrink-0"
+            >
+                <svg
+                    viewBox="0 0 24 24"
+                    width="22"
+                    height="22"
+                    fill="currentColor"
+                    class="text-white"
+                >
+                    <path
+                        d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                    ></path>
                 </svg>
             </div>
             <div>
                 <p class="text-[13px] font-bold text-ink">Tim Redaksi</p>
-                <p class="text-[12px] text-ink/45">Kantor Kementerian Agama Kota Probolinggo</p>
+                <p class="text-[12px] text-ink/45">
+                    Kantor Kementerian Agama Kota Probolinggo
+                </p>
             </div>
         </div>
-
     </div>
 
     <!-- ── Related posts ──────────────────────────────── -->
-    {related.length > 0 && (
-        <section class="-mx-4 sm:-mx-8 md:-mx-14 lg:-mx-20 px-4 sm:px-8 md:px-14 lg:px-20 py-10 border-t border-ink/8">
-            <div class="max-w-5xl mx-auto">
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="w-1 h-6 bg-green shrink-0"></div>
-                    <h2 class="text-lg font-extrabold uppercase tracking-tight text-ink">
-                        Berita Terkait
-                    </h2>
-                </div>
+    {
+        related.length > 0 && (
+            <section class="-mx-4 sm:-mx-8 md:-mx-14 lg:-mx-20 px-4 sm:px-8 md:px-14 lg:px-20 py-10 border-t border-ink/8">
+                <div class="max-w-5xl mx-auto">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-1 h-6 bg-green shrink-0" />
+                        <h2 class="text-lg font-extrabold uppercase tracking-tight text-ink">
+                            Berita Terkait
+                        </h2>
+                    </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                    {related.map((b: any) => (
-                        <a href={`/portal/berita/${b.slug}`}
-                           class="group flex flex-col border border-ink/10 overflow-hidden bg-cream hover:border-green/30 transition-colors">
-                            <div class="relative overflow-hidden h-36 shrink-0 bg-ink/5">
-                                {b.thumbnail ? (
-                                    <img
-                                        src={b.thumbnail}
-                                        alt={b.judul}
-                                        class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-400"
-                                        loading="lazy"
-                                    />
-                                ) : (
-                                    <div class="w-full h-full flex items-center justify-center">
-                                        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" class="text-ink/15">
-                                            <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/>
-                                        </svg>
-                                    </div>
-                                )}
-                                <span class={`absolute top-2 left-2 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 ${relatedCategoryColor(b.kategori)}`}>
-                                    {b.kategori}
-                                </span>
-                            </div>
-                            <div class={`h-0.5 w-full shrink-0 ${categoryAccent(b.kategori)}`} />
-                            <div class="p-4 flex flex-col flex-1">
-                                <span class="text-[10px] text-ink/30 font-medium mb-2">
-                                    {formatDate(b.publishedAt ?? b.createdAt)}
-                                </span>
-                                <h3 class="text-[13px] font-bold text-ink leading-snug group-hover:text-green transition-colors line-clamp-3">
-                                    {b.judul}
-                                </h3>
-                            </div>
-                        </a>
-                    ))}
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                        {related.map((b: any) => (
+                            <a
+                                href={`/portal/berita/${b.slug}`}
+                                class="group flex flex-col border border-ink/10 overflow-hidden bg-cream hover:border-green/30 transition-colors"
+                            >
+                                <div class="relative overflow-hidden h-36 shrink-0 bg-ink/5">
+                                    {b.thumbnail ? (
+                                        <img
+                                            src={b.thumbnail}
+                                            alt={b.judul}
+                                            class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-400"
+                                            loading="lazy"
+                                        />
+                                    ) : (
+                                        <div class="w-full h-full flex items-center justify-center">
+                                            <svg
+                                                viewBox="0 0 24 24"
+                                                width="24"
+                                                height="24"
+                                                fill="currentColor"
+                                                class="text-ink/15"
+                                            >
+                                                <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z" />
+                                            </svg>
+                                        </div>
+                                    )}
+                                    <span
+                                        class={`absolute top-2 left-2 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 ${relatedCategoryColor(b.kategori)}`}
+                                    >
+                                        {b.kategori}
+                                    </span>
+                                </div>
+                                <div
+                                    class={`h-0.5 w-full shrink-0 ${categoryAccent(b.kategori)}`}
+                                />
+                                <div class="p-4 flex flex-col flex-1">
+                                    <span class="text-[10px] text-ink/30 font-medium mb-2">
+                                        {formatDate(
+                                            b.publishedAt ?? b.createdAt,
+                                        )}
+                                    </span>
+                                    <h3 class="text-[13px] font-bold text-ink leading-snug group-hover:text-green transition-colors line-clamp-3">
+                                        {b.judul}
+                                    </h3>
+                                </div>
+                            </a>
+                        ))}
+                    </div>
                 </div>
-            </div>
-        </section>
-    )}
-
+            </section>
+        )
+    }
 </BaseLayout>
 
 <script>
-{
-    // ── Reading progress — 4 edges ────────────────────
-    const barTop    = document.getElementById("bar-top")    as HTMLElement | null;
-    const barRight  = document.getElementById("bar-right")  as HTMLElement | null;
-    const barBottom = document.getElementById("bar-bottom") as HTMLElement | null;
-    const barLeft   = document.getElementById("bar-left")   as HTMLElement | null;
-    const body      = document.getElementById("article-body") as HTMLElement | null;
+    {
+        // ── Reading progress — top only ───────────────────
+        const barTop = document.getElementById("bar-top") as HTMLElement | null;
+        const body = document.getElementById(
+            "article-body",
+        ) as HTMLElement | null;
 
-    function updateBar() {
-        if (!body) return;
-        const bodyRect = body.getBoundingClientRect();
-        const total    = body.offsetHeight - window.innerHeight;
-        const scrolled = -bodyRect.top;
-        const pct      = total > 0 ? Math.min(100, Math.max(0, (scrolled / total) * 100)) : 0;
+        function updateBar() {
+            if (!body || !barTop) return;
+            const bodyRect = body.getBoundingClientRect();
+            const total = body.offsetHeight - window.innerHeight;
+            const scrolled = -bodyRect.top;
+            const pct =
+                total > 0
+                    ? Math.min(100, Math.max(0, (scrolled / total) * 100))
+                    : 0;
 
-        // Each edge covers 25% of scroll — fills sequentially
-        const seg = (start: number) => pct < start ? 0 : Math.min(100, (pct - start) * 4);
+            barTop.style.width = `${pct}%`;
+        }
 
-        if (barTop)    barTop.style.width    = `${seg(0)}%`;
-        if (barRight)  barRight.style.height = `${seg(25)}%`;
-        if (barBottom) barBottom.style.width = `${seg(50)}%`;
-        if (barLeft)   barLeft.style.height  = `${seg(75)}%`;
-    }
-
-    // ── Reading time estimate ─────────────────────────
-    function calcReadingTime() {
-        const label = document.getElementById("reading-time-label");
-        if (!label || !body) return;
-        const words = body.innerText.trim().split(/\s+/).length;
-        const mins = Math.max(1, Math.round(words / 200));
-        label.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" class="text-ink/30">
+        // ── Reading time estimate ─────────────────────────
+        function calcReadingTime() {
+            const label = document.getElementById("reading-time-label");
+            if (!label || !body) return;
+            const words = body.innerText.trim().split(/\s+/).length;
+            const mins = Math.max(1, Math.round(words / 200));
+            label.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" class="text-ink/30">
             <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/>
         </svg> ${mins} menit baca`;
-    }
+        }
 
-    // ── Copy link button ──────────────────────────────
-    function initCopyLink() {
-        const btn = document.getElementById("copy-link-btn");
-        const lbl = document.getElementById("copy-link-label");
-        if (!btn || !lbl) return;
-        btn.addEventListener("click", async () => {
-            try {
-                await navigator.clipboard.writeText(window.location.href);
-                lbl.textContent = "Tersalin!";
-                setTimeout(() => { lbl.textContent = "Salin Tautan"; }, 2000);
-            } catch {
-                lbl.textContent = "Gagal menyalin";
-                setTimeout(() => { lbl.textContent = "Salin Tautan"; }, 2000);
-            }
+        // ── Copy link button ──────────────────────────────
+        function initCopyLink() {
+            const btn = document.getElementById("copy-link-btn");
+            const lbl = document.getElementById("copy-link-label");
+            if (!btn || !lbl) return;
+            btn.addEventListener("click", async () => {
+                try {
+                    await navigator.clipboard.writeText(window.location.href);
+                    lbl.textContent = "Tersalin!";
+                    setTimeout(() => {
+                        lbl.textContent = "Salin Tautan";
+                    }, 2000);
+                } catch {
+                    lbl.textContent = "Gagal menyalin";
+                    setTimeout(() => {
+                        lbl.textContent = "Salin Tautan";
+                    }, 2000);
+                }
+            });
+        }
+
+        function init() {
+            window.addEventListener("scroll", updateBar, { passive: true });
+            window.addEventListener("resize", updateBar);
+            updateBar();
+            calcReadingTime();
+            initCopyLink();
+        }
+
+        init();
+        document.addEventListener("astro:page-load", () => {
+            window.removeEventListener("scroll", updateBar);
+            window.removeEventListener("resize", updateBar);
+            init();
         });
     }
-
-    function init() {
-        window.addEventListener("scroll", updateBar, { passive: true });
-        window.addEventListener("resize", updateBar);
-        updateBar();
-        calcReadingTime();
-        initCopyLink();
-    }
-
-    init();
-    document.addEventListener("astro:page-load", () => {
-        window.removeEventListener("scroll", updateBar);
-        window.removeEventListener("resize", updateBar);
-        init();
-    });
-}
 </script>

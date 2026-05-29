@@ -25,11 +25,11 @@ try {
 
     servicesWithIcon = categories.map((s: any) => ({
         ...s,
-        iconBody: iconBody(s.icon),
+        iconBody: s.icon ?? "",
     }));
     subServicesWithIcon = layanan.map((s: any) => ({
         ...s,
-        iconBody: iconBody(s.icon),
+        iconBody: s.icon ?? "",
         relatedServiceId: s.categoryId,
         progress: `${s.slaDuration} ${s.slaUnit === "menit" ? "Menit" : s.slaUnit === "jam" ? "Jam" : "Hari"}`,
     }));

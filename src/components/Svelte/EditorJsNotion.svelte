@@ -88,6 +88,7 @@
                 { default: Marker },
                 { default: Warning },
                 { default: Embed },
+                { default: Undo },
             ] = await Promise.all([
                 import("@editorjs/editorjs"),
                 import("@editorjs/paragraph"),
@@ -103,6 +104,7 @@
                 import("@editorjs/marker"),
                 import("@editorjs/warning"),
                 import("@editorjs/embed"),
+                import("editorjs-undo"),
             ]);
 
             editor = new EditorJS({
@@ -138,10 +140,13 @@
                                     const fd = new FormData();
                                     fd.append("file", file);
 
-                                    const res = await fetch("/api/upload-dokumen", {
-                                        method: "POST",
-                                        body: fd,
-                                    });
+                                    const res = await fetch(
+                                        "/api/upload-dokumen",
+                                        {
+                                            method: "POST",
+                                            body: fd,
+                                        },
+                                    );
                                     const json = await res.json();
 
                                     if (!res.ok || json.success === false) {
@@ -165,7 +170,9 @@
                                 async uploadByUrl(url: string) {
                                     return {
                                         success: 1,
-                                        file: { url: toUploadProxyUrl(url) || url },
+                                        file: {
+                                            url: toUploadProxyUrl(url) || url,
+                                        },
                                     };
                                 },
                             },
@@ -230,6 +237,8 @@
             });
 
             await editor.isReady;
+            const undo = new Undo({ editor });
+            undo.initialize(initialContent);
             loading = false;
         } catch (err) {
             error = err?.message ?? "Editor gagal dimuat.";
@@ -250,7 +259,9 @@
     <div id={holderId} class:invisible={loading || !!error}></div>
 
     {#if loading}
-        <div class="editor-overlay flex items-center justify-center min-h-[420px]">
+        <div
+            class="editor-overlay flex items-center justify-center min-h-[420px]"
+        >
             <div
                 class="w-8 h-8 border-2 border-green border-t-transparent rounded-full animate-spin"
             ></div>

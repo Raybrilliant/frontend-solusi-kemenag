@@ -28,6 +28,8 @@
     let saving = $state(false);
     let toast = $state(null);
     let kategoriOptions = $state([]);
+    let kategoriOpen = $state(false);
+    let kategoriQuery = $state("umum");
     let copied = $state(false);
 
     const isEdit = $derived(mode === "edit" && beritaId);
@@ -37,7 +39,13 @@
         fetch("/api/admin/berita/kategori")
             .then((r) => r.json())
             .then((d) => {
-                kategoriOptions = d?.data ?? [];
+                kategoriOptions = [
+                    ...new Set(
+                        (d?.data ?? [])
+                            .map((item) => normalizeKategori(item))
+                            .filter(Boolean),
+                    ),
+                ].sort();
             })
             .catch(() => {});
     });
@@ -55,7 +63,8 @@
                         toUploadProxyUrl(item.thumbnail) ||
                         item.thumbnail ||
                         "";
-                    kategori = item.kategori ?? "berita";
+                    kategori = normalizeKategori(item.kategori ?? "berita");
+                    kategoriQuery = kategori;
                     status = item.status ?? "draft";
                     publishedAt = toDatetimeLocal(item.publishedAt);
                     content = item.content ?? {
@@ -86,6 +95,45 @@
     function showToast(type, msg) {
         toast = { type, msg };
         setTimeout(() => (toast = null), 4000);
+    }
+
+    function normalizeKategori(value) {
+        return String(value ?? "")
+            .trim()
+            .toLowerCase();
+    }
+
+    const filteredKategoriOptions = $derived(
+        kategoriOptions.filter((opt) =>
+            !kategoriQuery.trim()
+                ? true
+                : opt
+                      .toLowerCase()
+                      .includes(kategoriQuery.trim().toLowerCase()),
+        ),
+    );
+
+    const kategoriDraft = $derived(normalizeKategori(kategoriQuery));
+    const kategoriExists = $derived(
+        kategoriDraft ? kategoriOptions.includes(kategoriDraft) : false,
+    );
+
+    function selectKategori(value) {
+        const next = normalizeKategori(value);
+        kategori = next;
+        kategoriQuery = next;
+        kategoriOpen = false;
+    }
+
+    function handleKategoriInput(event) {
+        kategoriQuery = event.currentTarget.value;
+        kategori = normalizeKategori(kategoriQuery);
+        kategoriOpen = true;
+    }
+
+    function confirmKategoriDraft() {
+        if (!kategoriDraft) return;
+        selectKategori(kategoriDraft);
     }
 
     function slugify(value) {
@@ -175,7 +223,7 @@
                 slug: slug.trim() || undefined,
                 ringkasan: ringkasan.trim(),
                 thumbnail: thumbnail.trim() || null,
-                kategori,
+                kategori: normalizeKategori(kategori),
                 status: nextStatus,
                 content,
                 ...(publishedAt
@@ -332,25 +380,121 @@
                         >
                             Kategori
                         </label>
-                        <input
-                            id="kategori-input"
-                            list="kategori-datalist"
-                            bind:value={kategori}
-                            placeholder="Pilih atau ketik kategori baru…"
-                            autocomplete="off"
-                            class="w-full border bg-white/50 border-black/10 rounded-lg py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors"
-                        />
-                        <datalist id="kategori-datalist">
-                            {#each kategoriOptions as opt}
-                                <option value={opt} />
-                            {/each}
-                        </datalist>
-                        {#if kategori && !kategoriOptions.includes(kategori
-                                    .trim()
-                                    .toLowerCase())}
+                        <div class="relative">
+                            <div
+                                class="flex items-center gap-2 rounded-lg border border-black/10 bg-white/50 px-3 focus-within:ring-2 focus-within:ring-green focus-within:ring-offset-1 transition-colors"
+                            >
+                                <Icon
+                                    icon="mdi:magnify"
+                                    class="w-4 h-4 text-ink/30 shrink-0"
+                                />
+                                <input
+                                    id="kategori-input"
+                                    value={kategoriQuery}
+                                    oninput={handleKategoriInput}
+                                    onfocus={() => (kategoriOpen = true)}
+                                    onkeydown={(event) => {
+                                        if (event.key === "Enter") {
+                                            event.preventDefault();
+                                            confirmKategoriDraft();
+                                        }
+                                        if (event.key === "Escape") {
+                                            kategoriOpen = false;
+                                        }
+                                    }}
+                                    placeholder="Cari kategori atau ketik kategori baru…"
+                                    autocomplete="off"
+                                    class="w-full bg-transparent py-3 text-sm focus:outline-none"
+                                />
+                                <button
+                                    type="button"
+                                    onclick={() =>
+                                        (kategoriOpen = !kategoriOpen)}
+                                    class="text-ink/35 hover:text-ink transition-colors cursor-pointer"
+                                    aria-label="Buka daftar kategori"
+                                >
+                                    <Icon
+                                        icon={kategoriOpen
+                                            ? "mdi:chevron-up"
+                                            : "mdi:chevron-down"}
+                                        class="w-5 h-5"
+                                    />
+                                </button>
+                            </div>
+
+                            {#if kategoriOpen}
+                                <div
+                                    class="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 overflow-hidden rounded-xl border border-black/10 bg-white shadow-lg"
+                                >
+                                    {#if filteredKategoriOptions.length > 0}
+                                        <div
+                                            class="max-h-56 overflow-y-auto py-2"
+                                        >
+                                            {#each filteredKategoriOptions as opt}
+                                                <button
+                                                    type="button"
+                                                    onclick={() =>
+                                                        selectKategori(opt)}
+                                                    class={`flex w-full items-center justify-between px-4 py-2 text-left text-sm transition-colors cursor-pointer ${kategori === opt ? "bg-green/8 text-green font-semibold" : "text-ink/70 hover:bg-black/4 hover:text-ink"}`}
+                                                >
+                                                    <span class="capitalize"
+                                                        >{opt}</span
+                                                    >
+                                                    {#if kategori === opt}
+                                                        <Icon
+                                                            icon="mdi:check"
+                                                            class="w-4 h-4"
+                                                        />
+                                                    {/if}
+                                                </button>
+                                            {/each}
+                                        </div>
+                                    {/if}
+
+                                    {#if kategoriDraft && !kategoriExists}
+                                        <div
+                                            class="border-t border-black/6 p-2"
+                                        >
+                                            <button
+                                                type="button"
+                                                onclick={confirmKategoriDraft}
+                                                class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-green hover:bg-green/6 transition-colors cursor-pointer"
+                                            >
+                                                <Icon
+                                                    icon="mdi:plus-circle-outline"
+                                                    class="w-4 h-4 shrink-0"
+                                                />
+                                                <span>
+                                                    Tambah kategori baru:
+                                                    <strong class="capitalize"
+                                                        >{kategoriDraft}</strong
+                                                    >
+                                                </span>
+                                            </button>
+                                        </div>
+                                    {:else if filteredKategoriOptions.length === 0}
+                                        <p
+                                            class="px-4 py-3 text-sm text-ink/45"
+                                        >
+                                            Tidak ada kategori yang cocok.
+                                        </p>
+                                    {/if}
+                                </div>
+                            {/if}
+                        </div>
+
+                        {#if kategoriDraft && !kategoriExists}
                             <p class="text-[11px] text-green/70 mt-1">
-                                Kategori baru akan dibuat: <strong
-                                    class="text-green">{kategori.trim()}</strong
+                                Kategori baru akan dibuat:
+                                <strong class="text-green capitalize"
+                                    >{kategoriDraft}</strong
+                                >
+                            </p>
+                        {:else if kategori}
+                            <p class="text-[11px] text-ink/45 mt-1">
+                                Kategori terpilih:
+                                <strong class="text-ink capitalize"
+                                    >{kategori}</strong
                                 >
                             </p>
                         {/if}

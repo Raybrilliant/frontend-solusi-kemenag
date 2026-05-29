@@ -112,16 +112,13 @@
                         e.key === "Enter" && openModal(service.id)}
                 >
                     <div class="p-3 md:p-5 flex flex-col flex-1">
-                        <svg
-                            viewBox="0 0 24 24"
-                            width="36"
-                            height="36"
-                            fill="currentColor"
-                            class="mb-2 md:mb-3 md:w-13 md:h-13"
-                            style="color:#0F6B44"
-                        >
-                            {@html service.iconBody}
-                        </svg>
+                        {#if service.iconBody?.includes(":")}
+                            <Icon icon={service.iconBody} width="36" height="36" class="mb-2 md:mb-3 md:w-13 md:h-13" style="color:#0F6B44" />
+                        {:else}
+                            <svg viewBox="0 0 24 24" width="36" height="36" fill="currentColor" class="mb-2 md:mb-3 md:w-13 md:h-13" style="color:#0F6B44">
+                                {@html service.iconBody}
+                            </svg>
+                        {/if}
                         <h4
                             class="text-[10px] md:text-sm font-semibold mb-1 md:mb-2 opacity-50"
                         >
@@ -176,15 +173,13 @@
                     <div
                         class="w-12 md:w-16 h-12 md:h-16 bg-green/8 flex items-center justify-center shrink-0 self-stretch border-r border-ink/8"
                     >
-                        <svg
-                            viewBox="0 0 24 24"
-                            width="22"
-                            height="22"
-                            fill="currentColor"
-                            style="color:#0F6B44"
-                        >
-                            {@html service.iconBody}
-                        </svg>
+                        {#if service.iconBody?.includes(":")}
+                            <Icon icon={service.iconBody} width="22" height="22" style="color:#0F6B44" />
+                        {:else}
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" style="color:#0F6B44">
+                                {@html service.iconBody}
+                            </svg>
+                        {/if}
                     </div>
                     <div class="flex-1 py-3 md:py-4 min-w-0">
                         <span
@@ -261,14 +256,13 @@
                     class="w-10 h-10 bg-green/10 flex items-center justify-center shrink-0"
                     style="color:#0F6B44"
                 >
-                    <svg
-                        viewBox="0 0 24 24"
-                        width="20"
-                        height="20"
-                        fill="currentColor"
-                    >
-                        {@html activeService.iconBody}
-                    </svg>
+                    {#if activeService.iconBody?.includes(":")}
+                        <Icon icon={activeService.iconBody} width="20" height="20" />
+                    {:else}
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                            {@html activeService.iconBody}
+                        </svg>
+                    {/if}
                 </div>
                 <div class="flex-1 min-w-0">
                     <p
@@ -321,14 +315,13 @@
                             class="w-9 h-9 md:w-10 md:h-10 bg-green/10 flex items-center justify-center shrink-0"
                             style="color:#0F6B44"
                         >
-                            <svg
-                                viewBox="0 0 24 24"
-                                width="16"
-                                height="16"
-                                fill="currentColor"
-                            >
-                                {@html sub.iconBody}
-                            </svg>
+                            {#if sub.iconBody?.includes(":")}
+                                <Icon icon={sub.iconBody} width="16" height="16" />
+                            {:else}
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                    {@html sub.iconBody}
+                                </svg>
+                            {/if}
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="text-sm font-semibold leading-tight">

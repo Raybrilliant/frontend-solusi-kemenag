@@ -130,14 +130,7 @@
                             <div
                                 style="color:#0F6B44;width:16px;height:16px;display:flex;align-items:center;shrink-0:true"
                             >
-                                <svg
-                                    viewBox="0 0 24 24"
-                                    width="16"
-                                    height="16"
-                                    fill="currentColor"
-                                >
-                                    {@html group.service.iconBody}
-                                </svg>
+                                <Icon icon={group.service.iconBody || "mdi:folder"} width="16" height="16" />
                             </div>
                             <span
                                 class="text-xs font-black uppercase tracking-wider"
@@ -170,14 +163,7 @@
                                 class="w-9 h-9 flex items-center justify-center shrink-0"
                                 style="background:rgba(15,107,68,.08);color:#0F6B44"
                             >
-                                <svg
-                                    viewBox="0 0 24 24"
-                                    width="16"
-                                    height="16"
-                                    fill="currentColor"
-                                >
-                                    {@html sub.iconBody}
-                                </svg>
+                                <Icon icon={sub.iconBody || "mdi:folder"} width="16" height="16" />
                             </div>
 
                             <!-- Text -->

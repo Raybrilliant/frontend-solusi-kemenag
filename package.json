@@ -34,6 +34,7 @@
     "@tanstack/table-core": "^8.21.3",
     "astro": "^6.3.7",
     "astro-icon": "^1.1.5",
+    "editorjs-undo": "^2.0.28",
     "svelte": "^5.55.9",
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3"
