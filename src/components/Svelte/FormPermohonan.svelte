@@ -1,4 +1,6 @@
 <script lang="ts">
+    import Icon from "@iconify/svelte";
+
     // Static data — replace with API call when backend provides these
     const kelurahanMap: Record<string, string[]> = {
         Mayangan: ["Mayangan", "Mangunharjo", "Jati", "Sukabumi", "Wiroborang"],
@@ -100,8 +102,12 @@
 
         try {
             // 1. Upload setiap file ke server, dapatkan URL-nya
-            const dokumen: { nama: string; ukuran: number; url: string; tipe: string }[] =
-                [];
+            const dokumen: {
+                nama: string;
+                ukuran: number;
+                url: string;
+                tipe: string;
+            }[] = [];
 
             if (files.length > 0) {
                 uploadProgress = { current: 0, total: files.length };
@@ -149,9 +155,7 @@
             });
             const json = await res.json();
             if (!json.success)
-                throw new Error(
-                    json.message ?? "Gagal mengirim permohonan.",
-                );
+                throw new Error(json.message ?? "Gagal mengirim permohonan.");
             successKode = json.data?.id ?? json.data?.kode ?? "";
             status = "success";
         } catch (err: any) {
@@ -170,29 +174,6 @@
             setTimeout(() => (copied = false), 2000);
         });
     }
-
-    // ── Inline SVG paths (MDI) ────────────────────────────
-    const P: Record<string, string> = {
-        pencil: "M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z",
-        paperclip:
-            "M16.5,6V17.5A4,4 0 0,1 12.5,21.5A4,4 0 0,1 8.5,17.5V5A2.5,2.5 0 0,1 11,2.5A2.5,2.5 0 0,1 13.5,5V15.5A1,1 0 0,1 12.5,16.5A1,1 0 0,1 11.5,15.5V6H10V15.5A2.5,2.5 0 0,0 12.5,18A2.5,2.5 0 0,0 15,15.5V5A4,4 0 0,0 11,1A4,4 0 0,0 7,5V17.5A5.5,5.5 0 0,0 12.5,23A5.5,5.5 0 0,0 18,17.5V6H16.5Z",
-        cloudUpload:
-            "M14,13V17H10V13H7L12,8L17,13M19.35,10.03C18.67,6.59 15.64,4 12,4C9.11,4 6.6,5.64 5.35,8.03C2.34,8.36 0,10.9 0,14A6,6 0 0,0 6,20H19A5,5 0 0,0 24,15C24,12.36 21.95,10.22 19.35,10.03Z",
-        chevronDown: "M7,10L12,15L17,10H7Z",
-        send: "M2,21L23,12L2,3V10L17,12L2,14V21Z",
-        bookmark:
-            "M17,3H7A2,2 0 0,0 5,5V21L12,18L19,21V5C19,3.89 18.1,3 17,3M17,18L12,15.82L7,18V5H17V18Z",
-        file: "M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z",
-        close: "M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z",
-        checkCircle:
-            "M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L18,9.5L16.59,8.09L11,13.67L7.91,10.59L6.5,12L11,16.5Z",
-        shieldCheck:
-            "M12,1L3,5V11C3,16.55 7.58,21.74 12,23C16.42,21.74 21,16.55 21,11V5L12,1M10,17L5.5,12.5L6.91,11.09L10,14.17L17.09,7.08L18.5,8.5L10,17Z",
-    };
-
-    function icon(key: string, size = 20, color = "currentColor") {
-        return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="${color}"><path d="${P[key]}"/></svg>`;
-    }
 </script>
 
 <div class="border border-ink/10 bg-cream shadow-sm">
@@ -202,7 +183,12 @@
             <div
                 class="w-10 h-10 md:w-12 md:h-12 bg-green flex items-center justify-center shrink-0"
             >
-                {@html icon("pencil", 20, "#F6F1E8")}
+                <Icon
+                    icon="mdi:pencil"
+                    width="20"
+                    height="20"
+                    class="text-cream"
+                />
             </div>
             <div>
                 <h1
@@ -224,13 +210,23 @@
         <div class="px-4 md:px-6 pb-6 md:pb-8 flex flex-col gap-5 pt-2">
             <!-- Check icon + heading -->
             <div class="flex flex-col items-center gap-3 py-6 text-center">
-                <div class="w-16 h-16 bg-green flex items-center justify-center">
-                    {@html icon("checkCircle", 36, "#F6F1E8")}
+                <div
+                    class="w-16 h-16 bg-green flex items-center justify-center"
+                >
+                    <Icon
+                        icon="mdi:check-circle"
+                        width="36"
+                        height="36"
+                        class="text-cream"
+                    />
                 </div>
                 <div>
-                    <h2 class="text-xl font-bold uppercase mb-1">Permohonan Terkirim!</h2>
+                    <h2 class="text-xl font-bold uppercase mb-1">
+                        Permohonan Terkirim!
+                    </h2>
                     <p class="text-sm opacity-60">
-                        Nomor tiket akan dikirim ke WhatsApp Anda dalam beberapa menit.
+                        Nomor tiket akan dikirim ke WhatsApp Anda dalam beberapa
+                        menit.
                     </p>
                 </div>
             </div>
@@ -238,11 +234,15 @@
             <!-- Kode tiket -->
             {#if successKode}
                 <div class="border border-green/30 bg-green/5 p-4">
-                    <p class="text-[10px] font-bold uppercase tracking-widest text-ink/40 mb-2">
+                    <p
+                        class="text-[10px] font-bold uppercase tracking-widest text-ink/40 mb-2"
+                    >
                         Nomor Tiket Permohonan
                     </p>
                     <div class="flex items-center gap-3">
-                        <p class="flex-1 font-mono font-bold text-lg md:text-xl text-ink break-all">
+                        <p
+                            class="flex-1 font-mono font-bold text-lg md:text-xl text-ink break-all"
+                        >
                             {successKode}
                         </p>
                         <button
@@ -258,12 +258,20 @@
                 </div>
 
                 <!-- WA notice -->
-                <div class="flex items-start gap-3 bg-yellow/20 border border-yellow/40 p-3">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-yellow-700 shrink-0 mt-0.5">
-                        <path d="M1 21L12 2l11 19H1zm11-3v-2h-2v2h2zm0-4V10h-2v4h2z"/>
-                    </svg>
+                <div
+                    class="flex items-start gap-3 bg-yellow/20 border border-yellow/40 p-3"
+                >
+                    <Icon
+                        icon="mdi:alert"
+                        width="16"
+                        height="16"
+                        class="text-yellow-700 shrink-0 mt-0.5"
+                    />
                     <p class="text-xs text-yellow-800 leading-relaxed">
-                        Jika notifikasi WhatsApp tidak diterima, gunakan nomor tiket di atas untuk memantau status di halaman <strong>Cek Progress</strong>.
+                        Jika notifikasi WhatsApp tidak diterima, gunakan nomor
+                        tiket di atas untuk memantau status di halaman <strong
+                            >Cek Progress</strong
+                        >.
                     </p>
                 </div>
 
@@ -274,13 +282,23 @@
                         class="inline-flex items-center gap-2 bg-green text-cream text-xs font-bold uppercase px-5 py-3 hover:bg-green/90 transition-colors"
                     >
                         Pantau Status
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M6.4 18L5 16.6 14.6 7H6V5h12v12h-2V8.4z"/></svg>
+                        <Icon
+                            icon="mdi:arrow-top-right"
+                            width="13"
+                            height="13"
+                        />
                     </a>
                     <button
                         onclick={() => {
                             status = "idle";
                             successKode = "";
-                            nama = whatsapp = kecamatan = kelurahan = alamat = keterangan = "";
+                            nama =
+                                whatsapp =
+                                kecamatan =
+                                kelurahan =
+                                alamat =
+                                keterangan =
+                                    "";
                             files = [];
                         }}
                         class="border border-ink/15 text-sm font-bold uppercase px-5 py-3 hover:bg-ink/5 transition-colors"
@@ -292,7 +310,13 @@
                 <button
                     onclick={() => {
                         status = "idle";
-                        nama = whatsapp = kecamatan = kelurahan = alamat = keterangan = "";
+                        nama =
+                            whatsapp =
+                            kecamatan =
+                            kelurahan =
+                            alamat =
+                            keterangan =
+                                "";
                         files = [];
                     }}
                     class="self-center border border-ink/15 text-sm font-bold uppercase px-6 py-3 hover:bg-ink/5 transition-colors"
@@ -366,7 +390,11 @@
                         <span
                             class="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-50"
                         >
-                            {@html icon("chevronDown", 16)}
+                            <Icon
+                                icon="mdi:chevron-down"
+                                width="16"
+                                height="16"
+                            />
                         </span>
                     </div>
                 </div>
@@ -392,7 +420,11 @@
                         <span
                             class="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-50"
                         >
-                            {@html icon("chevronDown", 16)}
+                            <Icon
+                                icon="mdi:chevron-down"
+                                width="16"
+                                height="16"
+                            />
                         </span>
                     </div>
                 </div>
@@ -435,7 +467,11 @@
                     class="label flex items-center gap-1.5"
                 >
                     <span style="color:#0F6B44"
-                        >{@html icon("paperclip", 15)}</span
+                        ><Icon
+                            icon="mdi:paperclip"
+                            width="15"
+                            height="15"
+                        /></span
                     >
                     Upload Dokumen Persyaratan
                     <span class="text-red-500">*</span>
@@ -461,7 +497,7 @@
                         class="w-12 h-12 bg-green/10 rounded-full flex items-center justify-center"
                         style="color:#0F6B44"
                     >
-                        {@html icon("cloudUpload", 24)}
+                        <Icon icon="mdi:cloud-upload" width="24" height="24" />
                     </div>
                     <p class="text-sm font-semibold">
                         Klik atau seret file ke sini
@@ -495,7 +531,11 @@
                                 class="flex items-center gap-2 text-xs py-1.5 px-3 bg-green/8 border border-green/20"
                             >
                                 <span style="color:#0F6B44"
-                                    >{@html icon("file", 14)}</span
+                                    ><Icon
+                                        icon="mdi:file-document-outline"
+                                        width="14"
+                                        height="14"
+                                    /></span
                                 >
                                 <span class="flex-1 truncate font-medium"
                                     >{f.name}</span
@@ -508,7 +548,11 @@
                                     onclick={() => removeFile(i)}
                                     class="opacity-40 hover:opacity-100 transition-opacity ml-1"
                                 >
-                                    {@html icon("close", 14)}
+                                    <Icon
+                                        icon="mdi:close"
+                                        width="14"
+                                        height="14"
+                                    />
                                 </button>
                             </div>
                         {/each}
@@ -534,7 +578,9 @@
                     <div class="h-1.5 bg-ink/10 overflow-hidden">
                         <div
                             class="h-full bg-green transition-all duration-300"
-                            style="width:{(uploadProgress.current / uploadProgress.total) * 100}%"
+                            style="width:{(uploadProgress.current /
+                                uploadProgress.total) *
+                                100}%"
                         ></div>
                     </div>
                 </div>
@@ -552,7 +598,12 @@
                         ? `Mengunggah ${uploadProgress.current}/${uploadProgress.total}...`
                         : "Mengirim..."}
                 {:else}
-                    {@html icon("send", 18, "#F6F1E8")}
+                    <Icon
+                        icon="mdi:send"
+                        width="18"
+                        height="18"
+                        class="text-cream"
+                    />
                     Kirim Permohonan
                 {/if}
             </button>

@@ -1,4 +1,6 @@
 <script>
+    import Icon from "@iconify/svelte";
+
     let {
         apiUrl = "/api/cek-progress",
         streamUrl = "/api/cek-progress-stream",
@@ -159,17 +161,12 @@
     class="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full max-w-xl"
 >
     <div class="flex-1 relative">
-        <svg
+        <Icon
+            icon="mdi:magnify"
             class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
             width="18"
             height="18"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-        >
-            <path
-                d="M9 3C5.7 3 3 5.7 3 9s2.7 6 6 6 6-2.7 6-6-2.7-6-6-6zm0 10c-2.2 0-4-1.8-4-4s1.8-4 4-4 4 1.8 4 4-1.8 4-4 4zm10.29 4.71l-3.5-3.5A6.9 6.9 0 0 1 9 16c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7a6.9 6.9 0 0 1-1.79 4.79l3.5 3.5-1.42 1.42z"
-            />
-        </svg>
+        />
         <input
             bind:value={query}
             type="text"
@@ -183,19 +180,12 @@
         class="w-full sm:w-auto px-6 py-3 sm:py-3.5 bg-green text-white text-sm font-semibold uppercase hover:bg-green/90 active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed shrink-0 flex items-center justify-center gap-2"
     >
         {#if loading}
-            <svg
+            <Icon
+                icon="mdi:loading"
                 class="animate-spin"
                 width="18"
                 height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-            >
-                <path
-                    d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"
-                />
-            </svg>
+            />
         {/if}
         Cek Status
     </button>
@@ -206,17 +196,12 @@
     <div
         class="mt-6 flex items-start gap-3 p-4 rounded-lg bg-red-50 border border-red-100 max-w-xl result-enter"
     >
-        <svg
+        <Icon
+            icon="mdi:alert-circle"
             class="shrink-0 text-red-400 mt-0.5"
             width="18"
             height="18"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-        >
-            <path
-                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
-            />
-        </svg>
+        />
         <div>
             <p class="text-sm font-semibold text-red-700">
                 Tiket Tidak Ditemukan
@@ -266,28 +251,41 @@
             ${data.status === "Selesai" ? "border-green" : data.status === "Diproses" ? "border-yellow" : "border-blue-500"}`}
         >
             <!-- Header -->
-            <div class="p-4 md:p-6 flex items-start gap-3 md:gap-4 border-b border-gray-100">
+            <div
+                class="p-4 md:p-6 flex items-start gap-3 md:gap-4 border-b border-gray-100"
+            >
                 <div
                     class={`w-11 h-11 md:w-14 md:h-14 flex items-center justify-center shrink-0
                     ${data.status === "Selesai" ? "bg-green" : data.status === "Diproses" ? "bg-yellow" : "bg-blue-100"}`}
                 >
                     <!-- megaphone / alert icon -->
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"
-                        class={data.status === "Selesai" ? "text-white" : data.status === "Diproses" ? "text-ink" : "text-blue-600"}
-                    >
-                        <path d="M18 11c0-3.07-1.76-5.72-4.5-6.77V4a1.5 1.5 0 0 0-3 0v.23C7.76 5.28 6 7.93 6 11v5l-2 2v1h16v-1l-2-2v-5zm-6 11a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2z"/>
-                    </svg>
+                    <Icon
+                        icon="mdi:bullhorn-variant"
+                        width="22"
+                        height="22"
+                        class={data.status === "Selesai"
+                            ? "text-white"
+                            : data.status === "Diproses"
+                              ? "text-ink"
+                              : "text-blue-600"}
+                    />
                 </div>
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 flex-wrap mb-0.5">
-                        <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                        <p
+                            class="text-[10px] font-bold uppercase tracking-widest text-gray-400"
+                        >
                             Pengaduan #{data.kode}
                         </p>
-                        <span class="text-[10px] font-bold uppercase px-2 py-0.5 bg-ink/8 text-ink/60">
+                        <span
+                            class="text-[10px] font-bold uppercase px-2 py-0.5 bg-ink/8 text-ink/60"
+                        >
                             {data.title}
                         </span>
                     </div>
-                    <h3 class="text-base md:text-lg font-bold leading-snug">Laporan Pengaduan Masyarakat</h3>
+                    <h3 class="text-base md:text-lg font-bold leading-snug">
+                        Laporan Pengaduan Masyarakat
+                    </h3>
                     <!-- <p class="text-xs md:text-sm text-gray-500 mt-0.5 line-clamp-2">{data.description}</p> -->
                 </div>
                 <!-- Status badge -->
@@ -295,7 +293,11 @@
                     class={`text-xs font-bold px-3 py-1.5 shrink-0
                     ${data.status === "Selesai" ? "bg-green/10 text-green" : data.status === "Diproses" ? "bg-yellow/40 text-yellow-800" : "bg-blue-100 text-blue-700"}`}
                 >
-                    {data.status === "Selesai" ? "✓ Selesai" : data.status === "Diproses" ? "⟳ Diproses" : "◉ Diterima"}
+                    {data.status === "Selesai"
+                        ? "✓ Selesai"
+                        : data.status === "Diproses"
+                          ? "⟳ Diproses"
+                          : "◉ Diterima"}
                 </span>
             </div>
 
@@ -305,27 +307,37 @@
                     {#each aduanSteps as step, i}
                         {@const done = i < aduanActiveIdx}
                         {@const active = i === aduanActiveIdx}
-                        <div class="flex flex-col items-center gap-1.5 shrink-0">
+                        <div
+                            class="flex flex-col items-center gap-1.5 shrink-0"
+                        >
                             <div
                                 class={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all
                                 ${done ? "bg-green border-green text-white" : active ? "bg-white border-blue-500 text-blue-600 ring-4 ring-blue-100" : "bg-white border-gray-200 text-gray-300"}`}
                             >
                                 {#if done}
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                                    </svg>
+                                    <Icon
+                                        icon="mdi:check"
+                                        width="14"
+                                        height="14"
+                                    />
                                 {:else if active && step.key === "Baru"}
-                                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse block"></span>
+                                    <span
+                                        class="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse block"
+                                    ></span>
                                 {:else}
                                     {i + 1}
                                 {/if}
                             </div>
-                            <span class={`text-[10px] font-semibold ${done ? "text-green" : active ? "text-gray-700" : "text-gray-300"}`}>
+                            <span
+                                class={`text-[10px] font-semibold ${done ? "text-green" : active ? "text-gray-700" : "text-gray-300"}`}
+                            >
                                 {step.label}
                             </span>
                         </div>
                         {#if i < aduanSteps.length - 1}
-                            <div class={`flex-1 h-0.5 mx-2 mb-4 ${i < aduanActiveIdx ? "bg-green" : "bg-gray-200"}`}></div>
+                            <div
+                                class={`flex-1 h-0.5 mx-2 mb-4 ${i < aduanActiveIdx ? "bg-green" : "bg-gray-200"}`}
+                            ></div>
                         {/if}
                     {/each}
                 </div>
@@ -334,55 +346,97 @@
             <!-- Status info block -->
             <div class="px-4 md:px-6 py-4 md:py-5">
                 {#if data.status === "Baru"}
-                    <div class="bg-blue-50 border border-blue-100 p-4 flex gap-3">
-                        <div class="shrink-0 w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="text-blue-500">
-                                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm.5 5v5.25l4.5 2.67-.75 1.23L11 13V7h1.5z"/>
-                            </svg>
+                    <div
+                        class="bg-blue-50 border border-blue-100 p-4 flex gap-3"
+                    >
+                        <div
+                            class="shrink-0 w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center"
+                        >
+                            <Icon
+                                icon="mdi:clock-outline"
+                                width="18"
+                                height="18"
+                                class="text-blue-500"
+                            />
                         </div>
                         <div class="flex-1">
-                            <p class="text-sm font-bold text-blue-800">Pengaduan Diterima</p>
-                            <p class="text-xs text-blue-600 mt-1 leading-relaxed">
-                                Pengaduan Anda telah diterima dan akan segera ditindaklanjuti oleh petugas.
+                            <p class="text-sm font-bold text-blue-800">
+                                Pengaduan Diterima
+                            </p>
+                            <p
+                                class="text-xs text-blue-600 mt-1 leading-relaxed"
+                            >
+                                Pengaduan Anda telah diterima dan akan segera
+                                ditindaklanjuti oleh petugas.
                             </p>
                             {#if data.receivedTime}
                                 <p class="text-xs text-blue-400 mt-2">
-                                    Diterima pada: <span class="font-semibold">{formatDatetime(data.receivedTime)}</span>
+                                    Diterima pada: <span class="font-semibold"
+                                        >{formatDatetime(
+                                            data.receivedTime,
+                                        )}</span
+                                    >
                                 </p>
                             {/if}
                         </div>
                     </div>
                 {:else if data.status === "Diproses"}
-                    <div class="bg-yellow/20 border border-yellow/50 p-4 flex gap-3">
-                        <div class="shrink-0 w-9 h-9 rounded-full bg-yellow/40 flex items-center justify-center">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="text-yellow-700">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
-                            </svg>
+                    <div
+                        class="bg-yellow/20 border border-yellow/50 p-4 flex gap-3"
+                    >
+                        <div
+                            class="shrink-0 w-9 h-9 rounded-full bg-yellow/40 flex items-center justify-center"
+                        >
+                            <Icon
+                                icon="mdi:information-outline"
+                                width="18"
+                                height="18"
+                                class="text-yellow-700"
+                            />
                         </div>
                         <div class="flex-1">
-                            <p class="text-sm font-bold text-yellow-800">Sedang Ditindaklanjuti</p>
-                            <p class="text-xs text-yellow-700 mt-1 leading-relaxed">
-                                Pengaduan Anda sedang dalam proses penanganan oleh petugas terkait.
+                            <p class="text-sm font-bold text-yellow-800">
+                                Sedang Ditindaklanjuti
+                            </p>
+                            <p
+                                class="text-xs text-yellow-700 mt-1 leading-relaxed"
+                            >
+                                Pengaduan Anda sedang dalam proses penanganan
+                                oleh petugas terkait.
                             </p>
                             {#if data.startTime}
                                 <p class="text-xs text-yellow-600 mt-2">
-                                    Mulai diproses: <span class="font-semibold">{formatDatetime(data.startTime)}</span>
+                                    Mulai diproses: <span class="font-semibold"
+                                        >{formatDatetime(data.startTime)}</span
+                                    >
                                 </p>
                             {/if}
                         </div>
                     </div>
                 {:else}
                     <!-- Selesai -->
-                    <div class="bg-green/8 border border-green/20 p-4 flex gap-3">
-                        <div class="shrink-0 w-9 h-9 rounded-full bg-green flex items-center justify-center">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
-                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                            </svg>
+                    <div
+                        class="bg-green/8 border border-green/20 p-4 flex gap-3"
+                    >
+                        <div
+                            class="shrink-0 w-9 h-9 rounded-full bg-green flex items-center justify-center"
+                        >
+                            <Icon
+                                icon="mdi:check"
+                                width="18"
+                                height="18"
+                                class="text-white"
+                            />
                         </div>
                         <div class="flex-1">
-                            <p class="text-sm font-bold text-green">Pengaduan Telah Selesai</p>
-                            <p class="text-xs text-green/70 mt-1 leading-relaxed">
-                                Pengaduan Anda telah selesai ditindaklanjuti. Terima kasih atas partisipasi Anda.
+                            <p class="text-sm font-bold text-green">
+                                Pengaduan Telah Selesai
+                            </p>
+                            <p
+                                class="text-xs text-green/70 mt-1 leading-relaxed"
+                            >
+                                Pengaduan Anda telah selesai ditindaklanjuti.
+                                Terima kasih atas partisipasi Anda.
                             </p>
                         </div>
                     </div>
@@ -392,47 +446,80 @@
                 {#if data.message && data.status === "Selesai"}
                     <div class="mt-4 p-4 bg-yellow/15 border border-yellow/40">
                         <div class="flex items-center gap-2 mb-2">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="text-yellow-700 shrink-0">
-                                <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
-                            </svg>
-                            <p class="text-[10px] font-bold uppercase tracking-widest text-yellow-800">Tindakan Instansi</p>
+                            <Icon
+                                icon="mdi:message-text-outline"
+                                width="14"
+                                height="14"
+                                class="text-yellow-700 shrink-0"
+                            />
+                            <p
+                                class="text-[10px] font-bold uppercase tracking-widest text-yellow-800"
+                            >
+                                Tindakan Instansi
+                            </p>
                         </div>
-                        <p class="text-sm text-yellow-900 leading-relaxed whitespace-pre-wrap">{data.message}</p>
+                        <p
+                            class="text-sm text-yellow-900 leading-relaxed whitespace-pre-wrap"
+                        >
+                            {data.message}
+                        </p>
                     </div>
                 {/if}
 
                 <!-- Deskripsi lengkap -->
                 <div class="mt-4 p-4 bg-gray-50 border border-gray-100">
-                    <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Isi Pengaduan</p>
-                    <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{data.description}</p>
+                    <p
+                        class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2"
+                    >
+                        Isi Pengaduan
+                    </p>
+                    <p
+                        class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap"
+                    >
+                        {data.description}
+                    </p>
                 </div>
             </div>
 
             <!-- Meta row -->
-            <div class="px-4 md:px-6 py-3 md:py-4 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 bg-gray-50/60">
+            <div
+                class="px-4 md:px-6 py-3 md:py-4 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 bg-gray-50/60"
+            >
                 <div>
-                    <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Tanggal Masuk</p>
-                    <p class="text-xs md:text-sm font-semibold">{data.tanggal}</p>
-                </div>
-                <div class="sm:border-l sm:border-gray-200 sm:pl-4">
-                    <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">
-                        {data.status === "Baru" ? "Waktu Diterima" : "Waktu Mulai Proses"}
+                    <p
+                        class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5"
+                    >
+                        Tanggal Masuk
                     </p>
                     <p class="text-xs md:text-sm font-semibold">
-                        {data.status === "Baru" ? formatDatetime(data.receivedTime) : formatDatetime(data.startTime)}
+                        {data.tanggal}
+                    </p>
+                </div>
+                <div class="sm:border-l sm:border-gray-200 sm:pl-4">
+                    <p
+                        class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5"
+                    >
+                        {data.status === "Baru"
+                            ? "Waktu Diterima"
+                            : "Waktu Mulai Proses"}
+                    </p>
+                    <p class="text-xs md:text-sm font-semibold">
+                        {data.status === "Baru"
+                            ? formatDatetime(data.receivedTime)
+                            : formatDatetime(data.startTime)}
                     </p>
                 </div>
             </div>
 
             <!-- Footer -->
-            <div class="px-4 md:px-6 py-3 md:py-4 border-t border-gray-100 flex items-center justify-between gap-3">
+            <div
+                class="px-4 md:px-6 py-3 md:py-4 border-t border-gray-100 flex items-center justify-between gap-3"
+            >
                 <button
                     onclick={reset}
                     class="text-sm text-gray-400 hover:text-gray-700 font-medium flex items-center gap-1.5 transition-colors"
                 >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-                    </svg>
+                    <Icon icon="mdi:arrow-left" width="14" height="14" />
                     Cari tiket lain
                 </button>
                 {#if data.status === "Selesai" && data.fileUrl}
@@ -441,19 +528,19 @@
                         download
                         class="inline-flex items-center gap-2 px-5 py-2.5 bg-green text-white text-sm font-bold hover:bg-green/90 active:scale-95 transition-all"
                     >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-                        </svg>
+                        <Icon icon="mdi:download" width="16" height="16" />
                         Unduh Dokumen
                     </a>
                 {:else}
-                    <a href="/pengaduan" class="text-xs text-green font-semibold hover:underline">
+                    <a
+                        href="/pengaduan"
+                        class="text-xs text-green font-semibold hover:underline"
+                    >
                         Kirim pengaduan baru →
                     </a>
                 {/if}
             </div>
         </div>
-
     {:else}
         <!-- ═══════════════════════════════════════════════════
              PERMOHONAN CARD (existing)
@@ -561,22 +648,32 @@
                                             : 'bg-white border-gray-200 text-gray-300'}"
                                 >
                                     {#if done}
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                                        </svg>
+                                        <Icon
+                                            icon="mdi:check"
+                                            width="14"
+                                            height="14"
+                                        />
                                     {:else if isOvertime}
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M1 21L12 2l11 19H1zm11-3v-2h-2v2h2zm0-4V10h-2v4h2z"/>
-                                        </svg>
+                                        <Icon
+                                            icon="mdi:alert"
+                                            width="14"
+                                            height="14"
+                                        />
                                     {:else if active && step.key === "Diterima"}
-                                        <span class="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse block"></span>
+                                        <span
+                                            class="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse block"
+                                        ></span>
                                     {:else}
                                         {i + 1}
                                     {/if}
                                 </div>
                                 <span
                                     class="text-[10px] font-semibold
-                    {done ? 'text-green' : active ? 'text-gray-700' : 'text-gray-300'}"
+                    {done
+                                        ? 'text-green'
+                                        : active
+                                          ? 'text-gray-700'
+                                          : 'text-gray-300'}"
                                 >
                                     {step.label}
                                 </span>
@@ -595,22 +692,39 @@
             <!-- Progress section -->
             <div class="px-4 md:px-6 py-4 md:py-5">
                 {#if data.status === "Diterima"}
-                    <div class="rounded-lg bg-blue-50 border border-blue-100 p-4 flex gap-3">
-                        <div class="shrink-0 w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="text-blue-500">
-                                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm.5 5v5.25l4.5 2.67-.75 1.23L11 13V7h1.5z"/>
-                            </svg>
+                    <div
+                        class="rounded-lg bg-blue-50 border border-blue-100 p-4 flex gap-3"
+                    >
+                        <div
+                            class="shrink-0 w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center"
+                        >
+                            <Icon
+                                icon="mdi:clock-outline"
+                                width="18"
+                                height="18"
+                                class="text-blue-500"
+                            />
                         </div>
                         <div class="flex-1">
-                            <p class="text-sm font-bold text-blue-800">Berkas Diterima — Menunggu Antrian</p>
-                            <p class="text-xs text-blue-600 mt-1 leading-relaxed">
+                            <p class="text-sm font-bold text-blue-800">
+                                Berkas Diterima — Menunggu Antrian
+                            </p>
+                            <p
+                                class="text-xs text-blue-600 mt-1 leading-relaxed"
+                            >
                                 Berkas Anda telah diterima oleh petugas.
-                                <span class="font-semibold">Countdown layanan akan dimulai</span>
+                                <span class="font-semibold"
+                                    >Countdown layanan akan dimulai</span
+                                >
                                 saat petugas mulai memproses permohonan Anda.
                             </p>
                             {#if data.receivedTime}
                                 <p class="text-xs text-blue-400 mt-2">
-                                    Diterima pada: <span class="font-semibold">{formatDatetime(data.receivedTime)}</span>
+                                    Diterima pada: <span class="font-semibold"
+                                        >{formatDatetime(
+                                            data.receivedTime,
+                                        )}</span
+                                    >
                                 </p>
                             {/if}
                         </div>
@@ -619,99 +733,165 @@
                         <div class="h-full w-0 bg-blue-300"></div>
                     </div>
                     <p class="text-xs text-gray-400 mt-1.5">
-                        Estimasi durasi layanan: <span class="font-semibold text-gray-600">{data.durasiLabel}</span>
+                        Estimasi durasi layanan: <span
+                            class="font-semibold text-gray-600"
+                            >{data.durasiLabel}</span
+                        >
                     </p>
                 {:else if data.status === "Ditolak"}
-                    <div class="rounded-lg bg-red-50 border border-red-200 p-4 flex gap-3">
-                        <div class="shrink-0 w-9 h-9 rounded-full bg-red-100 flex items-center justify-center">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="text-red-500">
-                                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                            </svg>
+                    <div
+                        class="rounded-lg bg-red-50 border border-red-200 p-4 flex gap-3"
+                    >
+                        <div
+                            class="shrink-0 w-9 h-9 rounded-full bg-red-100 flex items-center justify-center"
+                        >
+                            <Icon
+                                icon="mdi:close"
+                                width="18"
+                                height="18"
+                                class="text-red-500"
+                            />
                         </div>
                         <div>
-                            <p class="text-sm font-bold text-red-700">Permohonan Ditolak</p>
+                            <p class="text-sm font-bold text-red-700">
+                                Permohonan Ditolak
+                            </p>
                             {#if data.message}
-                                <p class="text-sm text-red-600 mt-1 leading-relaxed">
-                                    <span class="font-semibold">Alasan: </span>{data.message}
+                                <p
+                                    class="text-sm text-red-600 mt-1 leading-relaxed"
+                                >
+                                    <span class="font-semibold"
+                                        >Alasan:
+                                    </span>{data.message}
                                 </p>
                             {/if}
                             <p class="text-xs text-red-400 mt-2">
-                                Hubungi petugas atau ajukan kembali permohonan dengan melengkapi persyaratan yang diminta.
+                                Hubungi petugas atau ajukan kembali permohonan
+                                dengan melengkapi persyaratan yang diminta.
                             </p>
                         </div>
                     </div>
                 {:else if data.status === "Selesai"}
                     <div class="flex items-center gap-3 mb-3">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="#0F6B44">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14l-4-4 1.41-1.41L10 13.17l6.59-6.59L18 8l-8 8z"/>
-                        </svg>
-                        <span class="text-sm font-semibold text-green">Layanan telah selesai diproses</span>
+                        <Icon
+                            icon="mdi:check-circle"
+                            width="18"
+                            height="18"
+                            style="color:#0F6B44"
+                        />
+                        <span class="text-sm font-semibold text-green"
+                            >Layanan telah selesai diproses</span
+                        >
                     </div>
                     <div class="h-3 bg-green/20 overflow-hidden">
                         <div class="h-full bg-green" style="width:100%"></div>
                     </div>
                 {:else if overtime}
                     <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-bold uppercase tracking-widest text-red-500">Melewati Batas Waktu</span>
-                        <span class="text-xs text-red-500 font-semibold">+{formatOvertime(overtimeSec)}</span>
+                        <span
+                            class="text-xs font-bold uppercase tracking-widest text-red-500"
+                            >Melewati Batas Waktu</span
+                        >
+                        <span class="text-xs text-red-500 font-semibold"
+                            >+{formatOvertime(overtimeSec)}</span
+                        >
                     </div>
                     <div class="h-3 bg-red-100 overflow-hidden">
                         <div class="h-full bg-red-500" style="width:100%"></div>
                     </div>
-                    <div class="mt-3 p-3.5 rounded-lg bg-amber-50 border border-amber-200 flex gap-2.5">
-                        <svg class="shrink-0 text-amber-500 mt-0.5" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M1 21L12 2l11 19H1zm11-3v-2h-2v2h2zm0-4V10h-2v4h2z"/>
-                        </svg>
+                    <div
+                        class="mt-3 p-3.5 rounded-lg bg-amber-50 border border-amber-200 flex gap-2.5"
+                    >
+                        <Icon
+                            icon="mdi:alert"
+                            class="shrink-0 text-amber-500 mt-0.5"
+                            width="16"
+                            height="16"
+                        />
                         <p class="text-xs text-amber-800 leading-relaxed">
                             <span class="font-bold">Hak Kompensasi: </span>
-                            Layanan Anda melewati estimasi waktu. Anda berhak mengajukan kompensasi sesuai standar pelayanan yang berlaku. Hubungi petugas untuk informasi lebih lanjut.
+                            Layanan Anda melewati estimasi waktu. Anda berhak mengajukan
+                            kompensasi sesuai standar pelayanan yang berlaku. Hubungi
+                            petugas untuk informasi lebih lanjut.
                         </p>
                     </div>
                 {:else}
                     <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-bold uppercase tracking-widest text-gray-400">Sisa Waktu Layanan</span>
-                        <span class="text-xl md:text-2xl font-bold tabular-nums" style="color:{barColor}">
+                        <span
+                            class="text-xs font-bold uppercase tracking-widest text-gray-400"
+                            >Sisa Waktu Layanan</span
+                        >
+                        <span
+                            class="text-xl md:text-2xl font-bold tabular-nums"
+                            style="color:{barColor}"
+                        >
                             {formatCountdown(remainSec)}
                         </span>
                     </div>
                     <div class="h-3 bg-gray-100 overflow-hidden">
-                        <div class="h-full transition-all duration-1000" style="width:{pct}%; background-color:{barColor}"></div>
+                        <div
+                            class="h-full transition-all duration-1000"
+                            style="width:{pct}%; background-color:{barColor}"
+                        ></div>
                     </div>
                     <p class="text-xs text-gray-400 mt-1.5">
-                        Estimasi selesai dalam <span class="font-semibold text-gray-600">{data.durasiLabel}</span> sejak pendaftaran
+                        Estimasi selesai dalam <span
+                            class="font-semibold text-gray-600"
+                            >{data.durasiLabel}</span
+                        > sejak pendaftaran
                     </p>
                 {/if}
             </div>
 
             <!-- Meta row -->
-            <div class="px-4 md:px-6 py-3 md:py-4 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 bg-gray-50/60">
+            <div
+                class="px-4 md:px-6 py-3 md:py-4 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 bg-gray-50/60"
+            >
                 <div>
-                    <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Tanggal Masuk</p>
-                    <p class="text-xs md:text-sm font-semibold">{data.tanggal}</p>
-                </div>
-                <div class="sm:border-l sm:border-gray-200 sm:pl-4">
-                    <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">
-                        {data.status === "Diterima" ? "Waktu Diterima" : "Waktu Mulai Proses"}
+                    <p
+                        class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5"
+                    >
+                        Tanggal Masuk
                     </p>
                     <p class="text-xs md:text-sm font-semibold">
-                        {data.status === "Diterima" ? formatDatetime(data.receivedTime) : formatDatetime(data.startTime)}
+                        {data.tanggal}
                     </p>
                 </div>
                 <div class="sm:border-l sm:border-gray-200 sm:pl-4">
-                    <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Estimasi Durasi</p>
-                    <p class="text-xs md:text-sm font-semibold">{data.durasiLabel}</p>
+                    <p
+                        class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5"
+                    >
+                        {data.status === "Diterima"
+                            ? "Waktu Diterima"
+                            : "Waktu Mulai Proses"}
+                    </p>
+                    <p class="text-xs md:text-sm font-semibold">
+                        {data.status === "Diterima"
+                            ? formatDatetime(data.receivedTime)
+                            : formatDatetime(data.startTime)}
+                    </p>
+                </div>
+                <div class="sm:border-l sm:border-gray-200 sm:pl-4">
+                    <p
+                        class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5"
+                    >
+                        Estimasi Durasi
+                    </p>
+                    <p class="text-xs md:text-sm font-semibold">
+                        {data.durasiLabel}
+                    </p>
                 </div>
             </div>
 
             <!-- Footer -->
-            <div class="px-4 md:px-6 py-3 md:py-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
+            <div
+                class="px-4 md:px-6 py-3 md:py-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3"
+            >
                 <button
                     onclick={reset}
                     class="text-sm text-gray-400 hover:text-gray-700 font-medium flex items-center gap-1.5 transition-colors"
                 >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-                    </svg>
+                    <Icon icon="mdi:arrow-left" width="14" height="14" />
                     Cari tiket lain
                 </button>
 
@@ -721,16 +901,11 @@
                             href={`/survei?ticket=${encodeURIComponent(data.kode)}`}
                             class="inline-flex items-center gap-2 px-5 py-2.5 bg-yellow text-ink text-sm font-bold hover:bg-yellow/90 active:scale-95 transition-all"
                         >
-                            <svg
+                            <Icon
+                                icon="mdi:clipboard-text-outline"
                                 width="16"
                                 height="16"
-                                viewBox="0 0 24 24"
-                                fill="currentColor"
-                            >
-                                <path
-                                    d="M9 11H7v2h2v-2m4 0h-2v2h2v-2m4 0h-2v2h2v-2M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m0 16H5V8h14v11Z"
-                                ></path>
-                            </svg>
+                            />
                             Isi Survei
                         </a>
                         {#if data.fileUrl}
@@ -739,22 +914,19 @@
                                 download
                                 class="inline-flex items-center gap-2 px-5 py-2.5 bg-green text-white text-sm font-bold hover:bg-green/90 active:scale-95 transition-all"
                             >
-                                <svg
+                                <Icon
+                                    icon="mdi:download"
                                     width="16"
                                     height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="currentColor"
-                                >
-                                    <path
-                                        d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"
-                                    />
-                                </svg>
+                                />
                                 Unduh Dokumen
                             </a>
                         {/if}
                     </div>
                 {:else if data.status === "Diproses"}
-                    <p class="text-xs text-gray-400">Dokumen tersedia setelah layanan selesai</p>
+                    <p class="text-xs text-gray-400">
+                        Dokumen tersedia setelah layanan selesai
+                    </p>
                 {/if}
             </div>
         </div>

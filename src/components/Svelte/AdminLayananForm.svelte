@@ -1,4 +1,6 @@
 <script>
+    import Icon from "@iconify/svelte";
+
     let {
         mode = "tambah",
         layananId = null,
@@ -92,11 +94,6 @@
     }
 
     // ── Helpers ──────────────────────────────────────────
-    function iconUrl(name) {
-        if (!name) return "";
-        const [prefix, ico] = name.split(":");
-        return `https://api.iconify.design/${prefix}/${ico}.svg`;
-    }
 
     function showToast(t, msg) {
         toast = { type: t, msg };
@@ -243,7 +240,14 @@
             if (!res.ok || json.success === false)
                 throw new Error(json.message ?? "Gagal memperbarui.");
             persyaratanList = persyaratanList.map((p) =>
-                p.id === id ? { ...p, label: editLabel.trim(), description: editDescription.trim(), required: editRequired } : p
+                p.id === id
+                    ? {
+                          ...p,
+                          label: editLabel.trim(),
+                          description: editDescription.trim(),
+                          required: editRequired,
+                      }
+                    : p,
             );
             editingId = null;
             showToast("success", "Persyaratan berhasil diperbarui.");
@@ -261,33 +265,18 @@
             ? 'bg-green text-white'
             : 'bg-red-600 text-white'}"
     >
-        <svg
+        <Icon
+            icon={toast.type === "success" ? "mdi:check" : "mdi:alert-circle"}
             width="18"
             height="18"
-            viewBox="0 0 24 24"
-            fill="currentColor"
             class="shrink-0"
-        >
-            {#if toast.type === "success"}
-                <path
-                    d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"
-                />
-            {:else}
-                <path
-                    d="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10-4.48 10-10S17.52,2 12,2zm1,15h-2v-2h2v2zm0-4h-2V7h2v6z"
-                />
-            {/if}
-        </svg>
+        />
         <p class="text-sm font-semibold">{toast.msg}</p>
         <button
             onclick={() => (toast = null)}
             class="ml-auto opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
         >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"
-                ><path
-                    d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12z"
-                /></svg
-            >
+            <Icon icon="mdi:close" width="16" height="16" />
         </button>
     </div>
 {/if}
@@ -337,20 +326,15 @@
                             class="w-10 h-10 rounded-xl border border-black/10 bg-cream flex items-center justify-center shrink-0"
                         >
                             {#if icon.trim()}
-                                <img
-                                    src={iconUrl(icon.trim())}
-                                    alt={icon}
+                                <Icon
+                                    icon={icon.trim()}
                                     class="w-6 h-6 object-contain"
                                 />
                             {:else}
-                                <svg
-                                    viewBox="0 0 24 24"
+                                <Icon
+                                    icon="mdi:image-outline"
                                     class="w-5 h-5 text-ink/20"
-                                    ><path
-                                        fill="currentColor"
-                                        d="M4 5h13v7h2V5c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h9v-2H4zm16 3l-3.5 4.5L14 9.5L10 15H4l6-8z"
-                                    /></svg
-                                >
+                                />
                             {/if}
                         </div>
                         <div class="flex-1">
@@ -463,7 +447,9 @@
                     <div>
                         <label
                             class="block text-xs font-bold text-ink/50 uppercase tracking-wider mb-2"
-                            >Link Layanan Eksternal <span class="text-red-400">*</span></label
+                            >Link Layanan Eksternal <span class="text-red-400"
+                                >*</span
+                            ></label
                         >
                         <input
                             type="url"
@@ -472,7 +458,8 @@
                             class="w-full border bg-white/50 border-black/10 rounded-lg py-2.5 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors font-mono"
                         />
                         <p class="text-[10px] text-ink/30 mt-1">
-                            URL tujuan saat pengguna menekan tombol "Akses Layanan" di halaman publik.
+                            URL tujuan saat pengguna menekan tombol "Akses
+                            Layanan" di halaman publik.
                         </p>
                     </div>
                 {/if}
@@ -493,12 +480,7 @@
                         ></div>
                         Menyimpan...
                     {:else}
-                        <svg viewBox="0 0 24 24" class="w-4 h-4"
-                            ><path
-                                fill="currentColor"
-                                d="M15 9H5V5h10m-3 14a3 3 0 0 1-3-3a3 3 0 0 1 3-3a3 3 0 0 1 3 3a3 3 0 0 1-3 3m5-16H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7z"
-                            /></svg
-                        >
+                        <Icon icon="mdi:content-save" class="w-4 h-4" />
                         {mode === "edit"
                             ? "Simpan Perubahan"
                             : "Tambah Layanan"}
@@ -519,12 +501,7 @@
         <div class="lg:col-span-2">
             <div class="bg-white rounded border border-green/8 p-6 md:p-8">
                 <div class="flex items-center gap-2 mb-5">
-                    <svg viewBox="0 0 24 24" class="w-5 h-5 text-ink/40"
-                        ><path
-                            fill="currentColor"
-                            d="M10 4h4v4h-4zM4 16h4v4H4zm0-8h4v4H4zm12 0h4v4h-4zm-6 4h4v4h-4zm6 4h4v4h-4z"
-                        /></svg
-                    >
+                    <Icon icon="mdi:view-grid" class="w-5 h-5 text-ink/40" />
                     <h3
                         class="text-sm font-bold text-ink uppercase tracking-tight"
                     >
@@ -542,14 +519,10 @@
                     <div
                         class="flex flex-col items-center justify-center py-10 text-center"
                     >
-                        <svg
-                            viewBox="0 0 24 24"
+                        <Icon
+                            icon="mdi:plus-circle-outline"
                             class="w-10 h-10 text-ink/15 mb-3"
-                            ><path
-                                fill="currentColor"
-                                d="M17 12h-5v5h-2v-5H5v-2h5V5h2v5h5m-5-10A10 10 0 0 0 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2z"
-                            /></svg
-                        >
+                        />
                         <p
                             class="text-xs text-ink/35 leading-relaxed max-w-[200px]"
                         >
@@ -562,10 +535,14 @@
                     {#if persyaratanList.length > 0}
                         <ul class="space-y-2 mb-5">
                             {#each persyaratanList as syarat (syarat.id)}
-                                <li class="border border-black/5 overflow-hidden">
+                                <li
+                                    class="border border-black/5 overflow-hidden"
+                                >
                                     {#if editingId === syarat.id}
                                         <!-- Inline edit mode -->
-                                        <div class="px-3 py-3 bg-green/3 space-y-2">
+                                        <div
+                                            class="px-3 py-3 bg-green/3 space-y-2"
+                                        >
                                             <input
                                                 type="text"
                                                 bind:value={editLabel}
@@ -578,56 +555,101 @@
                                                 placeholder="Deskripsi atau link (opsional)"
                                                 class="w-full border border-black/10 bg-white rounded-lg py-1.5 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1"
                                             />
-                                            <div class="flex items-center gap-2">
-                                                <label class="flex items-center gap-1.5 cursor-pointer text-xs text-ink/60">
-                                                    <input type="checkbox" bind:checked={editRequired} class="accent-green" />
+                                            <div
+                                                class="flex items-center gap-2"
+                                            >
+                                                <label
+                                                    class="flex items-center gap-1.5 cursor-pointer text-xs text-ink/60"
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        bind:checked={
+                                                            editRequired
+                                                        }
+                                                        class="accent-green"
+                                                    />
                                                     Wajib
                                                 </label>
-                                                <div class="ml-auto flex gap-1.5">
+                                                <div
+                                                    class="ml-auto flex gap-1.5"
+                                                >
                                                     <button
                                                         onclick={cancelEdit}
                                                         class="px-3 py-1.5 text-xs font-semibold text-ink/50 border border-black/10 hover:bg-ink/5 transition-colors cursor-pointer"
-                                                    >Batal</button>
+                                                        >Batal</button
+                                                    >
                                                     <button
-                                                        onclick={() => updatePersyaratan(syarat.id)}
+                                                        onclick={() =>
+                                                            updatePersyaratan(
+                                                                syarat.id,
+                                                            )}
                                                         class="px-3 py-1.5 text-xs font-semibold bg-green text-white hover:bg-green/90 transition-colors cursor-pointer"
-                                                    >Simpan</button>
+                                                        >Simpan</button
+                                                    >
                                                 </div>
                                             </div>
                                         </div>
                                     {:else}
                                         <!-- Display mode -->
-                                        <div class="flex items-center gap-3 px-3 py-2.5 bg-ink/[0.025]">
-                                            <div class="w-6 h-6 rounded-full bg-green/10 flex items-center justify-center shrink-0">
-                                                <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 text-green"
-                                                    ><path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19L21 7l-1.41-1.41z" /></svg>
+                                        <div
+                                            class="flex items-center gap-3 px-3 py-2.5 bg-ink/[0.025]"
+                                        >
+                                            <div
+                                                class="w-6 h-6 rounded-full bg-green/10 flex items-center justify-center shrink-0"
+                                            >
+                                                <Icon
+                                                    icon="mdi:check"
+                                                    class="w-3.5 h-3.5 text-green"
+                                                />
                                             </div>
                                             <div class="flex-1 min-w-0">
-                                                <p class="text-sm font-medium text-ink leading-tight truncate">{syarat.label}</p>
+                                                <p
+                                                    class="text-sm font-medium text-ink leading-tight truncate"
+                                                >
+                                                    {syarat.label}
+                                                </p>
                                                 {#if syarat.description}
-                                                    <p class="text-[10px] text-ink/40 mt-0.5 truncate">{syarat.description}</p>
+                                                    <p
+                                                        class="text-[10px] text-ink/40 mt-0.5 truncate"
+                                                    >
+                                                        {syarat.description}
+                                                    </p>
                                                 {/if}
                                             </div>
                                             {#if syarat.required}
-                                                <span class="shrink-0 text-[10px] font-bold uppercase tracking-wider text-red-500 bg-red-50 px-2 py-0.5 rounded-full">Wajib</span>
+                                                <span
+                                                    class="shrink-0 text-[10px] font-bold uppercase tracking-wider text-red-500 bg-red-50 px-2 py-0.5 rounded-full"
+                                                    >Wajib</span
+                                                >
                                             {:else}
-                                                <span class="shrink-0 text-[10px] font-bold uppercase tracking-wider text-ink/30 bg-ink/5 px-2 py-0.5 rounded-full">Opsional</span>
+                                                <span
+                                                    class="shrink-0 text-[10px] font-bold uppercase tracking-wider text-ink/30 bg-ink/5 px-2 py-0.5 rounded-full"
+                                                    >Opsional</span
+                                                >
                                             {/if}
                                             <button
-                                                onclick={() => startEdit(syarat)}
+                                                onclick={() =>
+                                                    startEdit(syarat)}
                                                 class="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-ink/10 text-ink/25 hover:text-ink/60 transition-colors shrink-0 cursor-pointer"
                                                 aria-label="Edit persyaratan"
                                             >
-                                                <svg viewBox="0 0 24 24" class="w-3.5 h-3.5"
-                                                    ><path fill="currentColor" d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83l3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z" /></svg>
+                                                <Icon
+                                                    icon="mdi:pencil"
+                                                    class="w-3.5 h-3.5"
+                                                />
                                             </button>
                                             <button
-                                                onclick={() => deletePersyaratan(syarat.id)}
+                                                onclick={() =>
+                                                    deletePersyaratan(
+                                                        syarat.id,
+                                                    )}
                                                 class="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-red-50 text-ink/25 hover:text-red-500 transition-colors shrink-0 cursor-pointer"
                                                 aria-label="Hapus persyaratan"
                                             >
-                                                <svg viewBox="0 0 24 24" class="w-3.5 h-3.5"
-                                                    ><path fill="currentColor" d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6z" /></svg>
+                                                <Icon
+                                                    icon="mdi:delete"
+                                                    class="w-3.5 h-3.5"
+                                                />
                                             </button>
                                         </div>
                                     {/if}
@@ -638,14 +660,10 @@
                         <div
                             class="flex flex-col items-center justify-center py-8 text-center"
                         >
-                            <svg
-                                viewBox="0 0 24 24"
+                            <Icon
+                                icon="mdi:card-account-details-outline"
                                 class="w-8 h-8 text-ink/15 mb-2"
-                                ><path
-                                    fill="currentColor"
-                                    d="M19 3H5c-1.11 0-2 .89-2 2v14c0 1.11.89 2 2 2h14c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2m-7 3c1.09 0 2 .91 2 2s-.91 2-2 2s-2-.91-2-2s.91-2 2-2m4 10H8v-1c0-1.33 2.67-2 4-2s4 .67 4 2v1z"
-                                /></svg
-                            >
+                            />
                             <p class="text-xs text-ink/35">
                                 Belum ada persyaratan.
                             </p>
@@ -688,12 +706,7 @@
                                 onclick={addPersyaratan}
                                 class="ml-auto flex items-center gap-1 px-3 py-2 bg-green text-white text-xs font-semibold hover:bg-green/90 transition-colors cursor-pointer shrink-0"
                             >
-                                <svg viewBox="0 0 24 24" class="w-3.5 h-3.5"
-                                    ><path
-                                        fill="currentColor"
-                                        d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"
-                                    /></svg
-                                >
+                                <Icon icon="mdi:plus" class="w-3.5 h-3.5" />
                                 Tambah
                             </button>
                         </div>

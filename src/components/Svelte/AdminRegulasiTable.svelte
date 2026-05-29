@@ -1,4 +1,5 @@
 <script>
+  import Icon from "@iconify/svelte";
   let { apiUrl } = $props();
 
   // ── List state ──────────────────────────────────────────────
@@ -195,9 +196,7 @@
         onclick={openCreate}
         class="flex items-center gap-2 bg-green text-white text-xs font-bold uppercase px-4 py-2.5 hover:bg-green/90 transition-colors"
       >
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-          <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-        </svg>
+<Icon icon="mdi:plus" width="14" height="14" />
         Tambah Regulasi
       </button>
 
@@ -254,9 +253,7 @@
                 <td class="px-4 py-3 hidden md:table-cell">
                   {#if item.fileUrl}
                     <span class="inline-flex items-center gap-1 text-[10px] font-bold text-green">
-                      <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
-                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-                      </svg>
+<Icon icon="mdi:file-document-outline" width="12" height="12" />
                       PDF
                     </span>
                   {:else}
@@ -308,9 +305,7 @@
           class="w-7 h-7 flex items-center justify-center hover:bg-ink/8 transition-colors rounded-full"
           aria-label="Tutup"
         >
-          <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-            <path d="M1 1L13 13M13 1L1 13" stroke="#111" stroke-width="1.8" stroke-linecap="round"/>
-          </svg>
+<Icon icon="mdi:close" width="12" height="12" />
         </button>
       </div>
 
@@ -381,9 +376,7 @@
           <!-- Existing PDF -->
           {#if existingFileUrl && !pdfFile}
             <div class="flex items-center gap-2 bg-green/5 border border-green/20 px-3 py-2 mb-2">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" class="text-green shrink-0">
-                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-              </svg>
+<Icon icon="mdi:file-document-outline" width="14" height="14" class="text-green shrink-0" />
               <a
                 href={pdfProxyUrl(existingFileUrl)}
                 target="_blank"
@@ -401,9 +394,7 @@
           <!-- New file selected -->
           {#if pdfFile}
             <div class="flex items-center gap-2 bg-ink/3 border border-ink/10 px-3 py-2 mb-2">
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" class="text-green shrink-0">
-                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-              </svg>
+<Icon icon="mdi:file-document-outline" width="13" height="13" class="text-green shrink-0" />
               <span class="flex-1 text-xs font-medium truncate">{pdfFile.name}</span>
               <button
                 type="button"
@@ -416,9 +407,7 @@
           <!-- Upload zone (hide when new file already chosen) -->
           {#if !pdfFile}
             <label class="flex items-center gap-2 border border-dashed border-ink/20 px-3 py-3 cursor-pointer hover:border-green/40 hover:bg-green/3 transition-colors">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" class="text-ink/30 shrink-0">
-                <path d="M14,13V17H10V13H7L12,8L17,13M19.35,10.03C18.67,6.59 15.64,4 12,4C9.11,4 6.6,5.64 5.35,8.03C2.34,8.36 0,10.9 0,14A6,6 0 0,0 6,20H19A5,5 0 0,0 24,15C24,12.36 21.95,10.22 19.35,10.03Z"/>
-              </svg>
+<Icon icon="mdi:cloud-upload-outline" width="14" height="14" class="text-ink/30 shrink-0" />
               <span class="text-xs text-ink/50">
                 {existingFileUrl ? 'Ganti PDF' : 'Pilih file PDF'}
               </span>

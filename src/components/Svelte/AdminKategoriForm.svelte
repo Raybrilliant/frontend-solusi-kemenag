@@ -1,4 +1,6 @@
 <script>
+    import Icon from "@iconify/svelte";
+
     let {
         mode = "tambah",
         kategoriId = null,
@@ -36,11 +38,6 @@
     });
 
     // ── Helpers ──────────────────────────────────────────
-    function iconUrl(name) {
-        if (!name) return "";
-        const [prefix, ico] = name.split(":");
-        return `https://api.iconify.design/${prefix}/${ico}.svg`;
-    }
 
     function showToast(type, msg) {
         toast = { type, msg };
@@ -108,33 +105,18 @@
             ? 'bg-green text-white'
             : 'bg-red-600 text-white'}"
     >
-        <svg
+        <Icon
+            icon={toast.type === "success" ? "mdi:check" : "mdi:alert-circle"}
             width="18"
             height="18"
-            viewBox="0 0 24 24"
-            fill="currentColor"
             class="shrink-0"
-        >
-            {#if toast.type === "success"}
-                <path
-                    d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"
-                />
-            {:else}
-                <path
-                    d="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10-4.48 10-10S17.52,2 12,2zm1,15h-2v-2h2v2zm0-4h-2V7h2v6z"
-                />
-            {/if}
-        </svg>
+        />
         <p class="text-sm font-semibold">{toast.msg}</p>
         <button
             onclick={() => (toast = null)}
             class="ml-auto opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
         >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"
-                ><path
-                    d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12z"
-                /></svg
-            >
+            <Icon icon="mdi:close" width="16" height="16" />
         </button>
     </div>
 {/if}
@@ -164,18 +146,15 @@
                         class="w-10 h-10 rounded-xl border border-black/10 bg-cream flex items-center justify-center shrink-0"
                     >
                         {#if icon.trim()}
-                            <img
-                                src={iconUrl(icon.trim())}
-                                alt={icon}
+                            <Icon
+                                icon={icon.trim()}
                                 class="w-6 h-6 object-contain"
                             />
                         {:else}
-                            <svg viewBox="0 0 24 24" class="w-5 h-5 text-ink/20"
-                                ><path
-                                    fill="currentColor"
-                                    d="M4 5h13v7h2V5c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h9v-2H4zm16 3l-3.5 4.5L14 9.5L10 15H4l6-8z"
-                                /></svg
-                            >
+                            <Icon
+                                icon="mdi:image-outline"
+                                class="w-5 h-5 text-ink/20"
+                            />
                         {/if}
                     </div>
                     <div class="flex-1">
@@ -241,12 +220,7 @@
                     ></div>
                     Menyimpan...
                 {:else}
-                    <svg viewBox="0 0 24 24" class="w-4 h-4"
-                        ><path
-                            fill="currentColor"
-                            d="M15 9H5V5h10m-3 14a3 3 0 0 1-3-3a3 3 0 0 1 3-3a3 3 0 0 1 3 3a3 3 0 0 1-3 3m5-16H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7z"
-                        /></svg
-                    >
+                    <Icon icon="mdi:content-save" class="w-4 h-4" />
                     {mode === "edit" ? "Simpan Perubahan" : "Tambah Kategori"}
                 {/if}
             </button>

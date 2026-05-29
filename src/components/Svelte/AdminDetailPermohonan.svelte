@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Icon from "@iconify/svelte";
     let { permohonan, syarat = [], subService = null } = $props();
 
     type Toast = { type: "success" | "error"; msg: string };
@@ -230,34 +231,18 @@
             ? 'bg-green text-white'
             : 'bg-red-600 text-white'}"
     >
-        <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            class="shrink-0"
-        >
-            {#if toast.type === "success"}
-                <path
-                    d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"
-                />
-            {:else}
-                <path
-                    d="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10-4.48 10-10S17.52,2 12,2zm1,15h-2v-2h2v2zm0-4h-2V7h2v6z"
-                />
-            {/if}
-        </svg>
+        {#if toast.type === "success"}
+            <Icon icon="mdi:check" width="18" height="18" class="shrink-0" />
+        {:else}
+            <Icon icon="mdi:alert-circle" width="18" height="18" class="shrink-0" />
+        {/if}
         <p class="text-sm font-semibold">{toast.msg}</p>
         <button
             onclick={() => (toast = null)}
             class="ml-auto opacity-70 hover:opacity-100 transition-opacity"
             aria-label="Tutup notifikasi"
         >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path
-                    d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"
-                />
-            </svg>
+<Icon icon="mdi:close" width="16" height="16" />
         </button>
     </div>
 {/if}
@@ -266,19 +251,11 @@
 <div class="bg-white border-b border-black/8 px-6 md:px-8 py-5">
     <nav class="flex items-center gap-2 text-xs text-ink/40 mb-4">
         <a href="/admin" class="hover:text-ink transition-colors">Dashboard</a>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"
-            ><path
-                d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"
-            /></svg
-        >
+<Icon icon="mdi:chevron-right" width="14" height="14" />
         <a href="/admin/permohonan" class="hover:text-ink transition-colors"
             >Permohonan</a
         >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"
-            ><path
-                d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"
-            /></svg
-        >
+<Icon icon="mdi:chevron-right" width="14" height="14" />
         <span class="text-ink font-semibold font-mono">{current.id}</span>
     </nav>
 
@@ -317,21 +294,16 @@
         <div
             class="flex items-center gap-3 bg-ink/3 border border-ink/8 px-4 py-3 shrink-0"
         >
-            <svg
+            <Icon
+                icon="mdi:clock-outline"
                 width="18"
                 height="18"
-                viewBox="0 0 24 24"
-                fill="currentColor"
                 class={isOverdue
                     ? "text-red-500"
                     : current.status !== "Diproses"
                       ? "text-ink/30"
                       : "text-green"}
-            >
-                <path
-                    d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"
-                />
-            </svg>
+            />
             <div>
                 <p
                     class="text-[10px] font-bold uppercase tracking-widest text-ink/40"
@@ -387,16 +359,7 @@
                 <div
                     class="w-8 h-8 bg-green flex items-center justify-center shrink-0"
                 >
-                    <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="white"
-                    >
-                        <path
-                            d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"
-                        />
-                    </svg>
+                    <Icon icon="mdi:account" width="16" height="16" style="color: white;" />
                 </div>
                 <h2 class="text-sm font-bold uppercase tracking-wide">
                     Informasi Pemohon
@@ -452,16 +415,7 @@
                 <div
                     class="w-8 h-8 bg-green flex items-center justify-center shrink-0"
                 >
-                    <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="white"
-                    >
-                        <path
-                            d="M16,1H4C2.9,1 2,1.9 2,3V17H4V3H16V1M15,5H8C6.9,5 6.01,5.9 6.01,7L6,21C6,22.1 6.89,23 7.99,23H19C20.1,23 21,22.1 21,21V11L15,5M19,21H8V7H14V12H19V21Z"
-                        />
-                    </svg>
+                    <Icon icon="mdi:file-document-multiple-outline" width="16" height="16" style="color: white;" />
                 </div>
                 <h2 class="text-sm font-bold uppercase tracking-wide">
                     Dokumen Diunggah Pemohon
@@ -484,38 +438,11 @@
                                   : '#F3F4F6'}"
                         >
                             {#if doc.tipe === "pdf"}
-                                <svg
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="#EF4444"
-                                >
-                                    <path
-                                        d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M9.5,11.5C9.5,12.3 8.8,13 8,13H7V15H5.5V9H8C8.8,9 9.5,9.7 9.5,10.5V11.5M14.5,13.5C14.5,14.3 13.8,15 13,15H10.5V9H13C13.8,9 14.5,9.7 14.5,10.5V13.5M18.5,10.5H17V11.5H18.5V13H17V15H15.5V9H18.5V10.5M12,10.5H12V13.5H12V10.5M7,10.5H8V11.5H7V10.5Z"
-                                    />
-                                </svg>
+                                <Icon icon="mdi:file-pdf-box" width="16" height="16" style="color: #EF4444;" />
                             {:else if doc.tipe === "image"}
-                                <svg
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="#3B82F6"
-                                >
-                                    <path
-                                        d="M8.5,13.5L11,16.5L14.5,12L19,18H5M21,19V5C21,3.89 20.1,3 19,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19Z"
-                                    />
-                                </svg>
+                                <Icon icon="mdi:image" width="16" height="16" style="color: #3B82F6;" />
                             {:else}
-                                <svg
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="#6B7280"
-                                >
-                                    <path
-                                        d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"
-                                    />
-                                </svg>
+                                <Icon icon="mdi:file-document-outline" width="16" height="16" style="color: #6B7280;" />
                             {/if}
                         </div>
                         <div class="flex-1 min-w-0">
@@ -531,16 +458,7 @@
                             class="flex items-center gap-1.5 text-xs font-bold text-green border border-green/30 px-3 py-1.5 hover:bg-green hover:text-white transition-all opacity-0 group-hover:opacity-100 shrink-0"
                             aria-label="Unduh {doc.nama}"
                         >
-                            <svg
-                                width="13"
-                                height="13"
-                                viewBox="0 0 24 24"
-                                fill="currentColor"
-                            >
-                                <path
-                                    d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"
-                                />
-                            </svg>
+                            <Icon icon="mdi:download" width="13" height="13" />
                             Unduh
                         </button>
                     </div>
@@ -561,16 +479,7 @@
                 <div
                     class="w-8 h-8 bg-green flex items-center justify-center shrink-0"
                 >
-                    <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="white"
-                    >
-                        <path
-                            d="M10,17L5,12L6.41,10.58L10,14.17L17.59,6.58L19,8M19,3H14.82C14.4,1.84 13.3,1 12,1C10.7,1 9.6,1.84 9.18,3H5A2,2 0 0,0 3,5V21A2,2 0 0,0 5,23H19A2,2 0 0,0 21,21V5A2,2 0 0,0 19,3M12,3A1,1 0 0,1 13,4A1,1 0 0,1 12,5A1,1 0 0,1 11,4A1,1 0 0,1 12,3Z"
-                        />
-                    </svg>
+                    <Icon icon="mdi:clipboard-check-outline" width="16" height="16" style="color: white;" />
                 </div>
                 <h2 class="text-sm font-bold uppercase tracking-wide">
                     Persyaratan Dokumen
@@ -612,16 +521,7 @@
                 <div
                     class="w-10 h-10 bg-green flex items-center justify-center shrink-0"
                 >
-                    <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="white"
-                    >
-                        <path
-                            d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"
-                        />
-                    </svg>
+                    <Icon icon="mdi:check" width="18" height="18" style="color: white;" />
                 </div>
                 <div class="flex-1 min-w-0">
                     <p
@@ -641,14 +541,7 @@
                         )}
                     class="flex items-center gap-2 bg-green text-white text-sm font-bold px-4 py-2 hover:bg-green/90 transition-colors shrink-0"
                 >
-                    <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                    >
-                        <path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z" />
-                    </svg>
+                    <Icon icon="mdi:download" width="14" height="14" />
                     Unduh Output
                 </button>
             </div>
@@ -658,17 +551,7 @@
         {#if current.status === "Ditolak" && current.rejectionReason}
             <div class="bg-red-50 border border-red-200 px-5 py-4">
                 <div class="flex items-center gap-2 mb-2">
-                    <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                        class="text-red-500 shrink-0"
-                    >
-                        <path
-                            d="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10-4.48 10-10S17.52,2 12,2zm1,15h-2v-2h2v2zm0-4h-2V7h2v6z"
-                        />
-                    </svg>
+                    <Icon icon="mdi:alert-circle" width="16" height="16" class="text-red-500 shrink-0" />
                     <p
                         class="text-xs font-bold uppercase tracking-widest text-red-600"
                     >
@@ -693,16 +576,7 @@
                     <div
                         class="w-8 h-8 bg-ink flex items-center justify-center shrink-0"
                     >
-                        <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="white"
-                        >
-                            <path
-                                d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M16.2,16.2L11,13V7H12.5V12.2L17,14.9L16.2,16.2Z"
-                            />
-                        </svg>
+                        <Icon icon="mdi:clock-outline" width="16" height="16" style="color: white;" />
                     </div>
                     <h2 class="text-sm font-bold uppercase tracking-wide">
                         Ubah Status
@@ -777,17 +651,7 @@
                                     handleOutputFile(e);
                                 }}
                             >
-                                <svg
-                                    width="28"
-                                    height="28"
-                                    viewBox="0 0 24 24"
-                                    fill="currentColor"
-                                    class="text-green"
-                                >
-                                    <path
-                                        d="M14,13V17H10V13H7L12,8L17,13M19.35,10.03C18.67,6.59 15.64,4 12,4C9.11,4 6.6,5.64 5.35,8.03C2.34,8.36 0,10.9 0,14A6,6 0 0,0 6,20H19A5,5 0 0,0 24,15C24,12.36 21.95,10.22 19.35,10.03Z"
-                                    />
-                                </svg>
+                                <Icon icon="mdi:cloud-upload-outline" width="28" height="28" class="text-green" />
                                 <p class="text-xs font-semibold text-center">
                                     {outputFile
                                         ? outputFile.name
@@ -853,31 +717,10 @@
               hover:bg-green/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {#if submitting}
-                            <svg
-                                class="animate-spin"
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2.5"
-                            >
-                                <path
-                                    d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"
-                                />
-                            </svg>
+                            <Icon icon="mdi:loading" width="16" height="16" class="animate-spin" />
                             Menyimpan...
                         {:else}
-                            <svg
-                                width="15"
-                                height="15"
-                                viewBox="0 0 24 24"
-                                fill="currentColor"
-                            >
-                                <path
-                                    d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"
-                                />
-                            </svg>
+                            <Icon icon="mdi:check" width="15" height="15" />
                             Simpan Perubahan
                         {/if}
                     </button>
@@ -931,31 +774,18 @@
 
 {#snippet RingkasRow(props: { icon: string; label: string; value: string })}
     <div class="flex items-start gap-2.5">
-        <svg
+        <Icon
+            icon={props.icon === "calendar"
+                ? "mdi:calendar-blank-outline"
+                : props.icon === "tag"
+                  ? "mdi:tag"
+                  : props.icon === "clock"
+                    ? "mdi:clock-outline"
+                    : "mdi:phone"}
             width="14"
             height="14"
-            viewBox="0 0 24 24"
-            fill="currentColor"
             class="text-ink/30 mt-0.5 shrink-0"
-        >
-            {#if props.icon === "calendar"}
-                <path
-                    d="M19,3H18V1H16V3H8V1H6V3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M19,19H5V8H19V19Z"
-                />
-            {:else if props.icon === "tag"}
-                <path
-                    d="M5.5,7A1.5,1.5 0 0,1 4,5.5A1.5,1.5 0 0,1 5.5,4A1.5,1.5 0 0,1 7,5.5A1.5,1.5 0 0,1 5.5,7M21.41,11.58L12.41,2.58C12.05,2.22 11.55,2 11,2H4C2.89,2 2,2.89 2,4V11C2,11.55 2.22,12.05 2.59,12.41L11.58,21.41C11.95,21.77 12.45,22 13,22C13.55,22 14.05,21.77 14.41,21.41L21.41,14.41C21.78,14.05 22,13.55 22,13C22,12.44 21.77,11.94 21.41,11.58Z"
-                />
-            {:else if props.icon === "clock"}
-                <path
-                    d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"
-                />
-            {:else if props.icon === "phone"}
-                <path
-                    d="M6.62,10.79C8.06,13.62 10.38,15.94 13.21,17.38L15.41,15.18C15.69,14.9 16.08,14.82 16.43,14.93C17.55,15.3 18.75,15.5 20,15.5A1,1 0 0,1 21,16.5V20A1,1 0 0,1 20,21A17,17 0 0,1 3,4A1,1 0 0,1 4,3H7.5A1,1 0 0,1 8.5,4C8.5,5.25 8.7,6.45 9.07,7.57C9.18,7.92 9.1,8.31 8.82,8.59L6.62,10.79Z"
-                />
-            {/if}
-        </svg>
+        />
         <div>
             <p class="text-[10px] text-ink/40">{props.label}</p>
             <p class="text-xs font-semibold leading-snug">{props.value}</p>

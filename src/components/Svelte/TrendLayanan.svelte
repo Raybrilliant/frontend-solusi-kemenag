@@ -1,4 +1,5 @@
 <script>
+    import Icon from "@iconify/svelte";
     import { untrack } from "svelte";
 
     let { apiUrl, periods = ["3 Bulan", "6 Bulan", "1 Tahun"] } = $props();
@@ -141,17 +142,12 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2">
-            <svg
+            <Icon
+                icon="mdi:trending-up"
                 width="18"
                 height="18"
-                viewBox="0 0 24 24"
-                fill="currentColor"
                 class="text-green shrink-0"
-            >
-                <path
-                    d="M3.5 18.5l6-6 4 4L22 6.92 20.59 5.51 13.5 14.5l-4-4-7.5 7.5 1.5 1.5z"
-                />
-            </svg>
+            />
             <h2 class="font-bold uppercase text-xl tracking-tight">
                 Trend Layanan
             </h2>
@@ -166,28 +162,14 @@
             >
                 {period}
                 {#if loading}
-                    <svg
+                    <Icon
+                        icon="mdi:loading"
                         class="animate-spin"
                         width="11"
                         height="11"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="3"
-                    >
-                        <path
-                            d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"
-                        />
-                    </svg>
+                    />
                 {:else}
-                    <svg
-                        width="11"
-                        height="11"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                    >
-                        <path d="M7 10l5 5 5-5z" />
-                    </svg>
+                    <Icon icon="mdi:chevron-down" width="11" height="11" />
                 {/if}
             </button>
             {#if dropOpen}
@@ -345,7 +327,7 @@
                 {/each}
 
                 <!-- Area fills — fade in after lines are drawn -->
-                    <path class="area-anim" d={masukArea} fill="url(#grad-total)" />
+                <path class="area-anim" d={masukArea} fill="url(#grad-total)" />
                 <path
                     class="area-anim"
                     d={selesaiArea}
@@ -470,76 +452,76 @@
 
                 <!-- Last-point badges — spring pop-in at the very end -->
                 {#if lastMasuk}
-                <g
-                    class="badge-anim"
-                    style="transform-origin:{lastMasuk.x}px {lastMasuk.y -
-                        17}px"
-                >
-                    <rect
-                        x={lastMasuk.x - lastMasuk.bw / 2}
-                        y={lastMasuk.y - 26}
-                        width={lastMasuk.bw}
-                        height={18}
-                        rx="4"
-                        fill="#0F6B44"
-                    />
-                    <text
-                        x={lastMasuk.x}
-                        y={lastMasuk.y - 13}
-                        text-anchor="middle"
-                        font-size="11"
-                        font-weight="700"
-                        fill="white">{fmt(lastMasuk.v)}</text
+                    <g
+                        class="badge-anim"
+                        style="transform-origin:{lastMasuk.x}px {lastMasuk.y -
+                            17}px"
                     >
-                </g>
+                        <rect
+                            x={lastMasuk.x - lastMasuk.bw / 2}
+                            y={lastMasuk.y - 26}
+                            width={lastMasuk.bw}
+                            height={18}
+                            rx="4"
+                            fill="#0F6B44"
+                        />
+                        <text
+                            x={lastMasuk.x}
+                            y={lastMasuk.y - 13}
+                            text-anchor="middle"
+                            font-size="11"
+                            font-weight="700"
+                            fill="white">{fmt(lastMasuk.v)}</text
+                        >
+                    </g>
                 {/if}
                 {#if lastSelesai}
-                <g
-                    class="badge-anim"
-                    style="transform-origin:{lastSelesai.x}px {lastSelesai.y -
-                        17}px; animation-delay:0.82s"
-                >
-                    <rect
-                        x={lastSelesai.x - lastSelesai.bw / 2}
-                        y={lastSelesai.y - 26}
-                        width={lastSelesai.bw}
-                        height={18}
-                        rx="4"
-                        fill="#52A87C"
-                    />
-                    <text
-                        x={lastSelesai.x}
-                        y={lastSelesai.y - 13}
-                        text-anchor="middle"
-                        font-size="11"
-                        font-weight="700"
-                        fill="white">{fmt(lastSelesai.v)}</text
+                    <g
+                        class="badge-anim"
+                        style="transform-origin:{lastSelesai.x}px {lastSelesai.y -
+                            17}px; animation-delay:0.82s"
                     >
-                </g>
+                        <rect
+                            x={lastSelesai.x - lastSelesai.bw / 2}
+                            y={lastSelesai.y - 26}
+                            width={lastSelesai.bw}
+                            height={18}
+                            rx="4"
+                            fill="#52A87C"
+                        />
+                        <text
+                            x={lastSelesai.x}
+                            y={lastSelesai.y - 13}
+                            text-anchor="middle"
+                            font-size="11"
+                            font-weight="700"
+                            fill="white">{fmt(lastSelesai.v)}</text
+                        >
+                    </g>
                 {/if}
                 {#if lastDitolak}
-                <g
-                    class="badge-anim"
-                    style="transform-origin:{lastDitolak.x}px {lastDitolak.y -
-                        17}px; animation-delay:0.88s"
-                >
-                    <rect
-                        x={lastDitolak.x - lastDitolak.bw / 2}
-                        y={lastDitolak.y - 26}
-                        width={lastDitolak.bw}
-                        height={18}
-                        rx="4"
-                        fill="#F87171"
-                    />
-                    <text
-                        x={lastDitolak.x}
-                        y={lastDitolak.y - 13}
-                        text-anchor="middle"
-                        font-size="11"
-                        font-weight="700"
-                        fill="white">{fmt(lastDitolak.v)}</text
+                    <g
+                        class="badge-anim"
+                        style="transform-origin:{lastDitolak.x}px {lastDitolak.y -
+                            17}px; animation-delay:0.88s"
                     >
-                </g>
+                        <rect
+                            x={lastDitolak.x - lastDitolak.bw / 2}
+                            y={lastDitolak.y - 26}
+                            width={lastDitolak.bw}
+                            height={18}
+                            rx="4"
+                            fill="#F87171"
+                        />
+                        <text
+                            x={lastDitolak.x}
+                            y={lastDitolak.y - 13}
+                            text-anchor="middle"
+                            font-size="11"
+                            font-weight="700"
+                            fill="white">{fmt(lastDitolak.v)}</text
+                        >
+                    </g>
                 {/if}
 
                 <!-- X-axis labels -->

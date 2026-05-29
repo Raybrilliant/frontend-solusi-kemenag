@@ -1,4 +1,6 @@
 <script>
+    import Icon from "@iconify/svelte";
+
     let { apiUrl } = $props();
 
     const tabs = ["Sedang Diproses", "Selesai Terbaru"];
@@ -48,15 +50,12 @@
 <div class="border rounded-lg overflow-hidden p-5 h-full flex flex-col">
     <!-- Header -->
     <div class="flex items-center gap-3 border-b border-gray-100">
-        <svg
+        <Icon
+            icon="mdi:format-list-bulleted"
             width="24"
             height="24"
-            viewBox="0 0 24 24"
-            fill="black"
             class="text-green shrink-0"
-        >
-            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
-        </svg>
+        />
         <h2 class="text-xl font-bold uppercase tracking-tight">
             Layanan Terbaru
         </h2>
@@ -135,23 +134,22 @@
                         <!-- Badge -->
                         <span
                             class="text-xs font-semibold px-2.5 py-1 rounded shrink-0"
-                            style="background:{(statusColor[item.status] ?? statusColor.Diproses).bg}; color:{(statusColor[item.status] ?? statusColor.Diproses).text}"
+                            style="background:{(
+                                statusColor[item.status] ?? statusColor.Diproses
+                            ).bg}; color:{(
+                                statusColor[item.status] ?? statusColor.Diproses
+                            ).text}"
                         >
                             {item.status}
                         </span>
 
                         <!-- Chevron -->
-                        <svg
+                        <Icon
+                            icon="mdi:chevron-right"
                             width="14"
                             height="14"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
                             class="text-gray-300 shrink-0 group-hover:text-green transition-colors"
-                        >
-                            <path
-                                d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6-6-6z"
-                            />
-                        </svg>
+                        />
                     </li>
                 {/each}
 

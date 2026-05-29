@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import { toUploadProxyUrl } from "../../../lib/upload-url";
+import { categoryColor, categoryAccent } from "../../../lib/berita-kategori";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 const { slug } = Astro.params;
@@ -71,27 +72,6 @@ function formatViews(n: number) {
     return String(n);
 }
 
-function categoryColor(cat: string) {
-    switch (cat) {
-        case "pengumuman": return "bg-yellow text-ink";
-        case "kua":        return "bg-green text-white";
-        case "pendidikan": return "bg-green/80 text-white";
-        case "bimas":      return "bg-ink text-cream";
-        default:           return "bg-ink/15 text-ink";
-    }
-}
-
-function categoryAccent(cat: string) {
-    switch (cat) {
-        case "pengumuman": return "bg-yellow";
-        case "kua":
-        case "pendidikan": return "bg-green";
-        case "bimas":      return "bg-ink/40";
-        default:           return "bg-ink/15";
-    }
-}
-
-// reuse same mapping for related posts
 const relatedCategoryColor = categoryColor;
 
 // EditorJS block → HTML
@@ -195,27 +175,41 @@ const pageUrl = `${Astro.url.origin}/portal/berita/${slug}`;
 const shareText = encodeURIComponent(`${article.judul} — ${pageUrl}`);
 const waUrl = `https://wa.me/?text=${shareText}`;
 const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`;
+
+const ogImage = article.thumbnail
+    ? (article.thumbnail.startsWith("http")
+        ? article.thumbnail
+        : `${Astro.url.origin}${article.thumbnail}`)
+    : undefined;
 ---
 
 <style>
-    /* Reading progress bar */
-    #reading-bar {
+    /* Reading progress — 4 edges */
+    .prog-edge {
         position: fixed;
-        top: 0;
-        left: 0;
-        height: 3px;
-        width: 0%;
-        background: #0F6B44;
         z-index: 9999;
-        transition: width 0.05s linear;
+        background: #0F6B44;
         pointer-events: none;
+        transition: width 0.06s linear, height 0.06s linear;
     }
+    #bar-top    { top: 0;    left: 0;  height: 3px; width: 0%; }
+    #bar-right  { top: 0;    right: 0; width: 3px;  height: 0%; }
+    #bar-bottom { bottom: 0; right: 0; height: 3px; width: 0%; }
+    #bar-left   { left: 0;   bottom: 0; width: 3px; height: 0%; }
 </style>
 
-<BaseLayout title={article.judul}>
+<BaseLayout
+    title={article.judul}
+    ogType="article"
+    ogDescription={article.ringkasan ?? undefined}
+    ogImage={ogImage}
+>
 
-    <!-- Progress bar -->
-    <div id="reading-bar"></div>
+    <!-- Progress edges -->
+    <div id="bar-top"    class="prog-edge"></div>
+    <div id="bar-right"  class="prog-edge"></div>
+    <div id="bar-bottom" class="prog-edge"></div>
+    <div id="bar-left"   class="prog-edge"></div>
 
     <!-- ── Breadcrumb ───────────────────────────────── -->
     <div class="pt-6 pb-4">
@@ -230,23 +224,49 @@ const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent
 
     <!-- ── Thumbnail hero ──────────────────────────── -->
     {article.thumbnail && (
-        <div class="-mx-4 sm:-mx-8 md:-mx-14 lg:-mx-20 mb-8 relative overflow-hidden" style="height: 420px;">
-            <img
-                src={article.thumbnail}
-                alt={article.judul}
-                class="w-full h-full object-cover"
-                loading="eager"
-            />
-            <div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.75));"></div>
-            <div class="absolute bottom-0 left-0 right-0 px-4 sm:px-8 md:px-14 lg:px-20 pb-8">
-                <span class={`inline-block text-[10px] font-black uppercase tracking-wider px-2 py-1 mb-3 ${categoryColor(article.kategori)}`}>
-                    {article.kategori}
-                </span>
-                <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white leading-tight max-w-3xl">
-                    {article.judul}
-                </h1>
+        <>
+            {/*
+                ── VERSI BARU: foto penuh tanpa crop ──
+                Untuk mengaktifkan: uncomment blok ini, comment VERSI LAMA di bawah.
+
+                <div class="-mx-4 sm:-mx-8 md:-mx-14 lg:-mx-20 mb-8 relative">
+                    <img
+                        src={article.thumbnail}
+                        alt={article.judul}
+                        class="w-full block"
+                        loading="eager"
+                    />
+                    <div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.72));"></div>
+                    <div class="absolute bottom-0 left-0 right-0 px-4 sm:px-8 md:px-14 lg:px-20 pb-8">
+                        <span class={`inline-block text-[10px] font-black uppercase tracking-wider px-2 py-1 mb-3 ${categoryColor(article.kategori)}`}>
+                            {article.kategori}
+                        </span>
+                        <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white leading-tight max-w-3xl">
+                            {article.judul}
+                        </h1>
+                    </div>
+                </div>
+            */}
+
+            {/* ── VERSI LAMA: fixed height 420px, object-cover (aktif) ── */}
+            <div class="-mx-4 sm:-mx-8 md:-mx-14 lg:-mx-20 mb-8 relative overflow-hidden" style="height: 420px;">
+                <img
+                    src={article.thumbnail}
+                    alt={article.judul}
+                    class="w-full h-full object-cover object-[center_20%]"
+                    loading="eager"
+                />
+                <div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.72));"></div>
+                <div class="absolute bottom-0 left-0 right-0 px-4 sm:px-8 md:px-14 lg:px-20 pb-8">
+                    <span class={`inline-block text-[10px] font-black uppercase tracking-wider px-2 py-1 mb-3 ${categoryColor(article.kategori)}`}>
+                        {article.kategori}
+                    </span>
+                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white leading-tight max-w-3xl">
+                        {article.judul}
+                    </h1>
+                </div>
             </div>
-        </div>
+        </>
     )}
 
     <div class="max-w-3xl mx-auto">
@@ -288,7 +308,7 @@ const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent
         </p>
 
         <!-- ── Article body ──────────────────────────── -->
-        <div id="article-body" class="mb-10">
+        <div id="article-body" class="text-justify mb-10">
             <Fragment set:html={contentHtml} />
         </div>
 
@@ -396,17 +416,27 @@ const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent
 
 <script>
 {
-    // ── Reading progress bar ──────────────────────────
-    const bar = document.getElementById("reading-bar") as HTMLElement | null;
-    const body = document.getElementById("article-body") as HTMLElement | null;
+    // ── Reading progress — 4 edges ────────────────────
+    const barTop    = document.getElementById("bar-top")    as HTMLElement | null;
+    const barRight  = document.getElementById("bar-right")  as HTMLElement | null;
+    const barBottom = document.getElementById("bar-bottom") as HTMLElement | null;
+    const barLeft   = document.getElementById("bar-left")   as HTMLElement | null;
+    const body      = document.getElementById("article-body") as HTMLElement | null;
 
     function updateBar() {
-        if (!bar || !body) return;
+        if (!body) return;
         const bodyRect = body.getBoundingClientRect();
-        const total = body.offsetHeight - window.innerHeight;
+        const total    = body.offsetHeight - window.innerHeight;
         const scrolled = -bodyRect.top;
-        const pct = total > 0 ? Math.min(100, Math.max(0, (scrolled / total) * 100)) : 0;
-        bar.style.width = `${pct}%`;
+        const pct      = total > 0 ? Math.min(100, Math.max(0, (scrolled / total) * 100)) : 0;
+
+        // Each edge covers 25% of scroll — fills sequentially
+        const seg = (start: number) => pct < start ? 0 : Math.min(100, (pct - start) * 4);
+
+        if (barTop)    barTop.style.width    = `${seg(0)}%`;
+        if (barRight)  barRight.style.height = `${seg(25)}%`;
+        if (barBottom) barBottom.style.width = `${seg(50)}%`;
+        if (barLeft)   barLeft.style.height  = `${seg(75)}%`;
     }
 
     // ── Reading time estimate ─────────────────────────

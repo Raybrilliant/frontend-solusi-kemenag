@@ -1,4 +1,6 @@
 <script>
+    import Icon from "@iconify/svelte";
+
     let {
         formBaseUrl = "/api/survei/form",
         submitUrl = "/api/survei/submit",
@@ -201,8 +203,7 @@
                 const json = await res.json();
                 if (json.success === false) {
                     throw new Error(
-                        json.message ??
-                            `Gagal mengirim survei ${type.value}.`,
+                        json.message ?? `Gagal mengirim survei ${type.value}.`,
                     );
                 }
             }
@@ -224,19 +225,17 @@
 <div class="w-full max-w-5xl">
     {#if success}
         <section class="border-2 border-green bg-white p-6 md:p-8">
-            <div class="w-14 h-14 bg-green text-white flex items-center justify-center mb-5">
-                <svg viewBox="0 0 24 24" class="w-8 h-8" fill="currentColor">
-                    <path
-                        d="M9,16.17L4.83,12L3.41,13.41L9,19L21,7L19.59,5.59L9,16.17Z"
-                    ></path>
-                </svg>
+            <div
+                class="w-14 h-14 bg-green text-white flex items-center justify-center mb-5"
+            >
+                <Icon icon="mdi:check" class="w-8 h-8" />
             </div>
             <h2 class="text-2xl md:text-3xl font-bold uppercase text-ink">
                 Terima Kasih
             </h2>
             <p class="text-sm md:text-base text-ink/60 mt-2 max-w-2xl">
-                Jawaban SKM, SPKP, dan SPAK untuk tiket {ticket} berhasil
-                dikirim. Masukan Anda membantu peningkatan kualitas layanan.
+                Jawaban SKM, SPKP, dan SPAK untuk tiket {ticket} berhasil dikirim.
+                Masukan Anda membantu peningkatan kualitas layanan.
             </p>
             <a
                 href="/check-progress"
@@ -270,19 +269,23 @@
                 </button>
             </form>
             <p class="text-xs text-ink/40 mt-3">
-                Survei hanya dapat diisi untuk nomor tiket layanan yang statusnya
-                sudah selesai.
+                Survei hanya dapat diisi untuk nomor tiket layanan yang
+                statusnya sudah selesai.
             </p>
         </section>
 
         {#if error}
-            <div class="mb-5 border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div
+                class="mb-5 border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            >
                 {error}
             </div>
         {/if}
 
         {#if loading}
-            <div class="bg-white border border-black/10 p-10 text-center text-sm text-ink/40">
+            <div
+                class="bg-white border border-black/10 p-10 text-center text-sm text-ink/40"
+            >
                 Memuat form survei...
             </div>
         {:else if forms.SKM}
@@ -318,12 +321,18 @@
 
                 {#if !isProfileStep}
                     <div class="p-4 md:p-6">
-                        <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
+                        <div
+                            class="flex flex-wrap items-start justify-between gap-4 mb-6"
+                        >
                             <div>
-                                <p class="text-xs font-bold uppercase tracking-widest text-green">
+                                <p
+                                    class="text-xs font-bold uppercase tracking-widest text-green"
+                                >
                                     {currentType.label}
                                 </p>
-                                <h2 class="text-2xl font-bold uppercase text-ink mt-1">
+                                <h2
+                                    class="text-2xl font-bold uppercase text-ink mt-1"
+                                >
                                     {currentType.title}
                                 </h2>
                                 <p class="text-sm text-ink/50 mt-1 max-w-2xl">
@@ -348,10 +357,14 @@
                                             {index + 1}
                                         </span>
                                         <div class="flex-1">
-                                            <h3 class="font-semibold text-ink leading-snug">
+                                            <h3
+                                                class="font-semibold text-ink leading-snug"
+                                            >
                                                 {question.question}
                                             </h3>
-                                            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
+                                            <div
+                                                class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4"
+                                            >
                                                 {#each nilaiOptions as option}
                                                     <button
                                                         type="button"
@@ -368,10 +381,14 @@
                                                                 : "border-black/10 hover:border-green/40"
                                                         }`}
                                                     >
-                                                        <span class="block text-lg font-bold">
+                                                        <span
+                                                            class="block text-lg font-bold"
+                                                        >
                                                             {option.label}
                                                         </span>
-                                                        <span class="block text-xs opacity-75">
+                                                        <span
+                                                            class="block text-xs opacity-75"
+                                                        >
                                                             {option.text}
                                                         </span>
                                                     </button>
@@ -383,7 +400,9 @@
                             {/each}
                         </div>
 
-                        <div class="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-black/8 pt-5">
+                        <div
+                            class="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-black/8 pt-5"
+                        >
                             <button
                                 type="button"
                                 onclick={prevStep}
@@ -393,8 +412,7 @@
                                 Sebelumnya
                             </button>
                             <p class="text-xs text-ink/45">
-                                {answeredCount} dari {totalQuestions} pertanyaan
-                                terjawab
+                                {answeredCount} dari {totalQuestions} pertanyaan terjawab
                             </p>
                             <button
                                 type="button"
@@ -409,7 +427,9 @@
                     </div>
                 {:else}
                     <div class="p-4 md:p-6">
-                        <p class="text-xs font-bold uppercase tracking-widest text-green">
+                        <p
+                            class="text-xs font-bold uppercase tracking-widest text-green"
+                        >
                             Langkah Terakhir
                         </p>
                         <h2 class="text-2xl font-bold uppercase text-ink mt-1">
@@ -468,7 +488,9 @@
                             </div>
                         </div>
 
-                        <div class="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-black/8 pt-5">
+                        <div
+                            class="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-black/8 pt-5"
+                        >
                             <button
                                 type="button"
                                 onclick={prevStep}

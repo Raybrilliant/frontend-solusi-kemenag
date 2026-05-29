@@ -3,20 +3,55 @@ import '../styles/global.css'
 import Navbar from '../components/Navbar.astro'
 import FloatingActions from '../components/Svelte/FloatingActions.svelte'
 import { Icon } from 'astro-icon/components'
-let { title } = Astro.props
 
+const {
+    title,
+    ogTitle,
+    ogDescription,
+    ogImage,
+    ogType = "website",
+} = Astro.props;
+
+const SITE_URL = "https://kemenagkotaprobolinggo.id";
+const DEFAULT_DESC = "Kantor Kementerian Agama Kota Probolinggo. Melayani masyarakat dengan integritas untuk mewujudkan masyarakat yang taat beragama, rukun, cerdas, dan sejahtera.";
+const DEFAULT_IMAGE = `${SITE_URL}/logo.png`;
+
+const resolvedTitle = title
+    ? `${title} — Kantor Kementerian Agama Kota Probolinggo`
+    : "Kantor Kementerian Agama Kota Probolinggo";
+const resolvedOgTitle       = ogTitle       ?? resolvedTitle;
+const resolvedOgDescription = ogDescription ?? DEFAULT_DESC;
+const resolvedOgImage       = ogImage       ?? DEFAULT_IMAGE;
+const resolvedOgUrl         = Astro.url.href;
 ---
 
-<html lang="en" class="scroll-smooth">
+<html lang="id" class="scroll-smooth">
 	<head>
 		<meta charset="utf-8" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" href="/favicon.ico" />
-		<meta name="description" content="Kantor Kementerian Agama Kota Probolinggo. Melayani masyarakat dengan integritas untuk mewujudkan masyarakat yang taat beragama, rukun, cerdas, dan sejahtera. Portal resmi berita & layanan publik." />
-		<meta name="keywords" content="Kantor Kementerian Agama, Kota Probolinggo, Solusi, Sistem Online Layanan Unggul Terintegrasi" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="generator" content={Astro.generator} />
-		<title>{title ? `${title} - ` : ""} Kantor Kementerian Agama Kota Probolinggo</title>
+		<meta name="description" content={resolvedOgDescription} />
+		<meta name="keywords" content="Kantor Kementerian Agama, Kota Probolinggo, Solusi, Sistem Online Layanan Unggul Terintegrasi" />
+		<title>{resolvedTitle}</title>
+
+		<!-- Open Graph -->
+		<meta property="og:type"        content={ogType} />
+		<meta property="og:site_name"   content="Kemenag Kota Probolinggo" />
+		<meta property="og:locale"      content="id_ID" />
+		<meta property="og:url"         content={resolvedOgUrl} />
+		<meta property="og:title"       content={resolvedOgTitle} />
+		<meta property="og:description" content={resolvedOgDescription} />
+		<meta property="og:image"       content={resolvedOgImage} />
+		<meta property="og:image:width"  content="1200" />
+		<meta property="og:image:height" content="630" />
+
+		<!-- Twitter / X Card -->
+		<meta name="twitter:card"        content="summary_large_image" />
+		<meta name="twitter:title"       content={resolvedOgTitle} />
+		<meta name="twitter:description" content={resolvedOgDescription} />
+		<meta name="twitter:image"       content={resolvedOgImage} />
 	</head>
 	<body class="px-4 sm:px-8 md:px-14 lg:px-20 bg-cream">
 		<Navbar />

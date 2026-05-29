@@ -1,4 +1,5 @@
 <script>
+    import Icon from "@iconify/svelte";
     let {
         questionsUrl = "/api/admin/survei/questions",
         responsesUrl = "/api/admin/survei/responses",
@@ -761,11 +762,7 @@
             class="ml-auto opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
             aria-label="Tutup"
         >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path
-                    d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12z"
-                ></path>
-            </svg>
+<Icon icon="mdi:close" width="16" height="16" />
         </button>
     </div>
 {/if}
@@ -788,15 +785,7 @@
                         {type.label}
                     </span>
                     {#if activeType === type.value}
-                        <svg
-                            viewBox="0 0 24 24"
-                            class="w-5 h-5 text-green"
-                            fill="currentColor"
-                        >
-                            <path
-                                d="M9,16.17L4.83,12L3.41,13.41L9,19L21,7L19.59,5.59L9,16.17Z"
-                            ></path>
-                        </svg>
+<Icon icon="mdi:check" class="w-5 h-5 text-green" />
                     {/if}
                 </div>
                 <h2 class="mt-3 font-bold text-ink">{type.title}</h2>

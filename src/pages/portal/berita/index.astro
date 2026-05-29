@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import { toUploadProxyUrl } from "../../../lib/upload-url";
+import { categoryColor, categoryAccent } from "../../../lib/berita-kategori";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
@@ -32,13 +33,28 @@ try {
     }
 } catch {}
 
+// Fetch semua kategori unik dari berita yang ada
+let rawKategori: string[] = [];
+try {
+    const katRes = await fetch(`${BACKEND_URL}/api/v1/berita/?limit=500`);
+    if (katRes.ok) {
+        const katData = await katRes.json();
+        rawKategori = [
+            ...new Set(
+                (katData?.data ?? [])
+                    .map((b: any) => (b.kategori ?? "").trim().toLowerCase())
+                    .filter(Boolean),
+            ),
+        ].sort();
+    }
+} catch {}
+
 const categories = [
     { value: "", label: "Semua" },
-    { value: "umum", label: "Umum" },
-    { value: "pendidikan", label: "Pendidikan" },
-    { value: "bimas", label: "Bimbingan Masyarakat" },
-    { value: "kua", label: "KUA" },
-    { value: "pengumuman", label: "Pengumuman" },
+    ...rawKategori.map((k) => ({
+        value: k,
+        label: k.charAt(0).toUpperCase() + k.slice(1),
+    })),
 ];
 
 function formatDate(dateStr: string | null) {
@@ -50,25 +66,6 @@ function formatDate(dateStr: string | null) {
     });
 }
 
-function categoryColor(cat: string) {
-    switch (cat) {
-        case "pengumuman": return "bg-yellow text-ink";
-        case "kua":        return "bg-green text-white";
-        case "pendidikan": return "bg-green/80 text-white";
-        case "bimas":      return "bg-ink text-cream";
-        default:           return "bg-ink/15 text-ink";
-    }
-}
-
-function categoryAccent(cat: string) {
-    switch (cat) {
-        case "pengumuman": return "bg-yellow";
-        case "kua":
-        case "pendidikan": return "bg-green";
-        case "bimas":      return "bg-ink/40";
-        default:           return "bg-ink/15";
-    }
-}
 
 function buildUrl(params: Record<string, string>) {
     const p = new URLSearchParams();
@@ -78,6 +75,12 @@ function buildUrl(params: Record<string, string>) {
     const qs = p.toString();
     return `/portal/berita${qs ? `?${qs}` : ""}`;
 }
+
+const SITE_URL = "https://kemenagkotaprobolinggo.id";
+const firstThumb = berita[0]?.thumbnail;
+const ogImage = firstThumb
+    ? (firstThumb.startsWith("http") ? firstThumb : `${SITE_URL}${firstThumb}`)
+    : undefined;
 ---
 
 <style>
@@ -102,7 +105,11 @@ function buildUrl(params: Record<string, string>) {
     }
 </style>
 
-<BaseLayout title="Berita & Informasi">
+<BaseLayout
+    title="Berita & Informasi"
+    ogDescription="Informasi dan pengumuman resmi terkini dari Kantor Kementerian Agama Kota Probolinggo."
+    ogImage={ogImage}
+>
 
     <!-- ── Page header ────────────────────────────────── -->
     <div data-anim="down" class="pt-8 pb-6">

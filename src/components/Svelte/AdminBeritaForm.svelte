@@ -1,4 +1,5 @@
 <script>
+    import Icon from "@iconify/svelte";
     import EditorJsNotion from "./EditorJsNotion.svelte";
     import { toUploadProxyUrl } from "../../lib/upload-url";
 
@@ -26,9 +27,20 @@
     let loading = $state(mode === "edit");
     let saving = $state(false);
     let toast = $state(null);
+    let kategoriOptions = $state([]);
+    let copied = $state(false);
 
     const isEdit = $derived(mode === "edit" && beritaId);
-    const kategoriOptions = ["pendidikan", "bimas", "umum","pengumuman","kua"];
+
+    // Load existing categories once on mount (no reactive deps → runs once)
+    $effect(() => {
+        fetch("/api/admin/berita/kategori")
+            .then((r) => r.json())
+            .then((d) => {
+                kategoriOptions = d?.data ?? [];
+            })
+            .catch(() => {});
+    });
 
     $effect(() => {
         if (isEdit) {
@@ -39,7 +51,10 @@
                     judul = item.judul ?? "";
                     slug = item.slug ?? "";
                     ringkasan = item.ringkasan ?? "";
-                    thumbnail = toUploadProxyUrl(item.thumbnail) || item.thumbnail || "";
+                    thumbnail =
+                        toUploadProxyUrl(item.thumbnail) ||
+                        item.thumbnail ||
+                        "";
                     kategori = item.kategori ?? "berita";
                     status = item.status ?? "draft";
                     publishedAt = toDatetimeLocal(item.publishedAt);
@@ -118,16 +133,16 @@
             const json = await res.json();
 
             if (!res.ok || json.success === false) {
-                throw new Error(
-                    json.message ?? "Gagal mengunggah thumbnail.",
-                );
+                throw new Error(json.message ?? "Gagal mengunggah thumbnail.");
             }
 
             thumbnail =
                 toUploadProxyUrl(
                     json.data?.url,
                     json.data?.nama ?? thumbnailFile.name,
-                ) || json.data?.url || "";
+                ) ||
+                json.data?.url ||
+                "";
             showToast("success", "Thumbnail berhasil diunggah.");
         } catch (err) {
             showToast("error", err.message || "Gagal upload thumbnail.");
@@ -163,7 +178,9 @@
                 kategori,
                 status: nextStatus,
                 content,
-                ...(publishedAt ? { publishedAt: new Date(publishedAt).toISOString() } : {}),
+                ...(publishedAt
+                    ? { publishedAt: new Date(publishedAt).toISOString() }
+                    : {}),
             };
 
             const url = isEdit ? `${apiUrl}/${beritaId}` : apiUrl;
@@ -210,6 +227,19 @@
         }
     }
 
+    async function copyPublicLink() {
+        const url = `${window.location.origin}/portal/berita/${slugPreview}`;
+        try {
+            await navigator.clipboard.writeText(url);
+            copied = true;
+            setTimeout(() => {
+                copied = false;
+            }, 2500);
+        } catch {
+            showToast("error", "Gagal menyalin link.");
+        }
+    }
+
     async function changeStatus(nextStatus) {
         if (!beritaId) {
             await saveBerita(nextStatus);
@@ -246,11 +276,7 @@
             onclick={() => (toast = null)}
             class="ml-auto opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
         >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path
-                    d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12z"
-                ></path>
-            </svg>
+            <Icon icon="mdi:close" width="16" height="16" />
         </button>
     </div>
 {/if}
@@ -262,7 +288,9 @@
         ></div>
     </div>
 {:else}
-    <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-6 items-start">
+    <div
+        class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-6 items-start"
+    >
         <div class="space-y-6">
             <section class="bg-white border border-green/8 p-6 md:p-8">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -300,17 +328,32 @@
                     <div>
                         <label
                             class="block text-xs font-bold text-ink/50 uppercase tracking-wider mb-2"
+                            for="kategori-input"
                         >
                             Kategori
                         </label>
-                        <select
+                        <input
+                            id="kategori-input"
+                            list="kategori-datalist"
                             bind:value={kategori}
+                            placeholder="Pilih atau ketik kategori baru…"
+                            autocomplete="off"
                             class="w-full border bg-white/50 border-black/10 rounded-lg py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors"
-                        >
-                            {#each kategoriOptions as item}
-                                <option value={item}>{item}</option>
+                        />
+                        <datalist id="kategori-datalist">
+                            {#each kategoriOptions as opt}
+                                <option value={opt} />
                             {/each}
-                        </select>
+                        </datalist>
+                        {#if kategori && !kategoriOptions.includes(kategori
+                                    .trim()
+                                    .toLowerCase())}
+                            <p class="text-[11px] text-green/70 mt-1">
+                                Kategori baru akan dibuat: <strong
+                                    class="text-green">{kategori.trim()}</strong
+                                >
+                            </p>
+                        {/if}
                     </div>
 
                     <div class="md:col-span-2">
@@ -338,16 +381,23 @@
                                 <label
                                     class="flex-1 border-2 border-dashed border-black/10 rounded-xl px-4 py-4 bg-cream/40 hover:border-green/40 transition-colors cursor-pointer"
                                 >
-                                    <span class="block text-sm font-medium text-ink/75">
+                                    <span
+                                        class="block text-sm font-medium text-ink/75"
+                                    >
                                         {thumbnailFile
                                             ? thumbnailFile.name
                                             : "Pilih file dari komputer"}
                                     </span>
-                                    <span class="block text-xs text-ink/40 mt-1">
-                                        JPG, JPEG, PNG, PDF sesuai endpoint upload.
+                                    <span
+                                        class="block text-xs text-ink/40 mt-1"
+                                    >
+                                        JPG, JPEG, PNG, PDF sesuai endpoint
+                                        upload.
                                     </span>
                                     {#if thumbnailFile}
-                                        <span class="block text-xs text-ink/35 mt-1">
+                                        <span
+                                            class="block text-xs text-ink/35 mt-1"
+                                        >
                                             {formatSize(thumbnailFile.size)}
                                         </span>
                                     {/if}
@@ -362,10 +412,13 @@
                                 <button
                                     type="button"
                                     onclick={uploadThumbnail}
-                                    disabled={!thumbnailFile || thumbnailUploading}
+                                    disabled={!thumbnailFile ||
+                                        thumbnailUploading}
                                     class="px-5 py-3 bg-ink/6 text-ink text-sm font-semibold hover:bg-ink/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
                                 >
-                                    {thumbnailUploading ? "Uploading..." : "Upload"}
+                                    {thumbnailUploading
+                                        ? "Uploading..."
+                                        : "Upload"}
                                 </button>
                             </div>
 
@@ -383,7 +436,9 @@
             <section class="bg-white border border-green/8 p-5 md:p-6">
                 <div class="flex items-center justify-between gap-3 mb-4">
                     <div>
-                        <h2 class="text-lg font-bold text-ink">Konten Berita</h2>
+                        <h2 class="text-lg font-bold text-ink">
+                            Konten Berita
+                        </h2>
                         <p class="text-sm text-ink/45 mt-1">
                             Editor blok dengan nuansa kerja seperti Notion.
                         </p>
@@ -405,7 +460,9 @@
 
         <aside class="space-y-4">
             <section class="bg-white border border-green/8 p-5">
-                <p class="text-xs font-bold text-ink/40 uppercase tracking-wider">
+                <p
+                    class="text-xs font-bold text-ink/40 uppercase tracking-wider"
+                >
                     Status Publikasi
                 </p>
                 <div class="mt-3 flex items-center gap-2">
@@ -425,8 +482,57 @@
                     {/if}
                 </div>
 
+                {#if status === "published" && slugPreview}
+                    <div class="mt-4 pt-4 border-t border-black/6">
+                        <p
+                            class="text-[11px] font-bold text-ink/40 uppercase tracking-wider mb-2"
+                        >
+                            Link Publik
+                        </p>
+                        <div
+                            class="flex items-center gap-2 bg-black/3 rounded-lg px-3 py-2"
+                        >
+                            <a
+                                href={`/portal/berita/${slugPreview}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="flex-1 text-[11px] text-green/70 hover:text-green truncate font-mono leading-relaxed"
+                                title={`/portal/berita/${slugPreview}`}
+                            >
+                                /portal/berita/{slugPreview}
+                            </a>
+                            <button
+                                type="button"
+                                onclick={copyPublicLink}
+                                class="shrink-0 flex items-center gap-1 px-2 py-1 text-[10px] font-bold uppercase tracking-wider border transition-colors cursor-pointer
+                                    {copied
+                                    ? 'border-green bg-green/8 text-green'
+                                    : 'border-black/10 text-ink/40 hover:border-green hover:text-green'}"
+                            >
+                                {#if copied}
+                                    <Icon
+                                        icon="mdi:check"
+                                        width="11"
+                                        height="11"
+                                    />
+                                    Tersalin
+                                {:else}
+                                    <Icon
+                                        icon="mdi:content-copy"
+                                        width="11"
+                                        height="11"
+                                    />
+                                    Salin
+                                {/if}
+                            </button>
+                        </div>
+                    </div>
+                {/if}
+
                 <div class="mt-4">
-                    <label class="block text-[11px] font-bold text-ink/40 uppercase tracking-wider mb-1.5">
+                    <label
+                        class="block text-[11px] font-bold text-ink/40 uppercase tracking-wider mb-1.5"
+                    >
                         Tanggal Publish
                     </label>
                     <input
@@ -481,7 +587,9 @@
             </section>
 
             <section class="bg-white border border-green/8 p-5">
-                <p class="text-xs font-bold text-ink/40 uppercase tracking-wider">
+                <p
+                    class="text-xs font-bold text-ink/40 uppercase tracking-wider"
+                >
                     Ringkasan Data
                 </p>
                 <dl class="space-y-3 mt-4">
@@ -493,7 +601,9 @@
                     </div>
                     <div class="flex items-start justify-between gap-3">
                         <dt class="text-sm text-ink/45">Slug aktif</dt>
-                        <dd class="text-sm font-semibold text-ink text-right break-all">
+                        <dd
+                            class="text-sm font-semibold text-ink text-right break-all"
+                        >
                             {slugPreview || "-"}
                         </dd>
                     </div>
@@ -512,7 +622,9 @@
                 </dl>
 
                 {#if thumbnail.trim()}
-                    <div class="mt-4 overflow-hidden rounded-2xl border border-black/8 bg-cream">
+                    <div
+                        class="mt-4 overflow-hidden rounded-2xl border border-black/8 bg-cream"
+                    >
                         <img
                             src={thumbnail.trim()}
                             alt={judul || "Thumbnail berita"}

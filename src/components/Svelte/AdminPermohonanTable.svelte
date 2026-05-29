@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Icon from "@iconify/svelte";
     import { createColumnHelper } from "@tanstack/table-core";
     import Table from "./Table.svelte";
 
@@ -207,12 +208,7 @@
             onclick={exportCSV}
             class="flex items-center gap-2 px-4 py-2 bg-green text-white text-sm font-semibold transition-colors cursor-pointer"
         >
-            <svg viewBox="0 0 24 24" class="w-4 h-4"
-                ><path
-                    fill="currentColor"
-                    d="M5 20h14v-2H5m14-9h-4V3H9v6H5l7 7z"
-                /></svg
-            > Export
+<Icon icon="mdi:download" class="w-4 h-4" /> Export
         </button>
     </div>
 </div>
@@ -258,50 +254,25 @@
                 <span class="text-xs text-ink/30">–</span>
             {:else if sla <= 0}
                 <div class="flex items-center gap-1 text-red-500">
-                    <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 shrink-0"
-                        ><path
-                            fill="currentColor"
-                            d="M1 21L12 2l11 19H1zm11-3v-2h-2v2h2zm0-4V10h-2v4h2z"
-                        /></svg
-                    ><span class="text-xs font-semibold">Telat</span>
+<Icon icon="mdi:alert" class="w-3.5 h-3.5 shrink-0" /><span class="text-xs font-semibold">Telat</span>
                 </div>
             {:else if sla <= 15}
                 <div class="flex items-center gap-1 text-red-500">
-                    <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 shrink-0"
-                        ><path
-                            fill="currentColor"
-                            d="M12 20a8 8 0 0 0 8-8a8 8 0 0 0-8-8a8 8 0 0 0-8 8a8 8 0 0 0 8 8m0-18a10 10 0 0 1 10 10a10 10 0 0 1-10 10C6.47 22 2 17.5 2 12A10 10 0 0 1 12 2m.5 5v5.25l4.5 2.67l-.75 1.23L11 13V7z"
-                        /></svg
-                    ><span class="text-xs font-semibold">{sla}m</span>
+<Icon icon="mdi:clock-outline" class="w-3.5 h-3.5 shrink-0" /><span class="text-xs font-semibold">{sla}m</span>
                 </div>
             {:else if sla <= 30}
                 <div class="flex items-center gap-1 text-amber-500">
-                    <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 shrink-0"
-                        ><path
-                            fill="currentColor"
-                            d="M12 20a8 8 0 0 0 8-8a8 8 0 0 0-8-8a8 8 0 0 0-8 8a8 8 0 0 0 8 8m0-18a10 10 0 0 1 10 10a10 10 0 0 1-10 10C6.47 22 2 17.5 2 12A10 10 0 0 1 12 2m.5 5v5.25l4.5 2.67l-.75 1.23L11 13V7z"
-                        /></svg
-                    ><span class="text-xs font-semibold">{sla}m</span>
+<Icon icon="mdi:clock-outline" class="w-3.5 h-3.5 shrink-0" /><span class="text-xs font-semibold">{sla}m</span>
                 </div>
             {:else if sla < 60}
                 <div class="flex items-center gap-1 text-ink/55">
-                    <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 shrink-0"
-                        ><path
-                            fill="currentColor"
-                            d="M12 20a8 8 0 0 0 8-8a8 8 0 0 0-8-8a8 8 0 0 0-8 8a8 8 0 0 0 8 8m0-18a10 10 0 0 1 10 10a10 10 0 0 1-10 10C6.47 22 2 17.5 2 12A10 10 0 0 1 12 2m.5 5v5.25l4.5 2.67l-.75 1.23L11 13V7z"
-                        /></svg
-                    ><span class="text-xs font-semibold">{sla}m</span>
+<Icon icon="mdi:clock-outline" class="w-3.5 h-3.5 shrink-0" /><span class="text-xs font-semibold">{sla}m</span>
                 </div>
             {:else}
                 {@const h = Math.floor(sla / 60)}
                 {@const m = sla % 60}
                 <div class="flex items-center gap-1 text-ink/55">
-                    <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 shrink-0"
-                        ><path
-                            fill="currentColor"
-                            d="M12 20a8 8 0 0 0 8-8a8 8 0 0 0-8-8a8 8 0 0 0-8 8a8 8 0 0 0 8 8m0-18a10 10 0 0 1 10 10a10 10 0 0 1-10 10C6.47 22 2 17.5 2 12A10 10 0 0 1 12 2m.5 5v5.25l4.5 2.67l-.75 1.23L11 13V7z"
-                        /></svg
-                    ><span class="text-xs font-semibold">{h}j {m}m</span>
+<Icon icon="mdi:clock-outline" class="w-3.5 h-3.5 shrink-0" /><span class="text-xs font-semibold">{h}j {m}m</span>
                 </div>
             {/if}
         {:else if cell.column.id === "_aksi"}
@@ -310,12 +281,7 @@
                 class="w-7 h-7 inline-flex items-center justify-center rounded-lg border border-black/10 hover:bg-black/4 text-ink/50 hover:text-ink transition-colors"
                 aria-label="Lihat detail"
             >
-                <svg viewBox="0 0 24 24" class="w-3.5 h-3.5"
-                    ><path
-                        fill="currentColor"
-                        d="M12 9a3 3 0 0 1 3 3a3 3 0 0 1-3 3a3 3 0 0 1-3-3a3 3 0 0 1 3-3m0-4.5c5 0 9.27 3.11 11 7.5c-1.73 4.39-6 7.5-11 7.5S2.73 16.39 1 12c1.73-4.39 6-7.5 11-7.5M3.18 12a9.821 9.821 0 0 0 17.64 0a9.821 9.821 0 0 0-17.64 0"
-                    /></svg
-                >
+<Icon icon="mdi:eye" class="w-3.5 h-3.5" />
             </a>
         {:else}
             <span class="text-sm text-ink/80">{cell.getValue()}</span>
@@ -345,12 +311,7 @@
             class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors cursor-pointer"
             aria-label="Tutup"
         >
-            <svg viewBox="0 0 24 24" class="w-4 h-4"
-                ><path
-                    fill="currentColor"
-                    d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"
-                /></svg
-            >
+<Icon icon="mdi:close" class="w-4 h-4" />
         </button>
     </div>
 {/if}

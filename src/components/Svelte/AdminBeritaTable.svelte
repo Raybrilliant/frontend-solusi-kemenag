@@ -1,11 +1,10 @@
 <script>
+    import Icon from "@iconify/svelte";
     import { createColumnHelper } from "@tanstack/table-core";
     import Table from "./Table.svelte";
 
-    let {
-        apiUrl = "/api/admin/berita",
-        apiStatusUrl = "/api/admin/berita",
-    } = $props();
+    let { apiUrl = "/api/admin/berita", apiStatusUrl = "/api/admin/berita" } =
+        $props();
 
     let data = $state([]);
     let loading = $state(true);
@@ -14,7 +13,7 @@
     let categoryFilter = $state("all");
     let toast = $state(null);
 
-    const categories = ["pendidikan", "bimas", "umum","pengumuman","kua"];
+    const categories = ["pendidikan", "bimas", "umum", "pengumuman", "kua"];
 
     function showToast(type, msg) {
         toast = { type, msg };
@@ -141,7 +140,9 @@
 
         const nextItem = json.data ?? {};
         data = data.map((item) =>
-            item.id === row.id ? { ...item, ...nextItem, status: nextStatus } : item,
+            item.id === row.id
+                ? { ...item, ...nextItem, status: nextStatus }
+                : item,
         );
         showToast("success", `Status berita diperbarui menjadi ${nextStatus}.`);
     }
@@ -160,11 +161,7 @@
             onclick={() => (toast = null)}
             class="ml-auto opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
         >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path
-                    d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12z"
-                ></path>
-            </svg>
+            <Icon icon="mdi:close" width="16" height="16" />
         </button>
     </div>
 {/if}
@@ -201,12 +198,7 @@
         href="/admin/berita/tambah"
         class="flex items-center gap-1.5 px-4 py-2 bg-green text-white text-sm font-semibold border border-black/10 transition-colors hover:bg-green/90"
     >
-        <svg viewBox="0 0 24 24" class="w-3.5 h-3.5">
-            <path
-                fill="currentColor"
-                d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"
-            ></path>
-        </svg>
+        <Icon icon="mdi:plus" class="w-3.5 h-3.5" />
         Tambah Berita
     </a>
 </div>
@@ -261,12 +253,7 @@
                     aria-label="Edit"
                     title="Edit"
                 >
-                    <svg viewBox="0 0 24 24" class="w-4 h-4">
-                        <path
-                            fill="currentColor"
-                            d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83l3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"
-                        ></path>
-                    </svg>
+                    <Icon icon="mdi:pencil" class="w-4 h-4" />
                 </a>
 
                 {#if row.status !== "published"}
@@ -276,12 +263,7 @@
                         aria-label="Publish"
                         title="Publish"
                     >
-                        <svg viewBox="0 0 24 24" class="w-4 h-4">
-                            <path
-                                fill="currentColor"
-                                d="M5 20h14v-2H5m7-14l-5.5 5.5l1.42 1.42L11 8.84V16h2V8.84l3.08 3.08l1.42-1.42z"
-                            ></path>
-                        </svg>
+                        <Icon icon="mdi:publish" class="w-4 h-4" />
                     </button>
                 {:else}
                     <button
@@ -290,12 +272,7 @@
                         aria-label="Unpublish"
                         title="Kembalikan ke draft"
                     >
-                        <svg viewBox="0 0 24 24" class="w-4 h-4">
-                            <path
-                                fill="currentColor"
-                                d="M19 15l-1.41-1.41L13 18.17V4h-2v14.17l-4.59-4.58L5 15l7 7z"
-                            ></path>
-                        </svg>
+                        <Icon icon="mdi:arrow-down" class="w-4 h-4" />
                     </button>
                 {/if}
 
@@ -305,12 +282,7 @@
                     aria-label="Hapus"
                     title="Hapus"
                 >
-                    <svg viewBox="0 0 24 24" class="w-4 h-4">
-                        <path
-                            fill="currentColor"
-                            d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6z"
-                        ></path>
-                    </svg>
+                    <Icon icon="mdi:delete" class="w-4 h-4" />
                 </button>
             </div>
         {/if}

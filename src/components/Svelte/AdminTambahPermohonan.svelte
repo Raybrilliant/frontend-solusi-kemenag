@@ -1,4 +1,5 @@
 <script>
+    import Icon from "@iconify/svelte";
     // Portal action: moves node to <body> so fixed positioning is never
     // trapped inside a CSS transform stacking context from parent elements.
     function portal(node) {
@@ -154,9 +155,7 @@
     onclick={openModal}
     class="flex items-center gap-2 bg-green text-white text-sm font-semibold px-4 py-2.5 hover:bg-green/90 transition shrink-0"
 >
-    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-    </svg>
+<Icon icon="mdi:plus" width="16" height="16" />
     Tambah Permohonan
 </button>
 
@@ -183,9 +182,7 @@
                     </h2>
                 </div>
                 <button onclick={closeModal} class="text-gray-400 hover:text-gray-700 transition p-1">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-                    </svg>
+<Icon icon="mdi:close" width="20" height="20" />
                 </button>
             </div>
 
@@ -197,9 +194,7 @@
                     <!-- Search -->
                     <div class="px-4 pt-4 pb-2">
                         <div class="relative">
-                            <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
-                                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-                            </svg>
+<Icon icon="mdi:magnify" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" width="15" height="15" />
                             <input
                                 type="text"
                                 bind:value={search}
@@ -213,9 +208,7 @@
                         <div class="flex items-center justify-center py-16 text-gray-400 text-sm">Memuat layanan...</div>
                     {:else if grouped.length === 0}
                         <div class="flex flex-col items-center justify-center py-16 text-gray-400 text-sm gap-2">
-                            <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor" class="text-gray-300">
-                                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-                            </svg>
+<Icon icon="mdi:magnify" width="32" height="32" class="text-gray-300" />
                             Layanan tidak ditemukan
                         </div>
                     {:else}
@@ -230,17 +223,13 @@
                                                 class="w-full flex items-center gap-3 px-4 py-3 border hover:border-green hover:bg-green/5 transition text-left group"
                                             >
                                                 <div class="w-8 h-8 bg-green/10 flex items-center justify-center shrink-0 group-hover:bg-green/20 transition">
-                                                    <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" class="text-green">
-                                                        <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z" />
-                                                    </svg>
+<Icon icon="mdi:file-document-outline" width="15" height="15" class="text-green" />
                                                 </div>
                                                 <div class="min-w-0 flex-1">
                                                     <p class="text-sm font-semibold leading-tight">{l.title}</p>
                                                     <p class="text-xs text-gray-400 mt-0.5">SLA {l.slaDuration} {l.slaUnit} · {l.cost}</p>
                                                 </div>
-                                                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" class="text-gray-300 group-hover:text-green shrink-0 transition">
-                                                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6-6-6z" />
-                                                </svg>
+<Icon icon="mdi:chevron-right" width="14" height="14" class="text-gray-300 group-hover:text-green shrink-0 transition" />
                                             </button>
                                         {/each}
                                     </div>
@@ -254,9 +243,7 @@
                     <div class="p-6 space-y-4">
                         <div class="flex items-center gap-3 bg-green/5 border border-green/20 px-4 py-3">
                             <div class="w-8 h-8 bg-green flex items-center justify-center shrink-0">
-                                <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" class="text-white">
-                                    <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z" />
-                                </svg>
+<Icon icon="mdi:file-document-outline" width="15" height="15" class="text-white" />
                             </div>
                             <div class="min-w-0 flex-1">
                                 <p class="text-[10px] text-green font-bold uppercase tracking-wide">Layanan Dipilih</p>
@@ -311,9 +298,7 @@
                 {:else}
                     <div class="p-8 flex flex-col items-center text-center gap-4">
                         <div class="w-14 h-14 bg-green flex items-center justify-center">
-                            <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" class="text-white">
-                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                            </svg>
+<Icon icon="mdi:check" width="28" height="28" class="text-white" />
                         </div>
                         <div>
                             <p class="font-bold text-lg uppercase tracking-tight">Permohonan Dibuat</p>
@@ -331,10 +316,10 @@
                                 class="flex-1 flex items-center justify-center gap-2 border border-green text-green text-sm font-semibold py-2.5 hover:bg-green/5 transition"
                             >
                                 {#if copied}
-                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>
+<Icon icon="mdi:check" width="14" height="14" />
                                     Tersalin!
                                 {:else}
-                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" /></svg>
+<Icon icon="mdi:content-copy" width="14" height="14" />
                                     Salin Kode
                                 {/if}
                             </button>
@@ -343,7 +328,7 @@
                                 target="_blank"
                                 class="flex-1 flex items-center justify-center gap-2 bg-green text-white text-sm font-semibold py-2.5 hover:bg-green/90 transition"
                             >
-                                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 4.5C7 4.5 2.7 7.6 1 12c1.7 4.4 6 7.5 11 7.5s9.3-3.1 11-7.5c-1.7-4.4-6-7.5-11-7.5zm0 12.5c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5zm0-8c-1.7 0-3 1.3-3 3s1.3 3 3 3 3-1.3 3-3-1.3-3-3-3z" /></svg>
+<Icon icon="mdi:eye" width="14" height="14" />
                                 Cek Status
                             </a>
                         </div>

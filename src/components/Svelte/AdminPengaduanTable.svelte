@@ -1,4 +1,5 @@
 <script>
+  import Icon from "@iconify/svelte";
   let { apiUrl } = $props();
 
   // ── List state ──────────────────────────────────────────
@@ -271,9 +272,7 @@
           class="w-7 h-7 flex items-center justify-center hover:bg-ink/8 transition-colors rounded-full"
           aria-label="Tutup"
         >
-          <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-            <path d="M1 1L13 13M13 1L1 13" stroke="#111" stroke-width="1.8" stroke-linecap="round"/>
-          </svg>
+<Icon icon="mdi:close" width="12" height="12" />
         </button>
       </div>
 
@@ -317,16 +316,12 @@
                     download={dok.nama}
                     class="flex items-center gap-2.5 bg-ink/3 border border-ink/8 px-3 py-2 hover:bg-green/5 hover:border-green/30 transition-colors group"
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="text-green shrink-0">
-                      <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-                    </svg>
+<Icon icon="mdi:file-document-outline" width="14" height="14" class="text-green shrink-0" />
                     <span class="flex-1 text-xs font-medium text-ink/70 truncate group-hover:text-ink">{dok.nama}</span>
                     <span class="text-[10px] text-ink/40 shrink-0">
                       {dok.ukuran < 1024*1024 ? `${(dok.ukuran/1024).toFixed(0)} KB` : `${(dok.ukuran/(1024*1024)).toFixed(1)} MB`}
                     </span>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" class="text-ink/30 shrink-0 group-hover:text-green transition-colors">
-                      <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-                    </svg>
+<Icon icon="mdi:download" width="12" height="12" class="text-ink/30 shrink-0 group-hover:text-green transition-colors" />
                   </a>
                 {/each}
               </div>
@@ -337,9 +332,7 @@
           {#if selected.outputFile?.url}
             {@const outFilename = selected.outputFile.url.split('/').pop()}
             <div class="bg-green/5 border border-green/20 p-3 flex items-center gap-2.5">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="text-green shrink-0">
-                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-              </svg>
+<Icon icon="mdi:file-document-outline" width="14" height="14" class="text-green shrink-0" />
               <span class="flex-1 text-xs font-medium text-ink/70 truncate">{selected.outputFile.nama}</span>
               <a
                 href={`/api/upload/${outFilename}`}
@@ -389,9 +382,7 @@
                 </label>
                 {#if outputFile}
                   <div class="flex items-center gap-2 bg-ink/3 border border-ink/10 px-3 py-2">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="text-green shrink-0">
-                      <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-                    </svg>
+<Icon icon="mdi:file-document-outline" width="13" height="13" class="text-green shrink-0" />
                     <span class="flex-1 text-xs font-medium truncate">{outputFile.name}</span>
                     <button
                       type="button"
@@ -401,9 +392,7 @@
                   </div>
                 {:else}
                   <label class="flex items-center gap-2 border border-dashed border-ink/20 px-3 py-2.5 cursor-pointer hover:border-green/40 hover:bg-green/3 transition-colors">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="text-ink/30 shrink-0">
-                      <path d="M14,13V17H10V13H7L12,8L17,13M19.35,10.03C18.67,6.59 15.64,4 12,4C9.11,4 6.6,5.64 5.35,8.03C2.34,8.36 0,10.9 0,14A6,6 0 0,0 6,20H19A5,5 0 0,0 24,15C24,12.36 21.95,10.22 19.35,10.03Z"/>
-                    </svg>
+<Icon icon="mdi:cloud-upload-outline" width="14" height="14" class="text-ink/30 shrink-0" />
                     <span class="text-xs text-ink/50">Pilih file (PDF, JPG, PNG)</span>
                     <input
                       type="file"

@@ -1,17 +1,6 @@
 <script>
+    import Icon from "@iconify/svelte";
     let { apiUrl = "/api/internal/services" } = $props();
-
-    // ── Icon paths ───────────────────────────────────────
-    const ICONS = {
-        "mdi:calendar-clock":
-            "M12 20a8 8 0 0 0 8-8a8 8 0 0 0-8-8a8 8 0 0 0-8 8a8 8 0 0 0 8 8m0-18a10 10 0 0 1 10 10a10 10 0 0 1-10 10C6.47 22 2 17.5 2 12A10 10 0 0 1 12 2m.5 5v5.25l4.5 2.67l-.75 1.23L11 13V7z",
-        "mdi:account-arrow-up":
-            "M17 21v-2h-4v-2h4v-2l3 3l-3 3M10 4a4 4 0 0 1 4 4a4 4 0 0 1-4 4a4 4 0 0 1-4-4a4 4 0 0 1 4-4m0 10c2.67 0 8 1.33 8 4v3H2v-3c0-2.67 5.33-4 8-4z",
-        "mdi:file-document-multiple-outline":
-            "M16 0H8C6.9 0 6 .9 6 2v14c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V6l-6-6m4 16H8V2h7v5h5v9M4 4v16h16v2H4c-1.1 0-2-.9-2-2V4h2z",
-        "mdi:clipboard-check-outline":
-            "M19 3h-4.18C14.4 1.84 13.3 1 12 1S9.6 1.84 9.18 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2m-7 0a1 1 0 0 1 1 1a1 1 0 0 1-1 1a1 1 0 0 1-1-1a1 1 0 0 1 1-1M7 7h10V5h2v14H5V5h2v2m3.5 9l6-6L15 8.5l-4.5 4.5L8 10.5L6.5 12l4 4z",
-    };
 
     // ── State ────────────────────────────────────────────
     let services = $state([]);
@@ -93,34 +82,23 @@
             ? 'bg-green text-white'
             : 'bg-red-600 text-white'}"
     >
-        <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            class="shrink-0"
-        >
-            {#if toast.type === "success"}
-                <path
-                    d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"
-                />
-            {:else}
-                <path
-                    d="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10-4.48 10-10S17.52,2 12,2zm1,15h-2v-2h2v2zm0-4h-2V7h2v6z"
-                />
-            {/if}
-        </svg>
+        {#if toast.type === "success"}
+            <Icon icon="mdi:check" width="18" height="18" class="shrink-0" />
+        {:else}
+            <Icon
+                icon="mdi:alert-circle"
+                width="18"
+                height="18"
+                class="shrink-0"
+            />
+        {/if}
         <p class="text-sm font-semibold">{toast.msg}</p>
         <button
             onclick={() => (toast = null)}
             class="ml-auto opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
             aria-label="Tutup notifikasi"
         >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"
-                ><path
-                    d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12z"
-                /></svg
-            >
+            <Icon icon="mdi:close" width="16" height="16" />
         </button>
     </div>
 {/if}
@@ -148,15 +126,12 @@
                         <div
                             class="w-12 h-12 rounded-xl bg-green/10 border border-green/20 flex items-center justify-center mb-4 group-hover:bg-green/20 transition-colors"
                         >
-                            <svg
-                                viewBox="0 0 24 24"
+                            <Icon
+                                icon={svc.icon}
                                 width="24"
                                 height="24"
-                                fill="currentColor"
                                 class="text-green"
-                            >
-                                <path d={ICONS[svc.icon]} />
-                            </svg>
+                            />
                         </div>
                         <h3 class="font-bold text-ink text-lg mb-2">
                             {svc.title}
@@ -168,12 +143,7 @@
                             class="flex items-center gap-1 mt-4 text-green text-sm font-semibold"
                         >
                             <span>Ajukan Sekarang</span>
-                            <svg viewBox="0 0 24 24" class="w-4 h-4"
-                                ><path
-                                    fill="currentColor"
-                                    d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"
-                                /></svg
-                            >
+                            <Icon icon="mdi:arrow-right" class="w-4 h-4" />
                         </div>
                     </button>
                 {/each}
@@ -190,25 +160,17 @@
                             <div
                                 class="w-12 h-12 rounded-xl bg-green/5 border border-green/15 flex items-center justify-center group-hover:bg-green/10 transition-colors"
                             >
-                                <svg
-                                    viewBox="0 0 24 24"
+                                <Icon
+                                    icon={svc.icon}
                                     width="24"
                                     height="24"
-                                    fill="currentColor"
                                     class="text-green/60"
-                                >
-                                    <path d={ICONS[svc.icon]} />
-                                </svg>
-                            </div>
-                            <svg
-                                viewBox="0 0 24 24"
-                                class="w-4 h-4 text-ink/20 group-hover:text-green/50 transition-colors"
-                            >
-                                <path
-                                    fill="currentColor"
-                                    d="M14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3m-2 16H5V5h5V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5h-2z"
                                 />
-                            </svg>
+                            </div>
+                            <Icon
+                                icon="mdi:open-in-new"
+                                class="w-4 h-4 text-ink/20 group-hover:text-green/50 transition-colors"
+                            />
                         </div>
                         <h3 class="font-bold text-ink text-lg mb-2">
                             {svc.title}
@@ -220,12 +182,7 @@
                             class="flex items-center gap-1 mt-4 text-ink/30 text-sm font-semibold group-hover:text-green/70 transition-colors"
                         >
                             <span>Buka {svc.appsName}</span>
-                            <svg viewBox="0 0 24 24" class="w-4 h-4"
-                                ><path
-                                    fill="currentColor"
-                                    d="M14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3m-2 16H5V5h5V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5h-2z"
-                                /></svg
-                            >
+                            <Icon icon="mdi:open-in-new" class="w-4 h-4" />
                         </div>
                     </a>
                 {/each}
@@ -238,12 +195,7 @@
                 onclick={backToList}
                 class="flex items-center gap-1.5 text-sm font-semibold text-ink/40 hover:text-ink transition-colors mb-6 cursor-pointer"
             >
-                <svg viewBox="0 0 24 24" class="w-4 h-4"
-                    ><path
-                        fill="currentColor"
-                        d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20z"
-                    /></svg
-                >
+                <Icon icon="mdi:arrow-left" class="w-4 h-4" />
                 Kembali ke daftar layanan
             </button>
 
@@ -251,15 +203,12 @@
                 <div
                     class="w-12 h-12 rounded-xl bg-green/10 border border-green/20 flex items-center justify-center"
                 >
-                    <svg
-                        viewBox="0 0 24 24"
+                    <Icon
+                        icon={activeService.icon}
                         width="24"
                         height="24"
-                        fill="currentColor"
                         class="text-green"
-                    >
-                        <path d={ICONS[activeService.icon]} />
-                    </svg>
+                    />
                 </div>
                 <div>
                     <h2 class="text-xl font-extrabold text-ink">
@@ -344,12 +293,7 @@
                             ></div>
                             Mengirim...
                         {:else}
-                            <svg viewBox="0 0 24 24" class="w-4 h-4"
-                                ><path
-                                    fill="currentColor"
-                                    d="M2 21V3l20 9-20 9zm2-2.5L17.5 12 4 5.5v5l9 1.5-9 1.5z"
-                                /></svg
-                            >
+                            <Icon icon="mdi:send" class="w-4 h-4" />
                             Kirim Pengajuan
                         {/if}
                     </button>

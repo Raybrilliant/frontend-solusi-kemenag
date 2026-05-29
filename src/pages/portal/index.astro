@@ -2,6 +2,8 @@
 import { Icon } from "astro-icon/components";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { toUploadProxyUrl } from "../../lib/upload-url";
+import { categoryColor, categoryAccent } from "../../lib/berita-kategori";
+
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
@@ -43,25 +45,22 @@ function formatDate(dateStr: string | null) {
     });
 }
 
-function categoryBadge(cat: string) {
-    switch (cat) {
-        case "pengumuman": return "bg-yellow text-ink";
-        case "kua":        return "bg-green text-white";
-        case "pendidikan": return "bg-green/80 text-white";
-        case "bimas":      return "bg-ink text-cream";
-        default:           return "bg-ink/15 text-ink";
+// Fetch semua kategori unik dari berita yang ada
+let rawKategori: string[] = [];
+try {
+    const katRes = await fetch(`${BACKEND_URL}/api/v1/berita/?limit=500`);
+    if (katRes.ok) {
+        const katData = await katRes.json();
+        rawKategori = [
+            ...new Set(
+                (katData?.data ?? [])
+                    .map((b: any) => (b.kategori ?? "").trim().toLowerCase())
+                    .filter(Boolean),
+            ),
+        ].sort();
     }
-}
+} catch {}
 
-function categoryAccentBar(cat: string) {
-    switch (cat) {
-        case "pengumuman": return "bg-yellow";
-        case "kua":
-        case "pendidikan": return "bg-green";
-        case "bimas":      return "bg-ink/40";
-        default:           return "bg-ink/15";
-    }
-}
 
 function regulasiBadge(type: string) {
     const t = type.toUpperCase();
@@ -518,13 +517,13 @@ function regulasiBadge(type: string) {
                                 </svg>
                             </div>
                         )}
-                        <span class={`absolute top-3 left-3 text-[10px] font-black uppercase tracking-wider px-2 py-1 ${categoryBadge(b.kategori)}`}>
+                        <span class={`absolute top-3 left-3 text-[10px] font-black uppercase tracking-wider px-2 py-1 ${categoryColor(b.kategori)}`}>
                             {b.kategori}
                         </span>
                     </div>
 
                     <!-- Color accent bar -->
-                    <div class={`h-0.5 w-full shrink-0 ${categoryAccentBar(b.kategori)}`} />
+                    <div class={`h-0.5 w-full shrink-0 ${categoryAccent(b.kategori)}`} />
 
                     <div class="p-5 md:p-6 flex flex-col flex-1">
                         <span class="text-[11px] text-ink/35 font-medium mb-3 block">

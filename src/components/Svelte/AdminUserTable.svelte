@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Icon from "@iconify/svelte";
     import { createColumnHelper } from "@tanstack/table-core";
     import Table from "./Table.svelte";
 
@@ -191,24 +192,14 @@
             onclick={exportCSV}
             class="flex items-center gap-1.5 px-3 py-2 bg-ink/5 text-ink/60 text-xs font-semibold border border-black/10 hover:bg-ink/10 transition-colors cursor-pointer"
         >
-            <svg viewBox="0 0 24 24" class="w-3.5 h-3.5"
-                ><path
-                    fill="currentColor"
-                    d="M5 20h14v-2H5m14-9h-4V3H9v6H5l7 7z"
-                /></svg
-            >
+            <Icon icon="mdi:download" class="w-3.5 h-3.5" />
             Export
         </button>
         <a
             href="/admin/manajemenUser/tambah"
             class="flex items-center gap-1.5 px-4 py-2 bg-green text-white text-sm font-semibold border border-black/10 transition-colors hover:bg-green/90"
         >
-            <svg viewBox="0 0 24 24" class="w-3.5 h-3.5"
-                ><path
-                    fill="currentColor"
-                    d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"
-                /></svg
-            >
+            <Icon icon="mdi:plus" class="w-3.5 h-3.5" />
             Tambah
         </a>
     </div>
@@ -269,24 +260,14 @@
                     class="w-7 h-7 flex items-center justify-center rounded-lg border border-black/10 hover:bg-black/4 text-ink/50 hover:text-ink transition-colors"
                     aria-label="Edit"
                 >
-                    <svg viewBox="0 0 24 24" class="w-3.5 h-3.5"
-                        ><path
-                            fill="currentColor"
-                            d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83l3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"
-                        /></svg
-                    >
+                    <Icon icon="mdi:pencil" class="w-3.5 h-3.5" />
                 </a>
                 <button
                     onclick={() => handleDelete(row)}
                     class="w-7 h-7 flex items-center justify-center rounded-lg border border-black/10 hover:bg-red-50 text-ink/50 hover:text-red-500 transition-colors cursor-pointer"
                     aria-label="Hapus"
                 >
-                    <svg viewBox="0 0 24 24" class="w-3.5 h-3.5"
-                        ><path
-                            fill="currentColor"
-                            d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6z"
-                        /></svg
-                    >
+                    <Icon icon="mdi:delete" class="w-3.5 h-3.5" />
                 </button>
             </div>
         {/if}
@@ -315,12 +296,7 @@
             class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors cursor-pointer"
             aria-label="Tutup"
         >
-            <svg viewBox="0 0 24 24" class="w-4 h-4"
-                ><path
-                    fill="currentColor"
-                    d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"
-                /></svg
-            >
+            <Icon icon="mdi:close" class="w-4 h-4" />
         </button>
     </div>
 {/if}
