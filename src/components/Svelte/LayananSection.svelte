@@ -307,7 +307,7 @@
             {:else}
                 {#each relatedSubs as sub, i}
                     <a
-                        href={`/subLayanan/${sub.id}`}
+                        href={`/sublayanan/${sub.id}`}
                         class="flex items-center gap-3 md:gap-4 p-3 md:p-4 bg-white border border-ink/8 hover:border-green/40 hover:bg-green/3 transition-all cursor-pointer group/item"
                         style="animation: slideUp 0.3s ease {i * 0.06}s both"
                     >

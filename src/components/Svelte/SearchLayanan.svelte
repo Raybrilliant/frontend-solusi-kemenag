@@ -148,7 +148,7 @@
                     <!-- Items -->
                     {#each group.items as sub, idx}
                         <a
-                            href={`/subLayanan/${sub.id}`}
+                            href={`/sublayanan/${sub.id}`}
                             onclick={close}
                             class="flex items-center gap-4 px-5 py-3.5 border-b border-ink/6 transition-colors group/row"
                             style="background:white"

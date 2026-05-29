@@ -14,7 +14,7 @@ const PUBLIC_PATHS = [
   "/internal/login",
   "/api",
   "/check-progress",
-  "/subLayanan",
+  "/sublayanan",
   "/information",
   "/_astro",
   "/favicon",

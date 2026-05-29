@@ -12,7 +12,7 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/node": "^10.1.1",
+    "@astrojs/node": "^10.1.2",
     "@astrojs/svelte": "^8.1.1",
     "@editorjs/checklist": "^1.6.0",
     "@editorjs/code": "^2.9.4",
@@ -32,7 +32,7 @@
     "@tailwindcss/vite": "^4.3.0",
     "@tanstack/svelte-table": "^8.21.3",
     "@tanstack/table-core": "^8.21.3",
-    "astro": "^6.3.7",
+    "astro": "^6.4.2",
     "astro-icon": "^1.1.5",
     "editorjs-undo": "^2.0.28",
     "svelte": "^5.55.9",
