@@ -8,24 +8,10 @@ import KategoriPopuler from "../../components/Svelte/KategoriPopuler.svelte";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
-const [statsRes, trendRes, categoryStatsRes] = await Promise.allSettled([
-    fetch(`${BACKEND_URL}/api/v1/dashboard/stats`),
+const [trendRes, categoryStatsRes] = await Promise.allSettled([
     fetch(`${BACKEND_URL}/api/v1/dashboard/trend?period=3`),
     fetch(`${BACKEND_URL}/api/v1/dashboard/stats/per-kategori`),
 ]);
-
-const stats = {
-    total: 0,
-    selesai: 0,
-    ditolak: 0,
-    tingkatPenyelesaian: 0,
-};
-if (statsRes.status === "fulfilled" && statsRes.value.ok) {
-    try {
-        const json = await statsRes.value.json();
-        if (json.success && json.data) Object.assign(stats, json.data);
-    } catch {}
-}
 
 const categoryStats: {
     categoryId: number;
@@ -49,25 +35,130 @@ function calcPct(curr: number, prev: number): number {
     return Math.round(((curr - prev) / prev) * 100);
 }
 
+function normalizeLabel(value: string): string {
+    return value
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]/g, "");
+}
+
+function getMonthTokens(date: Date): string[] {
+    const monthIdLong = new Intl.DateTimeFormat("id-ID", {
+        month: "long",
+    }).format(date);
+    const monthIdShort = new Intl.DateTimeFormat("id-ID", {
+        month: "short",
+    }).format(date);
+    const monthEnLong = new Intl.DateTimeFormat("en-US", {
+        month: "long",
+    }).format(date);
+    const monthEnShort = new Intl.DateTimeFormat("en-US", {
+        month: "short",
+    }).format(date);
+    const year = String(date.getFullYear());
+    const shortYear = year.slice(-2);
+
+    return [
+        monthIdLong,
+        monthIdShort,
+        monthEnLong,
+        monthEnShort,
+        `${monthIdLong} ${year}`,
+        `${monthIdShort} ${year}`,
+        `${monthEnLong} ${year}`,
+        `${monthEnShort} ${year}`,
+        `${monthIdLong}-${year}`,
+        `${monthIdShort}-${year}`,
+        `${monthEnLong}-${year}`,
+        `${monthEnShort}-${year}`,
+        `${monthIdLong} ${shortYear}`,
+        `${monthIdShort} ${shortYear}`,
+        `${monthEnLong} ${shortYear}`,
+        `${monthEnShort} ${shortYear}`,
+    ].map(normalizeLabel);
+}
+
+function findMonthIndex(labels: string[], date: Date): number {
+    const tokens = new Set(getMonthTokens(date));
+    return labels.findIndex((label) => tokens.has(normalizeLabel(label)));
+}
+
+const currentDate = new Date();
+const previousDate = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth() - 1,
+    1,
+);
+
+let currentLabel = new Intl.DateTimeFormat("id-ID", {
+    month: "long",
+    year: "numeric",
+}).format(currentDate);
+let previousLabel = new Intl.DateTimeFormat("id-ID", {
+    month: "long",
+    year: "numeric",
+}).format(previousDate);
+
+let currentTotal = 0,
+    currentSelesai = 0,
+    currentDitolak = 0,
+    currentTingkatPenyelesaian = 0;
+
 let percentTotal = 0,
     percentSelesai = 0,
-    percentDitolak = 0;
+    percentDitolak = 0,
+    percentTingkatPenyelesaian = 0;
 
 if (trendRes.status === "fulfilled" && trendRes.value.ok) {
     try {
         const json = await trendRes.value.json();
         if (json.success && json.data) {
-            const { masuk, selesai, ditolak } = json.data as {
-                masuk: number[];
-                selesai: number[];
-                ditolak: number[];
+            const {
+                labels = [],
+                masuk = [],
+                selesai = [],
+                ditolak = [],
+            } = json.data as {
+                labels?: string[];
+                masuk?: number[];
+                selesai?: number[];
+                ditolak?: number[];
             };
-            const n = masuk?.length ?? 0;
-            if (n >= 2) {
-                percentTotal = calcPct(masuk[n - 1], masuk[n - 2]);
-                percentSelesai = calcPct(selesai[n - 1], selesai[n - 2]);
-                percentDitolak = calcPct(ditolak[n - 1], ditolak[n - 2]);
+            const currentIndex = findMonthIndex(labels, currentDate);
+            const previousIndex = findMonthIndex(labels, previousDate);
+
+            if (currentIndex >= 0) {
+                currentTotal = masuk[currentIndex] ?? 0;
+                currentSelesai = selesai[currentIndex] ?? 0;
+                currentDitolak = ditolak[currentIndex] ?? 0;
+                currentTingkatPenyelesaian = currentTotal
+                    ? Math.round((currentSelesai / currentTotal) * 100)
+                    : 0;
+                currentLabel = labels[currentIndex] ?? currentLabel;
             }
+
+            const previousTotal =
+                previousIndex >= 0 ? (masuk[previousIndex] ?? 0) : 0;
+            const previousSelesai =
+                previousIndex >= 0 ? (selesai[previousIndex] ?? 0) : 0;
+            const previousDitolak =
+                previousIndex >= 0 ? (ditolak[previousIndex] ?? 0) : 0;
+            const previousTingkatPenyelesaian = previousTotal
+                ? Math.round((previousSelesai / previousTotal) * 100)
+                : 0;
+
+            if (previousIndex >= 0) {
+                previousLabel = labels[previousIndex] ?? previousLabel;
+            }
+
+            percentTotal = calcPct(currentTotal, previousTotal);
+            percentSelesai = calcPct(currentSelesai, previousSelesai);
+            percentDitolak = calcPct(currentDitolak, previousDitolak);
+            percentTingkatPenyelesaian = calcPct(
+                currentTingkatPenyelesaian,
+                previousTingkatPenyelesaian,
+            );
         }
     } catch {}
 }
@@ -87,35 +178,35 @@ function trendIcon(percentage: number): string {
 const cardData = [
     {
         title: "Total Layanan Masuk",
-        value: stats.total.toLocaleString("id-ID"),
+        value: currentTotal.toLocaleString("id-ID"),
         percentage: percentTotal,
         positiveIsGood: true,
         icon: "mdi:file-document-multiple-outline",
-        note: "Dari bulan lalu",
+        note: `${currentLabel} vs ${previousLabel}`,
     },
     {
         title: "Permohonan Selesai",
-        value: stats.selesai.toLocaleString("id-ID"),
+        value: currentSelesai.toLocaleString("id-ID"),
         percentage: percentSelesai,
         positiveIsGood: true,
         icon: "mdi:check-all",
-        note: "Dari bulan lalu",
+        note: `${currentLabel} vs ${previousLabel}`,
     },
     {
         title: "Permohonan Ditolak",
-        value: stats.ditolak.toLocaleString("id-ID"),
+        value: currentDitolak.toLocaleString("id-ID"),
         percentage: percentDitolak,
         positiveIsGood: false,
         icon: "mdi:file-document-remove-outline",
-        note: "Dari bulan lalu",
+        note: `${currentLabel} vs ${previousLabel}`,
     },
     {
         title: "Tingkat Penyelesaian",
-        value: `${stats.tingkatPenyelesaian.toLocaleString("id-ID")}%`,
-        badgeLabel: "Selesai",
-        badgeClass: "bg-green/10 text-green",
+        value: `${currentTingkatPenyelesaian.toLocaleString("id-ID")}%`,
+        percentage: percentTingkatPenyelesaian,
+        positiveIsGood: true,
         icon: "mdi:chart-donut",
-        note: "Rasio layanan selesai",
+        note: `${currentLabel} vs ${previousLabel}`,
     },
 ];
 ---
@@ -183,7 +274,9 @@ const cardData = [
                                 ) : (
                                     <>
                                         <Icon
-                                            name={trendIcon(card.percentage ?? 0)}
+                                            name={trendIcon(
+                                                card.percentage ?? 0,
+                                            )}
                                             width="14"
                                             height="14"
                                         />
@@ -210,8 +303,8 @@ const cardData = [
                             Statistik Per Kategori
                         </h2>
                         <p class="text-xs md:text-sm text-gray-500 mt-1">
-                            Ringkasan total, selesai, ditolak, dan rasio penyelesaian
-                            berdasarkan kategori layanan.
+                            Ringkasan total, selesai, ditolak, dan rasio
+                            penyelesaian berdasarkan kategori layanan.
                         </p>
                     </div>
                     <Icon
@@ -229,7 +322,10 @@ const cardData = [
                                     {item.categoryTitle}
                                 </h3>
                                 <span class="text-xs font-bold text-green bg-green/10 rounded-full px-2.5 py-1 shrink-0">
-                                    {item.tingkatPenyelesaian.toLocaleString("id-ID")}%
+                                    {item.tingkatPenyelesaian.toLocaleString(
+                                        "id-ID",
+                                    )}
+                                    %
                                 </span>
                             </div>
                             <div class="mt-4 h-2.5 bg-gray-100 rounded-full overflow-hidden">
@@ -316,7 +412,9 @@ const cardData = [
     </section>
 
     <!-- Zona Integritas -->
-    <div class="border border-green bg-green/10 p-4 flex items-center justify-between gap-3 my-3 md:my-5">
+    <div
+        class="border border-green bg-green/10 p-4 flex items-center justify-between gap-3 my-3 md:my-5"
+    >
         <div>
             <p
                 class="text-lg md:text-2xl font-bold uppercase tracking-wide text-green"

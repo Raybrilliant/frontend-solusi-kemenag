@@ -1,46 +1,6 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
-
-    // Static data — replace with API call when backend provides these
-    const kelurahanMap: Record<string, string[]> = {
-        Mayangan: ["Mayangan", "Mangunharjo", "Jati", "Sukabumi", "Wiroborang"],
-        Kanigaran: [
-            "Kanigaran",
-            "Tisnonegaran",
-            "Kebonsari Kulon",
-            "Kebonsari Wetan",
-            "Sukoharjo",
-            "Curahgrinting",
-        ],
-        Wonoasih: [
-            "Wonoasih",
-            "Jrebeng Kidul",
-            "Pakistaji",
-            "Kedunggaleng",
-            "Kedungasem",
-            "Sumbertaman",
-        ],
-        Kedopok: [
-            "Kedopok",
-            "Jrebeng Wetan",
-            "Jrebeng Lor",
-            "Kareng Lor",
-            "Sumber Wetan",
-            "Triwung Lor",
-        ],
-        Kademangan: [
-            "Kademangan",
-            "Ketapang",
-            "Triwung Kidul",
-            "Pilang",
-            "Pohsangit Kidul",
-            "Pohsangit Lor",
-        ],
-    };
-    const zonaIntegritas = {
-        waCenter: "6281234567890",
-        waCenterDisplay: "0812-3456-7890",
-    };
+    import { kelurahanMap } from "../../lib/data.js";
 
     let { serviceId } = $props();
 
@@ -63,6 +23,8 @@
     );
     let successKode = $state("");
     let copied = $state(false);
+    let formEl = $state<HTMLFormElement | null>(null);
+    let fileError = $state("");
 
     const kelurahanOptions = $derived(
         kecamatan ? (kelurahanMap[kecamatan] ?? []) : [],
@@ -86,6 +48,11 @@
         files = files.filter((_, idx) => idx !== i);
     }
 
+    $effect(() => {
+        files.length;
+        if (files.length > 0) fileError = "";
+    });
+
     function formatSize(bytes: number) {
         return bytes < 1024 * 1024
             ? `${(bytes / 1024).toFixed(0)} KB`
@@ -95,10 +62,23 @@
     // ── Submit ────────────────────────────────────────────
     async function handleSubmit(e: SubmitEvent) {
         e.preventDefault();
-        loading = true;
         status = "idle";
         errorMsg = "";
+        fileError = "";
         uploadProgress = null;
+
+        if (!formEl?.reportValidity()) {
+            return;
+        }
+
+        if (files.length === 0) {
+            status = "error";
+            fileError =
+                "Dokumen persyaratan wajib diunggah sebelum permohonan dikirim.";
+            return;
+        }
+
+        loading = true;
 
         try {
             // 1. Upload setiap file ke server, dapatkan URL-nya
@@ -199,6 +179,10 @@
                 <p class="text-xs md:text-sm opacity-60 mt-0.5">
                     Isi data diri dengan benar. Nomor tiket akan dikirim via
                     WhatsApp setelah submit.
+                </p>
+                <p class="text-[11px] md:text-xs text-ink/50 mt-1">
+                    Kolom dengan <span class="text-red-500 font-bold">*</span>
+                    wajib diisi.
                 </p>
             </div>
         </div>
@@ -327,9 +311,9 @@
         </div>
     {:else}
         <form
+            bind:this={formEl}
             onsubmit={handleSubmit}
             class="px-4 md:px-6 pb-4 md:pb-6 flex flex-col gap-4 md:gap-5"
-            novalidate
         >
             <!-- Nama -->
             <div class="flex flex-col gap-1.5">
@@ -481,6 +465,7 @@
                     for="file-upload"
                     class="drop-zone border-2 border-dashed bg-white p-5 md:p-8 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors"
                     class:dragging={isDragging}
+                    class:drop-zone-error={!!fileError}
                     ondragover={(e) => {
                         e.preventDefault();
                         isDragging = true;
@@ -512,12 +497,17 @@
                         accept=".pdf,.jpg,.jpeg,.png"
                         multiple
                         class="hidden"
+                        aria-invalid={fileError ? "true" : "false"}
                         onchange={(e: any) => {
                             if (e.target.files?.length)
                                 addFiles(e.target.files);
                         }}
                     />
                 </label>
+
+                {#if fileError}
+                    <p class="text-xs text-red-600 font-medium">{fileError}</p>
+                {/if}
 
                 <p class="text-xs opacity-40">
                     Semua dokumen akan kami jaga kerahasiaannya dan hanya
@@ -643,6 +633,10 @@
     .drop-zone.dragging {
         border-color: rgba(15, 107, 68, 0.5);
         background-color: rgba(15, 107, 68, 0.02);
+    }
+    .drop-zone-error {
+        border-color: rgba(220, 38, 38, 0.55);
+        background-color: rgba(254, 242, 242, 0.9);
     }
 
     .spinner {

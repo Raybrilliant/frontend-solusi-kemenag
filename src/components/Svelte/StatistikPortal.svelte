@@ -1,6 +1,8 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
     import { onMount } from "svelte";
+    import PortalDonutChart from "./PortalDonutChart.svelte";
+    import PortalHorizontalBarChart from "./PortalHorizontalBarChart.svelte";
     import Table from "./Table.svelte";
 
     type DataConfig = {
@@ -20,8 +22,8 @@
         const map: Record<string, DataConfig> = {
             "Data Pegawai": {
                 url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vS8NxHN7O3OCWAVj8SL3EIytT0GYlj_x7-Anj2HJgo0-m9z2Hub1Vue3td1Q6Hr-HTd2ZpfJ6tfy1Ta/pub?gid=108686125&single=true&output=csv",
-                colIndex: 11,
-                colIndex2: 6,
+                colIndex: 6,
+                colIndex2: 11,
                 table: true,
                 filterYear: false,
                 year,
@@ -30,8 +32,8 @@
             },
             "Guru DPK": {
                 url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vS8NxHN7O3OCWAVj8SL3EIytT0GYlj_x7-Anj2HJgo0-m9z2Hub1Vue3td1Q6Hr-HTd2ZpfJ6tfy1Ta/pub?gid=1831682664&single=true&output=csv",
-                colIndex: 7,
-                colIndex2: 3,
+                colIndex: 4,
+                colIndex2: 7,
                 table: true,
                 filterYear: false,
                 year,
@@ -41,11 +43,21 @@
             "Guru Sertifikat Pendidik": {
                 url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vS8NxHN7O3OCWAVj8SL3EIytT0GYlj_x7-Anj2HJgo0-m9z2Hub1Vue3td1Q6Hr-HTd2ZpfJ6tfy1Ta/pub?gid=1662667355&single=true&output=csv",
                 colIndex: 10,
+                colIndex2: 4,
+                table: true,
+                filterYear: false,
+                year,
+                visibleCols: [2, 3, 5, 7, 9],
+                yearColIndex: 0,
+            },
+            "Guru PAI": {
+                url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vS8NxHN7O3OCWAVj8SL3EIytT0GYlj_x7-Anj2HJgo0-m9z2Hub1Vue3td1Q6Hr-HTd2ZpfJ6tfy1Ta/pub?gid=567797176&single=true&output=csv",
+                colIndex: 4,
                 colIndex2: 3,
                 table: true,
                 filterYear: false,
                 year,
-                visibleCols: [2, 3, 5, 6, 7, 8, 9],
+                visibleCols: [2, 3, 4, 5, 6, 7, 8, 9, 10],
                 yearColIndex: 0,
             },
             "Lembaga Madrasah": {
@@ -126,6 +138,7 @@
         "Data Pegawai",
         "Guru DPK",
         "Guru Sertifikat Pendidik",
+        "Guru PAI",
         "Lembaga Madrasah",
         "Pondok Pesantren",
         "Lembaga TPQ dan Madin",
@@ -143,7 +156,6 @@
     let rawRows = $state<string[][]>([]); // from CSV row index 3+
     let searchQuery = $state("");
     let lastUpdate = $state("");
-    let animated = $state(false);
 
     let isMounted = false;
 
@@ -199,7 +211,6 @@
         const cfg = getConfig(selectedId, currentYear);
         if (!cfg?.url) return;
 
-        animated = false;
         loading = true;
         errorMsg = "";
         headers = [];
@@ -223,9 +234,6 @@
             errorMsg = "Gagal memuat data. Pastikan koneksi internet tersedia.";
         } finally {
             loading = false;
-            setTimeout(() => {
-                animated = true;
-            }, 60);
         }
     }
 
@@ -257,47 +265,84 @@
         return config.visibleCols.length > 0 ? config.visibleCols[0] : 1;
     });
 
-    // ── Chart 1: colIndex ─────────────────────────────────────
-    let chart1 = $derived.by(() => {
+    function parseNumericCell(value: string): number | null {
+        const cleaned = value.replace(/[^0-9.-]/g, "");
+        if (!cleaned || cleaned === "-" || cleaned === ".") return null;
+        const parsed = Number.parseFloat(cleaned);
+        return Number.isFinite(parsed) ? parsed : null;
+    }
+
+    function buildChartData(columnIndex: number) {
         if (!config || filteredRows.length === 0) return [];
+
+        const samples = filteredRows
+            .map((row) => (row[columnIndex] ?? "").trim())
+            .filter(Boolean)
+            .slice(0, 25);
+
+        const numericSampleCount = samples.filter(
+            (value) => parseNumericCell(value) !== null,
+        ).length;
+        const useNumericAggregation =
+            samples.length > 0 &&
+            numericSampleCount >= Math.ceil(samples.length * 0.6);
+
         const agg = new Map<string, number>();
+
         for (const row of filteredRows) {
-            const label = (row[labelColIdx] ?? "").trim();
-            if (!label) continue;
-            const raw = (row[config.colIndex] ?? "").replace(/[^0-9.-]/g, "");
-            const value = parseFloat(raw) || 0;
-            agg.set(label, (agg.get(label) ?? 0) + value);
+            const columnValue = (row[columnIndex] ?? "").trim();
+            if (!columnValue) continue;
+
+            if (useNumericAggregation) {
+                const label = (row[labelColIdx] ?? "").trim();
+                if (!label) continue;
+                const value = parseNumericCell(columnValue) ?? 0;
+                if (value <= 0) continue;
+                agg.set(label, (agg.get(label) ?? 0) + value);
+            } else {
+                agg.set(columnValue, (agg.get(columnValue) ?? 0) + 1);
+            }
         }
+
         return [...agg.entries()]
             .map(([label, value]) => ({ label, value }))
             .filter((d) => d.value > 0)
             .sort((a, b) => b.value - a.value)
             .slice(0, 25);
-    });
+    }
+
+    // ── Chart 1: colIndex ─────────────────────────────────────
+    let chart1 = $derived.by(() =>
+        config ? buildChartData(config.colIndex) : [],
+    );
 
     // ── Chart 2: colIndex2 ────────────────────────────────────
-    let chart2 = $derived.by(() => {
-        if (!config || filteredRows.length === 0) return [];
-        const agg = new Map<string, number>();
-        for (const row of filteredRows) {
-            const label = (row[labelColIdx] ?? "").trim();
-            if (!label) continue;
-            const raw = (row[config.colIndex2] ?? "").replace(/[^0-9.-]/g, "");
-            const value = parseFloat(raw) || 0;
-            agg.set(label, (agg.get(label) ?? 0) + value);
-        }
-        return [...agg.entries()]
-            .map(([label, value]) => ({ label, value }))
-            .filter((d) => d.value > 0)
-            .sort((a, b) => b.value - a.value)
-            .slice(0, 25);
-    });
-
-    let max1 = $derived(Math.max(...chart1.map((d) => d.value), 1));
-    let max2 = $derived(Math.max(...chart2.map((d) => d.value), 1));
+    let chart2 = $derived.by(() =>
+        config ? buildChartData(config.colIndex2) : [],
+    );
 
     let chart1Label = $derived(headers[config?.colIndex ?? 0] ?? "Grafik 1");
     let chart2Label = $derived(headers[config?.colIndex2 ?? 0] ?? "Grafik 2");
+    let labelColumnLabel = $derived(headers[labelColIdx] ?? "Label");
+
+    let chart1TopData = $derived(chart1.slice(0, 12));
+    let chart2TopData = $derived.by(() => {
+        const base = chart2.slice(0, 7);
+        const others = chart2
+            .slice(7)
+            .reduce((sum, item) => sum + item.value, 0);
+
+        return others > 0
+            ? [...base, { label: "Lainnya", value: others }]
+            : base;
+    });
+
+    let chart1Total = $derived(
+        chart1.reduce((sum, item) => sum + item.value, 0),
+    );
+    let chart2Total = $derived(
+        chart2.reduce((sum, item) => sum + item.value, 0),
+    );
 
     // ── TanStack columns ─────────────────────────────────────
     let tableColumns = $derived.by(() => {
@@ -335,18 +380,6 @@
             return obj;
         }),
     );
-
-    // ── Number formatter ─────────────────────────────────────
-    function fmt(n: number): string {
-        if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(2)} M`;
-        if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)} Jt`;
-        if (n >= 1_000) return `${(n / 1_000).toFixed(1)} Rb`;
-        return n.toLocaleString("id-ID");
-    }
-
-    function barPct(value: number, max: number): number {
-        return animated ? (value / max) * 100 : 0;
-    }
 </script>
 
 <!-- ══════════════════════════════════════════════════════════ -->
@@ -441,87 +474,28 @@
     <!-- Two charts side by side                             -->
     <!-- ══════════════════════════════════════════════════ -->
     {#if chart1.length > 0 || chart2.length > 0}
-        <!-- <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-10">
-
-            <!-- Chart 1 -->
-        <!-- <div class="border border-ink/10 bg-cream">
-                <div class="flex items-center gap-2 px-5 pt-5 pb-3 border-b border-ink/8">
-                    <div class="w-2.5 h-2.5 bg-green shrink-0"></div>
-                    <h3 class="text-[11px] font-black uppercase tracking-wider text-ink/60 flex-1 truncate">
-                        Grafik A — {chart1Label}
-                    </h3>
-                    {#if chart1.length === 25}
-                        <span class="text-[10px] text-ink/25 italic shrink-0">Top 25</span>
-                    {/if}
-                </div>
-                <div class="p-4 space-y-1.5">
-                    {#each chart1 as bar, i}
-                        {@const pct = barPct(bar.value, max1)}
-                        <div class="flex items-center gap-2 group min-w-0">
-                            <div class="w-28 sm:w-36 shrink-0 text-right text-[10px] font-medium text-ink/55 truncate leading-tight"
-                                 title={bar.label}>
-                                {bar.label}
-                            </div>
-                            <div class="flex-1 min-w-0 relative h-6 bg-ink/[0.04]">
-                                <div
-                                    class="absolute inset-y-0 left-0 bg-green group-hover:brightness-110 transition-[width,filter]"
-                                    style="width:{pct}%; transition-duration:0.55s; transition-timing-function:cubic-bezier(0.16,1,0.3,1); transition-delay:{i * 25}ms;"
-                                >
-                                    {#if pct > 22}
-                                        <span class="absolute inset-y-0 right-1.5 flex items-center text-[9px] font-bold text-white/90">
-                                            {fmt(bar.value)}
-                                        </span>
-                                    {/if}
-                                </div>
-                            </div>
-                            <div class="w-12 shrink-0 text-[10px] font-bold text-ink/40 text-right tabular-nums">
-                                {#if pct <= 22}{fmt(bar.value)}{/if}
-                            </div>
-                        </div>
-                    {/each}
-                </div>
-            </div> -->
-        <!-- Chart 2 -->
-        <!-- <div class="border border-ink/10 bg-cream">
-                <div class="flex items-center gap-2 px-5 pt-5 pb-3 border-b border-ink/8">
-                    <div class="w-2.5 h-2.5 bg-yellow shrink-0"></div>
-                    <h3 class="text-[11px] font-black uppercase tracking-wider text-ink/60 flex-1 truncate">
-                        Grafik B — {chart2Label}
-                    </h3>
-                    {#if chart2.length === 25}
-                        <span class="text-[10px] text-ink/25 italic shrink-0">Top 25</span>
-                    {/if}
-                </div>
-                <div class="p-4 space-y-1.5">
-                    {#each chart2 as bar, i}
-                        {@const pct = barPct(bar.value, max2)}
-                        <div class="flex items-center gap-2 group min-w-0">
-                            <div class="w-28 sm:w-36 shrink-0 text-right text-[10px] font-medium text-ink/55 truncate leading-tight"
-                                 title={bar.label}>
-                                {bar.label}
-                            </div>
-                            <div class="flex-1 min-w-0 relative h-6 bg-ink/[0.04]">
-                                <div
-                                    class="absolute inset-y-0 left-0 bg-yellow group-hover:brightness-110 transition-[width,filter]"
-                                    style="width:{pct}%; transition-duration:0.55s; transition-timing-function:cubic-bezier(0.16,1,0.3,1); transition-delay:{i * 25}ms;"
-                                >
-                                    {#if pct > 22}
-                                        <span class="absolute inset-y-0 right-1.5 flex items-center text-[9px] font-bold text-ink/70">
-                                            {fmt(bar.value)}
-                                        </span>
-                                    {/if}
-                                </div>
-                            </div>
-                            <div class="w-12 shrink-0 text-[10px] font-bold text-ink/40 text-right tabular-nums">
-                                {#if pct <= 22}{fmt(bar.value)}{/if}
-                            </div>
-                        </div>
-                    {/each}
-                </div>
+        <div class="grid grid-cols-1 xl:grid-cols-5 gap-5 mb-10">
+            <div class="xl:col-span-3">
+                <PortalHorizontalBarChart
+                    title={chart1Label}
+                    data={chart1TopData}
+                    total={chart1Total}
+                    labelColumn={labelColumnLabel}
+                    topLabel={chart1.length === 25
+                        ? "Top 12 dari 25"
+                        : "Top 12"}
+                />
             </div>
-
-        </div> -->
-    {/if} -->
+            <div class="xl:col-span-2">
+                <PortalDonutChart
+                    title={chart2Label}
+                    data={chart2TopData}
+                    total={chart2Total}
+                    labelColumn={labelColumnLabel}
+                />
+            </div>
+        </div>
+    {/if}
 
     <!-- ══════════════════════════════════════════════════ -->
     <!-- Table                                               -->

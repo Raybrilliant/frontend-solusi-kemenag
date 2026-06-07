@@ -10,7 +10,7 @@ const madrasah = [
     //     akreditasi: "A",
     //     alamat: "Jl. Mawar No. 27, Kelurahan Triwung Kidul, Kecamatan Kademangan",
     //     kodePos: "67213",
-    //     telp: "(0335) 426318",
+    //     website: "(0335) 426318",
     //     kepala: "Hj. Umi Salamah, S.Pd.I, M.Pd",
     //     siswa: 420,
     //     guru: 28,
@@ -25,7 +25,7 @@ const madrasah = [
         akreditasi: "A",
         alamat: "Jl. Citarum No. 09, Curahgrinting, Kec. Kanigaran",
         kodePos: "67212",
-        telp: "-",
+        website: "mtsnkotaprobolinggo.sch.id",
         kepala: "Abd. Manaf S.Pd.I",
         siswa: 0,
         guru: 0,
@@ -40,7 +40,7 @@ const madrasah = [
         akreditasi: "A",
         alamat: "Jl. Jeruk No.07, Jrebeng Kidul, Kec. Wonoasih ",
         kodePos: "67233",
-        telp: "-",
+        website: "man1kotaprobolinggo-m1kp.sch.id",
         kepala: "Drs. Mohammad Alfan Makmur, M.M.",
         siswa: 273,
         guru: 56,
@@ -55,7 +55,7 @@ const madrasah = [
         akreditasi: "A",
         alamat: "Jl. Soekarno Hatta No. 255, Curahgrinting, Kec. Kanigaran",
         kodePos: "67212",
-        telp: "(0335) 421842",
+        website: "man2kotaprobolinggo.sch.id",
         kepala: "Abd. Ghofur, S.Ag.",
         siswa: 1171,
         guru: 61,
@@ -168,10 +168,16 @@ const summaryStats = [
                                 <div class="flex items-center gap-2">
                                     <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"
                                          class="shrink-0 text-green/60">
-                                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-                                        <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+                                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
                                     </svg>
-                                    <span class="text-xs text-ink/60">{m.telp}</span>
+                                    {m.website && m.website !== "-" ? (
+                                        <a href={m.website.startsWith("http") ? m.website : `https://${m.website}`} target="_blank" rel="noopener noreferrer"
+                                           class="text-xs text-ink/60 hover:text-green transition-colors underline underline-offset-2 decoration-ink/20 hover:decoration-green">
+                                            {m.website}
+                                        </a>
+                                    ) : (
+                                        <span class="text-xs text-ink/40 italic">Tidak tersedia</span>
+                                    )}
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"

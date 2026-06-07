@@ -25,8 +25,8 @@
         loading = false,
         initialPageSize = 10,
         enableSelection = false,
-        onSelectionChange,
-        renderCell,
+        onSelectionChange = undefined,
+        renderCell = undefined,
         class: extraClass = "",
     } = $props();
 

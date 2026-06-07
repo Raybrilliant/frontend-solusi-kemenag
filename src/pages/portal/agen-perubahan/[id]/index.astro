@@ -1,0 +1,495 @@
+---
+import { Icon } from "astro-icon/components";
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import {
+    getAgenPerubahanById,
+    getAgenPerubahanFoto,
+    getAgenPerubahanInovasiByAgenId,
+} from "../../../../lib/data.js";
+
+const { id } = Astro.params;
+const agent = getAgenPerubahanById(id);
+const innovation = getAgenPerubahanInovasiByAgenId(id);
+
+if (!agent || !innovation) {
+    return Astro.redirect("/portal/agen-perubahan");
+}
+
+const fotoUrl = getAgenPerubahanFoto(agent);
+const backgroundParagraphs = String(innovation.latarBelakang ?? "")
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean);
+---
+
+<style>
+    [data-anim="down"] {
+        animation: fadeDown 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    [data-anim="up"] {
+        animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both;
+    }
+    [data-reveal] {
+        opacity: 0;
+        transition:
+            opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+            transform 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+            filter 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        will-change: transform, opacity, filter;
+        filter: blur(6px);
+    }
+    [data-reveal="up"] {
+        transform: translateY(28px) scale(0.988);
+    }
+    [data-reveal="left"] {
+        transform: translateX(-32px) scale(0.988);
+    }
+    [data-reveal="right"] {
+        transform: translateX(32px) scale(0.988);
+    }
+    [data-reveal].revealed {
+        opacity: 1;
+        transform: none;
+        filter: blur(0);
+    }
+    [data-delay="1"] {
+        transition-delay: 0.08s;
+    }
+    [data-delay="2"] {
+        transition-delay: 0.16s;
+    }
+    [data-delay="3"] {
+        transition-delay: 0.24s;
+    }
+    [data-delay="4"] {
+        transition-delay: 0.32s;
+    }
+    @keyframes fadeDown {
+        from {
+            opacity: 0;
+            transform: translateY(-12px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    @keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(22px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .hero-visual {
+        background:
+            radial-gradient(
+                circle at 25% 18%,
+                rgba(246, 199, 68, 0.25),
+                transparent 32%
+            ),
+            radial-gradient(
+                circle at 70% 28%,
+                rgba(15, 107, 68, 0.16),
+                transparent 42%
+            ),
+            linear-gradient(
+                180deg,
+                rgba(255, 255, 255, 0.72),
+                rgba(255, 255, 255, 0.95)
+            );
+    }
+    .detail-photo {
+        filter: grayscale(0.04) saturate(1.02)
+            drop-shadow(0 18px 30px rgba(15, 107, 68, 0.12));
+    }
+    .compare-card {
+        transition:
+            transform 0.22s ease,
+            box-shadow 0.22s ease;
+    }
+    .compare-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.08);
+    }
+    .split-reveal {
+        position: relative;
+        overflow: hidden;
+    }
+    .split-reveal::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.92),
+            rgba(255, 255, 255, 0.68)
+        );
+        transform: translateX(0);
+        transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+        z-index: 2;
+        pointer-events: none;
+    }
+    .split-reveal::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+            90deg,
+            rgba(15, 107, 68, 0.08),
+            transparent 55%
+        );
+        opacity: 0;
+        transform: translateX(-8%);
+        transition:
+            opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+            transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+        z-index: 1;
+        pointer-events: none;
+    }
+    .split-reveal.revealed::before {
+        transform: translateX(102%);
+    }
+    .split-reveal.revealed::after {
+        opacity: 1;
+        transform: translateX(0);
+    }
+</style>
+
+<BaseLayout
+    title={`Agen Perubahan — ${agent.nama}`}
+    ogDescription={`${agent.nama} · ${innovation.inovasi} · Agen Perubahan Kementerian Agama Kota Probolinggo.`}
+>
+    <section data-anim="down" class="pt-8 pb-6">
+        <a
+            href="/portal/agen-perubahan"
+            class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink/35 hover:text-green transition-colors mb-4"
+        >
+            <Icon name="mdi:arrow-left" class="w-3.5 h-3.5" />
+            Kembali ke Agen Perubahan
+        </a>
+
+        <div
+            data-anim="up"
+            class="grid grid-cols-1 lg:grid-cols-[360px_minmax(0,1fr)] gap-6 items-stretch mb-8"
+        >
+            <div
+                class="hero-visual border border-black/8 min-h-[420px] flex items-end justify-center overflow-hidden px-6 pt-8"
+            >
+                {
+                    fotoUrl ? (
+                        <img
+                            src={fotoUrl}
+                            alt={agent.nama}
+                            class="detail-photo max-h-[390px] w-auto object-contain object-bottom"
+                            loading="lazy"
+                        />
+                    ) : (
+                        <div class="w-full h-full flex items-center justify-center text-center px-8">
+                            <div>
+                                <Icon
+                                    name="mdi:account-tie"
+                                    class="w-20 h-20 text-green/35 mx-auto mb-4"
+                                />
+                                <p class="text-sm font-semibold uppercase tracking-wider text-ink/35">
+                                    Foto agen belum tersedia
+                                </p>
+                            </div>
+                        </div>
+                    )
+                }
+            </div>
+
+            <div
+                class="border border-black/8 bg-white/70 p-6 md:p-8 flex flex-col justify-between"
+            >
+                <div>
+                    <div
+                        class="inline-flex items-center gap-2 border border-green/15 bg-green/7 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-green mb-4"
+                    >
+                        <Icon name="mdi:lightbulb-on-outline" class="w-4 h-4" />
+                        Inovasi Tahun {agent.tahun}
+                    </div>
+
+                    <h1
+                        class="text-3xl md:text-4xl font-extrabold text-ink leading-tight"
+                    >
+                        {innovation.inovasi}
+                    </h1>
+                    <p class="text-lg text-ink/55 mt-2 font-semibold">
+                        {agent.nama}
+                    </p>
+                    <p class="text-sm text-ink/45 mt-1">
+                        {agent.jabatan} · {agent.unitKerja}
+                    </p>
+
+                    <div class="mt-6 border-l-4 border-green pl-4">
+                        <p
+                            class="text-[11px] font-black uppercase tracking-wider text-green/70 mb-1"
+                        >
+                            Deskripsi Inovasi
+                        </p>
+                        <p class="text-sm text-ink/60 text-justify leading-relaxed">
+                            {agent.deskripsi}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section
+        class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.9fr)] gap-6 pb-10"
+    >
+        <div class="space-y-6">
+            <article
+                data-reveal="left"
+                data-delay="1"
+                class="border border-black/8 bg-white/70 p-6 md:p-7"
+            >
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-1 h-6 bg-green shrink-0"></div>
+                    <h2
+                        class="text-xl font-extrabold uppercase tracking-tight text-ink"
+                    >
+                        Latar Belakang
+                    </h2>
+                </div>
+                <div
+                    class="space-y-4 text-justify text-sm md:text-[15px] leading-8 text-ink/65"
+                >
+                    {
+                        backgroundParagraphs.map((paragraph) => (
+                            <p>{paragraph}</p>
+                        ))
+                    }
+                </div>
+            </article>
+
+            <article
+                data-reveal="left"
+                data-delay="2"
+                class="border border-black/8 bg-white/70 p-6 md:p-7"
+            >
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-1 h-6 bg-yellow shrink-0"></div>
+                    <h2
+                        class="text-xl font-extrabold uppercase tracking-tight text-ink"
+                    >
+                        Tujuan Inovasi
+                    </h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {
+                        innovation.tujuan.map((item, index) => (
+                            <div class="border border-black/6 bg-cream/80 px-4 py-3 flex gap-3 items-start">
+                                <span class="w-7 h-7 shrink-0 flex items-center justify-center bg-green text-white text-xs font-bold">
+                                    {index + 1}
+                                </span>
+                                <p class="text-sm text-ink/65 leading-relaxed">
+                                    {item}
+                                </p>
+                            </div>
+                        ))
+                    }
+                </div>
+            </article>
+        </div>
+
+        <aside
+            data-reveal="right"
+            data-delay="2"
+            class="border border-black/8 bg-white/70 p-6 md:p-7 h-fit"
+        >
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-1 h-6 bg-ink shrink-0"></div>
+                <h2
+                    class="text-xl font-extrabold uppercase tracking-tight text-ink"
+                >
+                    Ringkasan
+                </h2>
+            </div>
+            <div class="space-y-4 text-sm text-ink/60">
+                <div>
+                    <p
+                        class="text-[11px] uppercase tracking-wider font-bold text-ink/35 mb-1"
+                    >
+                        Agen Perubahan
+                    </p>
+                    <p class="font-semibold text-ink">{agent.nama}</p>
+                </div>
+                <div>
+                    <p
+                        class="text-[11px] uppercase tracking-wider font-bold text-ink/35 mb-1"
+                    >
+                        Inovasi
+                    </p>
+                    <p class="font-semibold text-ink">{innovation.inovasi}</p>
+                </div>
+                <div>
+                    <p
+                        class="text-[11px] uppercase tracking-wider font-bold text-ink/35 mb-1"
+                    >
+                        Tahun
+                    </p>
+                    <p class="font-semibold text-ink">{agent.tahun}</p>
+                </div>
+                <div>
+                    <p
+                        class="text-[11px] uppercase tracking-wider font-bold text-ink/35 mb-1"
+                    >
+                        Unit Kerja
+                    </p>
+                    <p class="font-semibold text-ink">{agent.unitKerja}</p>
+                </div>
+            </div>
+        </aside>
+    </section>
+
+    <section data-reveal="up" data-delay="1" class="pb-10">
+        <div class="flex items-center gap-3 mb-5">
+            <div class="w-1 h-6 bg-green shrink-0"></div>
+            <h2
+                class="text-xl font-extrabold uppercase tracking-tight text-ink"
+            >
+                Before & After
+            </h2>
+        </div>
+
+        <div class="grid grid-cols-1 gap-5">
+            {
+                innovation.hasil.map((item, index) => (
+                    <div
+                        class="grid grid-cols-1 lg:grid-cols-2 gap-5"
+                        key={index}
+                    >
+                        <article
+                            data-reveal="left"
+                            data-delay="3"
+                            class="compare-card split-reveal border border-red-200 bg-red-50/60 overflow-hidden"
+                        >
+                            <div class="px-5 py-4 border-b border-red-200 flex items-center gap-2">
+                                <Icon
+                                    name="mdi:history"
+                                    class="w-4 h-4 text-red-500"
+                                />
+                                <h3 class="text-sm font-black uppercase tracking-wider text-red-600">
+                                    Sebelum Inovasi
+                                </h3>
+                            </div>
+                            <div class="p-5">
+                                {item.sebelum.foto ? (
+                                    <img
+                                        src={item.sebelum.foto}
+                                        alt={`Sebelum ${innovation.inovasi}`}
+                                        class="w-full h-64 object-cover mb-4 border border-black/6"
+                                        loading="lazy"
+                                    />
+                                ) : (
+                                    <div class="w-full h-64 mb-4 border border-dashed border-red-200 bg-white/60 flex items-center justify-center">
+                                        <span class="text-sm text-red-300 font-semibold uppercase tracking-wider">
+                                            Foto Sebelum
+                                        </span>
+                                    </div>
+                                )}
+                                <div class="text-sm text-ink/60 leading-relaxed space-y-3">
+                                    {
+                                        String(item.sebelum.deskripsi || "")
+                                            .split("\n")
+                                            .map((paragraph) => paragraph.trim())
+                                            .filter(Boolean)
+                                            .map((paragraph) => (
+                                                <p>{paragraph}</p>
+                                            ))
+                                    }
+                                    {
+                                        !item.sebelum.deskripsi && (
+                                            <p>Belum ada deskripsi kondisi sebelum inovasi.</p>
+                                        )
+                                    }
+                                </div>
+                            </div>
+                        </article>
+
+                        <article
+                            data-reveal="right"
+                            data-delay="4"
+                            class="compare-card split-reveal border border-green/20 bg-green/5 overflow-hidden"
+                        >
+                            <div class="px-5 py-4 border-b border-green/20 flex items-center gap-2">
+                                <Icon
+                                    name="mdi:check-circle-outline"
+                                    class="w-4 h-4 text-green"
+                                />
+                                <h3 class="text-sm font-black uppercase tracking-wider text-green">
+                                    Sesudah Inovasi
+                                </h3>
+                            </div>
+                            <div class="p-5">
+                                {item.sesudah.foto ? (
+                                    <img
+                                        src={item.sesudah.foto}
+                                        alt={`Sesudah ${innovation.inovasi}`}
+                                        class="w-full h-64 object-cover mb-4 border border-black/6"
+                                        loading="lazy"
+                                    />
+                                ) : (
+                                    <div class="w-full h-64 mb-4 border border-dashed border-green/20 bg-white/60 flex items-center justify-center">
+                                        <span class="text-sm text-green/35 font-semibold uppercase tracking-wider">
+                                            Foto Sesudah
+                                        </span>
+                                    </div>
+                                )}
+                                <div class="text-sm text-ink/60 leading-relaxed space-y-3">
+                                    {
+                                        String(item.sesudah.deskripsi || "")
+                                            .split("\n")
+                                            .map((paragraph) => paragraph.trim())
+                                            .filter(Boolean)
+                                            .map((paragraph) => (
+                                                <p>{paragraph}</p>
+                                            ))
+                                    }
+                                    {
+                                        !item.sesudah.deskripsi && (
+                                            <p>Belum ada deskripsi kondisi sesudah inovasi.</p>
+                                        )
+                                    }
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                ))
+            }
+        </div>
+    </section>
+    <script>
+        function initAgenPerubahanDetailReveal() {
+            const items = document.querySelectorAll("[data-reveal]");
+            if (!items.length) return;
+
+            const observer = new IntersectionObserver(
+                (entries) => {
+                    entries.forEach((entry) => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add("revealed");
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                },
+                { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
+            );
+
+            items.forEach((item) => observer.observe(item));
+        }
+
+        initAgenPerubahanDetailReveal();
+        document.addEventListener(
+            "astro:page-load",
+            initAgenPerubahanDetailReveal,
+        );
+    </script>
+</BaseLayout>

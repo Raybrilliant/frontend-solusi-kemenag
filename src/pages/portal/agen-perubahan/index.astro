@@ -1,0 +1,311 @@
+---
+import { Icon } from "astro-icon/components";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import {
+    getAgenPerubahanSorted,
+    getAgenPerubahanInovasiByAgenId,
+    getAgenPerubahanFoto,
+} from "../../../lib/data.js";
+
+const agents = getAgenPerubahanSorted().map((item) => ({
+    ...item,
+    detail: getAgenPerubahanInovasiByAgenId(item.id),
+    fotoUrl: getAgenPerubahanFoto(item),
+}));
+
+const groupedAgents = agents.reduce(
+    (groups, agent) => {
+        const year = String(agent.tahun ?? "Tanpa Tahun");
+        const existing = groups.find((group) => group.year === year);
+
+        if (existing) {
+            existing.items.push(agent);
+        } else {
+            groups.push({ year, items: [agent] });
+        }
+
+        return groups;
+    },
+    [] as Array<{
+        year: string;
+        items: typeof agents;
+    }>,
+);
+---
+
+<style>
+    [data-anim="down"] {
+        animation: fadeDown 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    [data-anim="up"] {
+        animation: fadeUp 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both;
+    }
+    [data-reveal] {
+        opacity: 0;
+        transition:
+            opacity 0.82s cubic-bezier(0.16, 1, 0.3, 1),
+            transform 0.82s cubic-bezier(0.16, 1, 0.3, 1),
+            filter 0.82s cubic-bezier(0.16, 1, 0.3, 1);
+        will-change: transform, opacity, filter;
+        filter: blur(6px);
+    }
+    [data-reveal="up"] {
+        transform: translateY(34px) scale(0.985);
+    }
+    [data-reveal].revealed {
+        opacity: 1;
+        transform: none;
+        filter: blur(0);
+    }
+    [data-delay="1"] {
+        transition-delay: 0.05s;
+    }
+    [data-delay="2"] {
+        transition-delay: 0.11s;
+    }
+    [data-delay="3"] {
+        transition-delay: 0.17s;
+    }
+    [data-delay="4"] {
+        transition-delay: 0.23s;
+    }
+    [data-delay="5"] {
+        transition-delay: 0.29s;
+    }
+    [data-delay="6"] {
+        transition-delay: 0.35s;
+    }
+    @keyframes fadeDown {
+        from {
+            opacity: 0;
+            transform: translateY(-12px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    @keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(22px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .agent-card {
+        transition:
+            transform 0.25s ease,
+            box-shadow 0.25s ease,
+            border-color 0.25s ease;
+    }
+    .agent-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 18px 36px rgba(0, 0, 0, 0.1);
+        border-color: rgba(15, 107, 68, 0.18);
+    }
+    .agent-visual {
+        background:
+            radial-gradient(
+                circle at 30% 20%,
+                rgba(246, 199, 68, 0.28),
+                transparent 35%
+            ),
+            radial-gradient(
+                circle at 70% 30%,
+                rgba(15, 107, 68, 0.18),
+                transparent 40%
+            ),
+            linear-gradient(
+                180deg,
+                rgba(255, 255, 255, 0.72),
+                rgba(255, 255, 255, 0.94)
+            );
+    }
+    .agent-photo {
+        transition:
+            transform 0.45s ease,
+            filter 0.45s ease;
+        filter: grayscale(1) saturate(0.8)
+            drop-shadow(0 10px 20px rgba(0, 0, 0, 0.1));
+    }
+    .agent-card:hover .agent-photo {
+        transform: translateY(-6px) scale(1.03);
+        filter: grayscale(0.08) saturate(1.08) contrast(1.02)
+            drop-shadow(0 18px 30px rgba(15, 107, 68, 0.16));
+    }
+    .agent-placeholder {
+        background: linear-gradient(
+            180deg,
+            rgba(15, 107, 68, 0.08),
+            rgba(15, 107, 68, 0.02)
+        );
+    }
+</style>
+
+<BaseLayout
+    title="Agen Perubahan"
+    ogDescription="Profil agen perubahan dan inovasi yang dikembangkan di Kantor Kementerian Agama Kota Probolinggo."
+>
+    <section data-anim="down" class="pt-8 pb-6">
+        <a
+            href="/portal"
+            class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink/35 hover:text-green transition-colors mb-4"
+        >
+            <Icon name="mdi:arrow-left" class="w-3.5 h-3.5" />
+            Beranda
+        </a>
+
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-1 h-7 bg-green shrink-0"></div>
+            <h1
+                class="text-4xl font-extrabold uppercase tracking-tight text-ink"
+            >
+                Agen Perubahan
+            </h1>
+        </div>
+        <p class="text-sm text-ink/45 mt-1 ml-4 max-w-3xl">
+            Deretan agen perubahan beserta inovasi yang dikembangkan. Data
+            diurutkan berdasarkan tahun inovasi terbaru agar memudahkan
+            penelusuran perkembangan setiap tahunnya.
+        </p>
+    </section>
+
+    {
+        agents.length === 0 ? (
+            <div
+                data-anim="up"
+                class="py-24 text-center border border-black/8 bg-white/60"
+            >
+                <Icon
+                    name="mdi:account-group-outline"
+                    class="w-10 h-10 text-ink/20 mx-auto mb-3"
+                />
+                <p class="text-sm font-semibold uppercase tracking-wider text-ink/35">
+                    Belum ada data agen perubahan
+                </p>
+            </div>
+        ) : (
+            <div class="space-y-10 pb-10">
+                {groupedAgents.map((group) => (
+                    <section data-anim="up" class="space-y-5">
+                        <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between border-b border-black/8 pb-3">
+                            <div>
+                                <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-green/70">
+                                    Agen Perubahan
+                                </p>
+                                <h2 class="text-2xl md:text-3xl font-extrabold uppercase tracking-tight text-ink">
+                                    Tahun {group.year}
+                                </h2>
+                            </div>
+                            <p class="text-sm text-ink/45 font-medium">
+                                {group.items.length} agen terdaftar
+                            </p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                            {group.items.map((agent, index) => (
+                                <a
+                                    href={`/portal/agen-perubahan/${agent.id}`}
+                                    data-reveal="up"
+                                    data-delay={String((index % 6) + 1)}
+                                    class="agent-card group border border-black/8 bg-white/70 overflow-hidden"
+                                >
+                                    <div class="agent-visual relative min-h-[320px] flex items-end justify-center overflow-hidden px-6 pt-8">
+                                        <div class="absolute top-4 left-4 inline-flex items-center gap-1 rounded-full bg-green/8 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-green border border-green/10">
+                                            <Icon
+                                                name="mdi:calendar"
+                                                class="w-3.5 h-3.5"
+                                            />
+                                            {agent.tahun}
+                                        </div>
+
+                                        {agent.fotoUrl ? (
+                                            <img
+                                                src={agent.fotoUrl}
+                                                alt={agent.nama}
+                                                class="agent-photo relative z-10 max-h-[290px] w-auto object-contain object-bottom"
+                                                loading="lazy"
+                                            />
+                                        ) : (
+                                            <div class="agent-placeholder relative z-10 mb-6 flex h-64 w-full max-w-[240px] items-center justify-center border border-black/6">
+                                                <div class="text-center px-6">
+                                                    <Icon
+                                                        name="mdi:account-tie"
+                                                        class="w-16 h-16 text-green/35 mx-auto mb-3"
+                                                    />
+                                                    <p class="text-xs font-semibold uppercase tracking-wider text-ink/35">
+                                                        Foto agen belum tersedia
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div class="border-t border-black/6 px-5 py-5 bg-cream/80">
+                                        <div class="flex items-start gap-3 justify-between mb-2">
+                                            <div>
+                                                <h2 class="text-lg font-bold text-ink leading-tight group-hover:text-green transition-colors">
+                                                    {agent.nama}
+                                                </h2>
+                                                <p class="text-sm text-ink/55 mt-1">
+                                                    {agent.jabatan}
+                                                </p>
+                                            </div>
+                                            <Icon
+                                                name="mdi:arrow-top-right"
+                                                class="w-4 h-4 text-ink/30 group-hover:text-green transition-colors shrink-0 mt-1"
+                                            />
+                                        </div>
+
+                                        <p class="text-[12px] uppercase tracking-wider text-ink/35 font-semibold mb-3">
+                                            {agent.unitKerja}
+                                        </p>
+
+                                        <div class="mb-3 border-l-4 border-green pl-3">
+                                            <p class="text-[11px] font-black uppercase tracking-wider text-green/70 mb-1">
+                                                Inovasi
+                                            </p>
+                                            <p class="text-sm font-semibold text-ink">
+                                                {agent.inovasi}
+                                            </p>
+                                        </div>
+
+                                        <p class="text-sm text-ink/55 leading-relaxed line-clamp-3">
+                                            {agent.deskripsi}
+                                        </p>
+                                    </div>
+                                </a>
+                            ))}
+                        </div>
+                    </section>
+                ))}
+            </div>
+        )
+    }
+    <script>
+        function initAgenPerubahanReveal() {
+            const items = document.querySelectorAll("[data-reveal]");
+            if (!items.length) return;
+
+            const observer = new IntersectionObserver(
+                (entries) => {
+                    entries.forEach((entry) => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add("revealed");
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                },
+                { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
+            );
+
+            items.forEach((item) => observer.observe(item));
+        }
+
+        initAgenPerubahanReveal();
+        document.addEventListener("astro:page-load", initAgenPerubahanReveal);
+    </script>
+</BaseLayout>

@@ -5,50 +5,50 @@ const kuaList = [
     {
         no: 1,
         kecamatan: "Mayangan",
-        nama: "KUA Kecamatan Mayangan",
+        nama: "KUA Mayangan",
         kepala: "Yusron Siswanto S Ag",
         alamat: "Jl. WR. Supratman No.69, Jati, Kec. Mayangan",
-        telp: "-",
+        website: "mayangan.kemenagkotaprobolinggo.id",
         kelurahan: ["Mayangan", "Mangunharjo", "Sukabumi", "Wiroborang", "Jati"],
         layanan: ["Pencatatan Nikah", "Penerbitan Buku Nikah", "Mediasi Perceraian", "Wakaf & Zakat"],
     },
     {
         no: 2,
         kecamatan: "Kanigaran",
-        nama: "KUA Kecamatan Kanigaran",
+        nama: "KUA Kanigaran",
         kepala: "Mohammad Anwar Sadad S.Th.I.",
         alamat: "Jl. Slamet Riyadi, Kanigaran, Kec. Kanigaran",
-        telp: "(0335) 427550",
+        website: "kanigaran.kemenagkotaprobolinggo.id",
         kelurahan: ["Kanigaran", "Kebonsari Kulon", "Kebonsari Wetan", "Curah Grinting", "Tisnonegaran"],
         layanan: ["Pencatatan Nikah", "Penerbitan Buku Nikah", "Konsultasi Keagamaan", "Mediasi Keluarga"],
     },
     {
         no: 3,
         kecamatan: "Kedopok",
-        nama: "KUA Kecamatan Kedopok",
+        nama: "KUA Kedopok",
         kepala: "Kusnandar S.Ag",
         alamat: "Jl. Mastrip No.20, Kedopok, Kec. Kedopok",
-        telp: "-",
+        website: "kedopok.kemenagkotaprobolinggo.id",
         kelurahan: ["Kedopok", "Kareng Lor", "Jrebeng Lor", "Jrebeng Wetan", "Jrebeng Kulon", "Sumber Taman"],
         layanan: ["Pencatatan Nikah", "Penerbitan Buku Nikah", "Penyuluhan Agama", "Wakaf"],
     },
     {
         no: 4,
         kecamatan: "Kademangan",
-        nama: "KUA Kecamatan Kademangan",
+        nama: "KUA Kademangan",
         kepala: "Ainul Kamal Rofiqi S.H.I",
         alamat: "Jl. Brantas No.50, Kademangan, Kec. Kademangan",
-        telp: "-",
+        website: "kademangan.kemenagkotaprobolinggo.id",
         kelurahan: ["Kademangan", "Triwung Kidul", "Triwung Lor", "Pohsangit Kidul", "Pilang"],
         layanan: ["Pencatatan Nikah", "Penerbitan Buku Nikah", "Bimbingan Pranikah", "Pengesahan Wakaf"],
     },
     {
         no: 5,
         kecamatan: "Wonoasih",
-        nama: "KUA Kecamatan Wonoasih",
+        nama: "KUA Wonoasih",
         kepala: "Hasbi Sidiq S. SOS. I",
         alamat: "Jl. Anggur No.119, Wonoasih, Kec. Wonoasih",
-        telp: "(0335) 428217",
+        website: "wonoasih.kemenagkotaprobolinggo.id",
         kelurahan: ["Wonoasih", "Kedunggaleng", "Pakistaji", "Sumber Taman", "Jrebeng Kidul"],
         layanan: ["Pencatatan Nikah", "Penerbitan Buku Nikah", "Penyuluhan Agama", "Mediasi Keluarga"],
     },
@@ -209,15 +209,22 @@ const layananUtama = [
                                         <p class="text-xs text-ink/70 font-medium leading-snug">{kua.kepala}</p>
                                     </div>
                                 </div>
-                                <!-- Telepon -->
+                                <!-- Website -->
                                 <div class="flex items-start gap-2">
                                     <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"
                                          class="shrink-0 text-green/60 mt-0.5">
-                                        <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
                                     </svg>
                                     <div>
-                                        <p class="text-[10px] text-ink/35 font-semibold uppercase tracking-wider">Telepon</p>
-                                        <p class="text-xs text-ink/70 font-medium">{kua.telp}</p>
+                                        <p class="text-[10px] text-ink/35 font-semibold uppercase tracking-wider">Website</p>
+                                        {kua.website && kua.website !== "-" ? (
+                                            <a href={`https://${kua.website}`} target="_blank" rel="noopener noreferrer"
+                                               class="text-xs text-green/80 font-medium hover:text-green hover:underline">
+                                                {kua.website}
+                                            </a>
+                                        ) : (
+                                            <p class="text-xs text-ink/40 font-medium">-</p>
+                                        )}
                                     </div>
                                 </div>
                                 <!-- Alamat -->
