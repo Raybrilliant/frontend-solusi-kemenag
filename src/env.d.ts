@@ -1,6 +1,6 @@
 import type { AuthUser } from "./lib/get-user";
 
-declare global {
+declare global { 
   namespace App {
     interface Locals {
       user?: AuthUser | null;
