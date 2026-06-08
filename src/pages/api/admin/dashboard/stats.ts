@@ -1,18 +1,17 @@
 import type { APIRoute } from "astro";
-import { getUserFromToken } from "../../../../lib/get-user";
+import {
+  getAdminAuthHeaders,
+  getAdminUser,
+} from "../../../../lib/admin-api-proxy";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
 // Proxy: GET /api/v1/dashboard/stats
 // Operator: ambil dari /stats/per-kategori dan filter ke kategori mereka
-export const GET: APIRoute = async ({ cookies }) => {
+export const GET: APIRoute = async ({ cookies, request }) => {
   try {
-    const token = cookies?.get?.("auth_token")?.value;
-    const headers: Record<string, string> = token
-      ? { Authorization: `Bearer ${token}` }
-      : {};
-
-    const user = await getUserFromToken(token);
+    const headers = getAdminAuthHeaders(cookies, request);
+    const user = await getAdminUser(cookies, request);
     const isOperator = user?.role === "operator" && user.categoryId !== null;
 
     if (isOperator) {
@@ -35,10 +34,10 @@ export const GET: APIRoute = async ({ cookies }) => {
             }
           : { total: 0, selesai: 0, ditolak: 0, tingkatPenyelesaian: 0 };
 
-        return new Response(
-          JSON.stringify({ success: true, data: stats }),
-          { status: 200, headers: { "Content-Type": "application/json" } },
-        );
+        return new Response(JSON.stringify({ success: true, data: stats }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
       }
 
       return new Response(JSON.stringify(data), {

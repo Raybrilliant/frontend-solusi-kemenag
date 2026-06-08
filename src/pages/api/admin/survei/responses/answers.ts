@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import {
   getAdminAuthHeaders,
+  hasAdminSession,
   jsonProxyResponse,
   missingAdminSessionResponse,
   readBackendJson,
@@ -8,10 +9,10 @@ import {
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
-export const GET: APIRoute = async ({ url, cookies }) => {
+export const GET: APIRoute = async ({ url, cookies, request }) => {
   try {
-    const headers = getAdminAuthHeaders(cookies);
-    if (!headers.Authorization) return missingAdminSessionResponse();
+    const headers = getAdminAuthHeaders(cookies, request);
+    if (!hasAdminSession(headers)) return missingAdminSessionResponse();
 
     const qs = url.searchParams.toString();
     const res = await fetch(

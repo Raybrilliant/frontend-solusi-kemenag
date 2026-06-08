@@ -1,12 +1,7 @@
 import type { APIRoute } from "astro";
+import { getAdminAuthHeaders } from "../../../../lib/admin-api-proxy";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
-
-function getAuthHeaders(cookies: any): Record<string, string> {
-  const token = cookies?.get?.("auth_token")?.value ?? "";
-  if (!token) return {};
-  return { Authorization: `Bearer ${token}` };
-}
 
 async function safeJson(res: Response): Promise<unknown> {
   const text = await res.text();
@@ -26,7 +21,7 @@ export const PATCH: APIRoute = async ({ params, request, cookies }) => {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        ...getAuthHeaders(cookies),
+        ...getAdminAuthHeaders(cookies, request),
       },
       body: JSON.stringify(body),
     });
@@ -53,11 +48,11 @@ export const PATCH: APIRoute = async ({ params, request, cookies }) => {
 };
 
 // Proxy: DELETE /api/v1/persyaratan/:id
-export const DELETE: APIRoute = async ({ params, cookies }) => {
+export const DELETE: APIRoute = async ({ params, cookies, request }) => {
   try {
     const res = await fetch(`${BACKEND_URL}/api/v1/persyaratan/${params.id}`, {
       method: "DELETE",
-      headers: getAuthHeaders(cookies),
+      headers: getAdminAuthHeaders(cookies, request),
     });
 
     if (!res.ok) {

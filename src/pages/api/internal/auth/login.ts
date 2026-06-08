@@ -27,9 +27,13 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
+    const headers = new Headers({ "Content-Type": "application/json" });
+    const ssoCookie = res.headers.get("set-cookie");
+    if (ssoCookie) headers.append("Set-Cookie", ssoCookie);
+
     return new Response(JSON.stringify(data), {
       status: res.status,
-      headers: { "Content-Type": "application/json" },
+      headers,
     });
   } catch (e) {
     return new Response(

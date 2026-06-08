@@ -1,19 +1,14 @@
 import type { APIRoute } from "astro";
+import { getAdminAuthHeaders } from "../../../../lib/admin-api-proxy";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
-function getAuthHeaders(cookies: any): Record<string, string> {
-  const token = cookies?.get?.("auth_token")?.value ?? "";
-  if (!token) return {};
-  return { Authorization: `Bearer ${token}` };
-}
-
 // Returns sorted list of unique kategori values from all existing berita
-export const GET: APIRoute = async ({ cookies }) => {
+export const GET: APIRoute = async ({ cookies, request }) => {
   try {
     const res = await fetch(
       `${BACKEND_URL}/api/v1/berita/admin/list?limit=500`,
-      { headers: getAuthHeaders(cookies) },
+      { headers: getAdminAuthHeaders(cookies, request) },
     );
 
     if (!res.ok) {

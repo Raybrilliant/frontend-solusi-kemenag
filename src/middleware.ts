@@ -1,7 +1,7 @@
 /**
  * Auth Middleware — Proteksi halaman admin & internal
  *
- * Cek token di cookie "auth_token" dan validasi ke backend.
+ * Cek token di cookie "auth_token" atau sesi SSO dan validasi ke backend.
  * Redirect ke login jika tidak valid.
  */
 import { defineMiddleware } from "astro:middleware";
@@ -27,11 +27,16 @@ function isPublicPath(pathname: string): boolean {
 }
 
 async function validateToken(
-  token: string,
+  token: string | undefined,
+  cookieHeader: string,
 ): Promise<{ valid: boolean; user?: any }> {
   try {
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    if (cookieHeader) headers.Cookie = cookieHeader;
+
     const res = await fetch(`${BACKEND_URL}/api/v1/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers,
       signal: AbortSignal.timeout(5000),
     });
     const data = await res.json();
@@ -66,7 +71,7 @@ async function validateToken(
 }
 
 export const onRequest = defineMiddleware(async (context, next) => {
-  const { url, cookies, redirect } = context;
+  const { url, cookies, redirect, request } = context;
 
   // Skip public paths
   if (isPublicPath(url.pathname)) {
@@ -82,16 +87,19 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   const token = cookies.get("auth_token")?.value;
+  const cookieHeader = request.headers.get("cookie") ?? "";
 
-  if (!token) {
-    console.log("[middleware] No auth_token cookie — redirecting to login");
+  if (!token && !cookieHeader) {
+    console.log(
+      "[middleware] No auth_token atau cookie sesi — redirecting to login",
+    );
     const loginPath = isAdminRoute ? "/admin/login" : "/internal/login";
     const redirectParam = `?redirect=${encodeURIComponent(url.pathname)}`;
     return redirect(`${loginPath}${redirectParam}`);
   }
 
-  // Validate token against backend
-  const { valid, user } = await validateToken(token);
+  // Validate token or SSO session against backend
+  const { valid, user } = await validateToken(token, cookieHeader);
 
   if (!valid) {
     console.log("[middleware] Token invalid — clearing cookie and redirecting");
@@ -131,7 +139,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
 
     if (!allowedHumasPaths.some((path) => url.pathname.startsWith(path))) {
-      console.log("[middleware] Humas cannot access admin route:", url.pathname);
+      console.log(
+        "[middleware] Humas cannot access admin route:",
+        url.pathname,
+      );
       return redirect("/admin/berita");
     }
   }

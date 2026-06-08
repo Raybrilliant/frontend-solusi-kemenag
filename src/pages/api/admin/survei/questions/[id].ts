@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import {
   getAdminAuthHeaders,
+  hasAdminSession,
   jsonProxyResponse,
   missingAdminSessionResponse,
   readBackendJson,
@@ -10,8 +11,8 @@ const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
 export const PUT: APIRoute = async ({ params, request, cookies }) => {
   try {
-    const headers = getAdminAuthHeaders(cookies);
-    if (!headers.Authorization) return missingAdminSessionResponse();
+    const headers = getAdminAuthHeaders(cookies, request);
+    if (!hasAdminSession(headers)) return missingAdminSessionResponse();
 
     const body = await request.json();
     const res = await fetch(
@@ -32,10 +33,10 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
   }
 };
 
-export const DELETE: APIRoute = async ({ params, cookies }) => {
+export const DELETE: APIRoute = async ({ params, cookies, request }) => {
   try {
-    const headers = getAdminAuthHeaders(cookies);
-    if (!headers.Authorization) return missingAdminSessionResponse();
+    const headers = getAdminAuthHeaders(cookies, request);
+    if (!hasAdminSession(headers)) return missingAdminSessionResponse();
 
     const res = await fetch(
       `${BACKEND_URL}/api/v1/survei/questions/${params.id}`,

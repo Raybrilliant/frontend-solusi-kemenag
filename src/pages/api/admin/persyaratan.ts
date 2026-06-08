@@ -1,12 +1,7 @@
 import type { APIRoute } from "astro";
+import { getAdminAuthHeaders } from "../../../lib/admin-api-proxy";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
-
-function getAuthHeaders(cookies: any): Record<string, string> {
-  const token = cookies?.get?.("auth_token")?.value ?? "";
-  if (!token) return {};
-  return { Authorization: `Bearer ${token}` };
-}
 
 async function safeJson(res: Response): Promise<unknown> {
   const text = await res.text();
@@ -19,12 +14,12 @@ async function safeJson(res: Response): Promise<unknown> {
 }
 
 // Proxy: GET /api/v1/persyaratan?layananId=...
-export const GET: APIRoute = async ({ url, cookies }) => {
+export const GET: APIRoute = async ({ url, cookies, request }) => {
   try {
     const layananId = url.searchParams.get("layananId");
     const qs = layananId ? `?layananId=${layananId}` : "";
     const res = await fetch(`${BACKEND_URL}/api/v1/persyaratan/${qs}`, {
-      headers: getAuthHeaders(cookies),
+      headers: getAdminAuthHeaders(cookies, request),
     });
 
     if (!res.ok) {
@@ -55,7 +50,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...getAuthHeaders(cookies),
+        ...getAdminAuthHeaders(cookies, request),
       },
       body: JSON.stringify(body),
     });

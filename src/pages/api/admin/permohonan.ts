@@ -1,5 +1,8 @@
 import type { APIRoute } from "astro";
-import { getUserFromToken } from "../../../lib/get-user";
+import {
+  getAdminAuthHeaders,
+  getAdminUser,
+} from "../../../lib/admin-api-proxy";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
@@ -41,16 +44,13 @@ function calcSlaRemaining(
   return Math.floor((totalMs - elapsedMs) / 60_000);
 }
 
-export const GET: APIRoute = async ({ url, cookies }) => {
+export const GET: APIRoute = async ({ url, cookies, request }) => {
   try {
-    const token = cookies.get("auth_token")?.value;
     const qs = url.searchParams.toString();
-    const headers: Record<string, string> = token
-      ? { Authorization: `Bearer ${token}` }
-      : {};
+    const headers = getAdminAuthHeaders(cookies, request);
 
     const [user, permRes] = await Promise.all([
-      getUserFromToken(token),
+      getAdminUser(cookies, request),
       fetch(`${BACKEND_URL}/api/v1/permohonan${qs ? `?${qs}` : ""}`, {
         headers,
       }),
@@ -61,7 +61,7 @@ export const GET: APIRoute = async ({ url, cookies }) => {
     const data = await permRes.json();
 
     if (data.success && data.data) {
-      const layanan = await getLayananData(headers);
+      const layanan = (await getLayananData(headers)) ?? [];
       const layananMap = new Map(layanan.map((s: any) => [s.id, s]));
 
       // Elysia already includes categoryId on each item; use it directly
@@ -93,10 +93,9 @@ export const GET: APIRoute = async ({ url, cookies }) => {
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
-    const token = cookies.get("auth_token")?.value;
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...getAdminAuthHeaders(cookies, request),
     };
     const body = await request.json();
     const res = await fetch(`${BACKEND_URL}/api/v1/permohonan/`, {

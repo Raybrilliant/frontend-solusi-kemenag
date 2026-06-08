@@ -1,12 +1,7 @@
 import type { APIRoute } from "astro";
+import { getAdminAuthHeaders } from "../../../../../lib/admin-api-proxy";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
-
-function getAuthHeaders(cookies: any): Record<string, string> {
-  const token = cookies?.get?.("auth_token")?.value ?? "";
-  if (!token) return {};
-  return { Authorization: `Bearer ${token}` };
-}
 
 // Proxy: PUT /api/v1/permohonan/:id/status
 export const PUT: APIRoute = async ({ params, request, cookies }) => {
@@ -25,7 +20,7 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          ...getAuthHeaders(cookies),
+          ...getAdminAuthHeaders(cookies, request),
         },
         body: JSON.stringify(body),
       },
@@ -63,7 +58,7 @@ export const PATCH: APIRoute = async ({ params, request, cookies }) => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          ...getAuthHeaders(cookies),
+          ...getAdminAuthHeaders(cookies, request),
         },
         body: JSON.stringify(body),
       },

@@ -1,10 +1,30 @@
-export function getAdminAuthHeaders(cookies: any): Record<string, string> {
+import { getUserFromToken, type AuthUser } from "./get-user";
+
+export function getAdminAuthHeaders(
+  cookies: any,
+  request?: Request,
+): Record<string, string> {
   const token = cookies?.get?.("auth_token")?.value ?? "";
-  if (!token) return {};
+  const cookieHeader = request?.headers.get("cookie") ?? "";
+
   return {
     Accept: "application/json",
-    Authorization: `Bearer ${token}`,
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(cookieHeader ? { Cookie: cookieHeader } : {}),
   };
+}
+
+export function hasAdminSession(headers: Record<string, string>): boolean {
+  return Boolean(headers.Authorization || headers.Cookie);
+}
+
+export async function getAdminUser(
+  cookies: any,
+  request?: Request,
+): Promise<AuthUser | null> {
+  const token = cookies?.get?.("auth_token")?.value;
+  const cookieHeader = request?.headers.get("cookie") ?? "";
+  return getUserFromToken(token, cookieHeader);
 }
 
 export function missingAdminSessionResponse(): Response {

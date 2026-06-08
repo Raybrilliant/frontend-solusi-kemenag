@@ -1,13 +1,10 @@
 import type { APIRoute } from "astro";
-import { getUserFromToken } from "../../../lib/get-user";
+import {
+  getAdminAuthHeaders,
+  getAdminUser,
+} from "../../../lib/admin-api-proxy";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
-
-function getAuthHeaders(cookies: any): Record<string, string> {
-  const token = cookies?.get?.("auth_token")?.value ?? "";
-  if (!token) return {};
-  return { Authorization: `Bearer ${token}` };
-}
 
 async function safeJson(res: Response): Promise<unknown> {
   const text = await res.text();
@@ -23,12 +20,11 @@ async function safeJson(res: Response): Promise<unknown> {
 }
 
 // Proxy: GET /api/v1/layanan — operator hanya lihat layanan kategorinya
-export const GET: APIRoute = async ({ url, cookies }) => {
+export const GET: APIRoute = async ({ url, cookies, request }) => {
   try {
-    const token = cookies?.get?.("auth_token")?.value;
-    const headers = getAuthHeaders(cookies);
+    const headers = getAdminAuthHeaders(cookies, request);
 
-    const user = await getUserFromToken(token);
+    const user = await getAdminUser(cookies, request);
     const isOperator = user?.role === "operator" && user.categoryId !== null;
 
     // Operator: paksa filter ke kategori mereka, abaikan param dari client
@@ -55,11 +51,12 @@ export const GET: APIRoute = async ({ url, cookies }) => {
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
     const body = await request.json();
+    const cookieHeader = request.headers.get("cookie") ?? "";
     const res = await fetch(`${BACKEND_URL}/api/v1/layanan/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...getAuthHeaders(cookies),
+        ...getAdminAuthHeaders(cookies, request),
       },
       body: JSON.stringify(body),
     });
