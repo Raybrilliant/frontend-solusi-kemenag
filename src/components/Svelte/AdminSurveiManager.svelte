@@ -8,12 +8,6 @@
 
     const surveyTypes = [
         {
-            value: "SKM",
-            label: "SKM",
-            title: "Survei Kepuasan Masyarakat",
-            tone: "bg-green/10 text-green",
-        },
-        {
             value: "SPKP",
             label: "SPKP",
             title: "Survei Persepsi Kualitas Pelayanan",
@@ -33,7 +27,7 @@
         { id: "monthly", label: "Nilai Bulanan" },
     ];
 
-    let activeType = $state("SKM");
+    let activeType = $state("SPKP");
     let activeTab = $state("questions");
     let questions = $state([]);
     let questionsLoading = $state(true);
@@ -762,7 +756,7 @@
             class="ml-auto opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
             aria-label="Tutup"
         >
-<Icon icon="mdi:close" width="16" height="16" />
+            <Icon icon="mdi:close" width="16" height="16" />
         </button>
     </div>
 {/if}
@@ -785,7 +779,7 @@
                         {type.label}
                     </span>
                     {#if activeType === type.value}
-<Icon icon="mdi:check" class="w-5 h-5 text-green" />
+                        <Icon icon="mdi:check" class="w-5 h-5 text-green" />
                     {/if}
                 </div>
                 <h2 class="mt-3 font-bold text-ink">{type.title}</h2>
@@ -942,10 +936,14 @@
 
                 <div class="space-y-4">
                     <div>
-                        <label class="text-sm font-semibold text-ink/70">
+                        <label
+                            for="survey-question"
+                            class="text-sm font-semibold text-ink/70"
+                        >
                             Pertanyaan
                         </label>
                         <textarea
+                            id="survey-question"
                             bind:value={formQuestion}
                             rows="5"
                             class="mt-1 w-full border border-black/10 bg-white px-3 py-2 text-sm focus:outline-none focus:border-green"
@@ -954,10 +952,14 @@
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="text-sm font-semibold text-ink/70">
+                            <label
+                                for="survey-sort-order"
+                                class="text-sm font-semibold text-ink/70"
+                            >
                                 Urutan
                             </label>
                             <input
+                                id="survey-sort-order"
                                 bind:value={formSortOrder}
                                 type="number"
                                 min="1"

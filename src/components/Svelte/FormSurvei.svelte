@@ -9,12 +9,6 @@
 
     const surveyTypes = [
         {
-            value: "SKM",
-            label: "SKM",
-            title: "Survei Kepuasan Masyarakat",
-            desc: "Nilai pengalaman Anda terhadap hasil layanan yang diterima.",
-        },
-        {
             value: "SPKP",
             label: "SPKP",
             title: "Survei Persepsi Kualitas Pelayanan",
@@ -234,8 +228,8 @@
                 Terima Kasih
             </h2>
             <p class="text-sm md:text-base text-ink/60 mt-2 max-w-2xl">
-                Jawaban SKM, SPKP, dan SPAK untuk tiket {ticket} berhasil dikirim.
-                Masukan Anda membantu peningkatan kualitas layanan.
+                Jawaban SPKP dan SPAK untuk tiket {ticket} berhasil dikirim. Masukan
+                Anda membantu peningkatan kualitas layanan.
             </p>
             <a
                 href="/check-progress"
@@ -288,7 +282,7 @@
             >
                 Memuat form survei...
             </div>
-        {:else if forms.SKM}
+        {:else if forms[surveyTypes[0]?.value]}
             <section class="bg-white border border-black/10">
                 <div class="p-4 md:p-5 border-b border-black/8">
                     <div class="flex flex-wrap items-center gap-2">
@@ -313,7 +307,7 @@
                                     : "bg-white text-ink/35 border-black/10"
                             }`}
                         >
-                            <span>4</span>
+                            <span>{surveyTypes.length + 1}</span>
                             <span>Profil</span>
                         </div>
                     </div>
@@ -442,10 +436,14 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-6">
                             <div>
-                                <label class="text-sm font-bold text-ink/70">
+                                <label
+                                    for="pendidikan-terakhir"
+                                    class="text-sm font-bold text-ink/70"
+                                >
                                     Pendidikan Terakhir
                                 </label>
                                 <select
+                                    id="pendidikan-terakhir"
                                     bind:value={pendidikan}
                                     class="mt-2 w-full border border-black/10 px-4 py-3 text-sm focus:outline-none focus:border-green"
                                 >
@@ -465,10 +463,14 @@
                             </div>
 
                             <div>
-                                <label class="text-sm font-bold text-ink/70">
+                                <label
+                                    for="pekerjaan-saat-ini"
+                                    class="text-sm font-bold text-ink/70"
+                                >
                                     Pekerjaan Saat Ini
                                 </label>
                                 <select
+                                    id="pekerjaan-saat-ini"
                                     bind:value={pekerjaan}
                                     class="mt-2 w-full border border-black/10 px-4 py-3 text-sm focus:outline-none focus:border-green"
                                 >
