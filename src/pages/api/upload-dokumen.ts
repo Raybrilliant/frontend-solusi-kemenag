@@ -16,14 +16,30 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       body: formData,
     });
 
-    const data = await res.json();
-    return new Response(JSON.stringify(data), {
+    const contentType = res.headers.get("content-type") ?? "";
+    const raw = await res.text();
+
+    let payload: Record<string, unknown>;
+
+    if (contentType.includes("application/json")) {
+      payload = raw ? JSON.parse(raw) : {};
+    } else {
+      payload = {
+        success: res.ok,
+        message: raw || (res.ok ? "Upload berhasil." : "Gagal upload dokumen."),
+      };
+    }
+
+    return new Response(JSON.stringify(payload), {
       status: res.status,
       headers: { "Content-Type": "application/json" },
     });
   } catch (e) {
     return new Response(
-      JSON.stringify({ success: false, message: String(e) }),
+      JSON.stringify({
+        success: false,
+        message: e instanceof Error ? e.message : String(e),
+      }),
       { status: 500, headers: { "Content-Type": "application/json" } },
     );
   }

@@ -25,6 +25,7 @@
     let copied = $state(false);
     let formEl = $state<HTMLFormElement | null>(null);
     let fileError = $state("");
+    let rejectedFiles = $state<{ name: string; reason: string }[]>([]);
 
     const kelurahanOptions = $derived(
         kecamatan ? (kelurahanMap[kecamatan] ?? []) : [],
@@ -35,13 +36,50 @@
     });
 
     // ── File handling ─────────────────────────────────────
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
+    const ALLOWED_FILE_EXTENSIONS = ["pdf", "jpg", "jpeg", "png"];
+
+    function getFileValidationError(file: File) {
+        const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+
+        if (!ALLOWED_FILE_EXTENSIONS.includes(extension)) {
+            return "Format file harus PDF, JPG, atau PNG.";
+        }
+
+        if (file.size > MAX_FILE_SIZE) {
+            return `Ukuran file melebihi batas 5MB (${formatSize(file.size)}).`;
+        }
+
+        return null;
+    }
+
     function addFiles(newFiles: FileList | File[]) {
-        const valid = Array.from(newFiles).filter((f) => {
-            const ok =
-                f.size <= 5 * 1024 * 1024 && /\.(pdf|jpe?g|png)$/i.test(f.name);
-            return ok;
-        });
-        files = [...files, ...valid];
+        const incoming = Array.from(newFiles);
+        const valid: File[] = [];
+        const rejected: { name: string; reason: string }[] = [];
+
+        for (const file of incoming) {
+            const validationError = getFileValidationError(file);
+            if (validationError) {
+                rejected.push({ name: file.name, reason: validationError });
+                continue;
+            }
+            valid.push(file);
+        }
+
+        if (valid.length > 0) {
+            files = [...files, ...valid];
+            fileError = "";
+        }
+
+        rejectedFiles = rejected;
+
+        if (rejected.length > 0) {
+            fileError =
+                rejected.length === 1
+                    ? `1 file tidak ditambahkan karena tidak memenuhi syarat.`
+                    : `${rejected.length} file tidak ditambahkan karena tidak memenuhi syarat.`;
+        }
     }
 
     function removeFile(i: number) {
@@ -50,8 +88,33 @@
 
     $effect(() => {
         files.length;
-        if (files.length > 0) fileError = "";
+        if (files.length > 0 && rejectedFiles.length === 0) fileError = "";
     });
+
+    function getUploadErrorMessage(message: string, fileName: string) {
+        const text = message.trim();
+        const lower = text.toLowerCase();
+
+        if (lower.includes("tipe file tidak diizinkan")) {
+            return `${fileName} gagal diunggah. Format yang didukung hanya PDF, JPG, atau PNG.`;
+        }
+
+        if (
+            lower.includes("maks") ||
+            lower.includes("maximum") ||
+            lower.includes("too large")
+        ) {
+            return `${fileName} gagal diunggah karena ukuran file melebihi batas yang diizinkan server.`;
+        }
+
+        if (lower.includes("failed") || lower.includes("queue")) {
+            return `${fileName} gagal diproses oleh server. Silakan coba lagi atau gunakan file lain.`;
+        }
+
+        return text
+            ? `${fileName} gagal diunggah. ${text}`
+            : `${fileName} gagal diunggah.`;
+    }
 
     function formatSize(bytes: number) {
         return bytes < 1024 * 1024
@@ -65,6 +128,7 @@
         status = "idle";
         errorMsg = "";
         fileError = "";
+        rejectedFiles = [];
         uploadProgress = null;
 
         if (!formEl?.reportValidity()) {
@@ -101,7 +165,10 @@
                     const upJson = await upRes.json();
                     if (!upJson.success)
                         throw new Error(
-                            upJson.message ?? "Gagal mengunggah dokumen.",
+                            getUploadErrorMessage(
+                                upJson.message ?? "Gagal mengunggah dokumen.",
+                                f.name,
+                            ),
                         );
                     dokumen.push({
                         nama: upJson.data.nama,
@@ -488,8 +555,9 @@
                         Klik atau seret file ke sini
                     </p>
                     <p class="text-xs opacity-50 text-center leading-relaxed">
-                        Format: PDF, JPG, PNG — Maks. 5MB per file<br />
-                        Anda dapat mengunggah lebih dari satu file
+                        Format yang didukung: PDF, JPG, JPEG, PNG<br />
+                        Maksimal 5MB per file, dan Anda dapat mengunggah lebih dari
+                        satu file
                     </p>
                     <input
                         id="file-upload"
@@ -506,7 +574,21 @@
                 </label>
 
                 {#if fileError}
-                    <p class="text-xs text-red-600 font-medium">{fileError}</p>
+                    <div class="text-xs text-red-600 font-medium space-y-1">
+                        <p>{fileError}</p>
+                        {#if rejectedFiles.length > 0}
+                            <ul class="list-disc pl-4 space-y-1 font-normal">
+                                {#each rejectedFiles as rejected}
+                                    <li>
+                                        <span class="font-medium"
+                                            >{rejected.name}</span
+                                        >
+                                        — {rejected.reason}
+                                    </li>
+                                {/each}
+                            </ul>
+                        {/if}
+                    </div>
                 {/if}
 
                 <p class="text-xs opacity-40">

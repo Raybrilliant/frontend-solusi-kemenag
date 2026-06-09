@@ -140,6 +140,21 @@
         return map[status] ?? "badge-default";
     }
 
+    function formatSlaDuration(totalMinutes: number) {
+        if (totalMinutes < 60) return `${totalMinutes}m`;
+
+        const d = Math.floor(totalMinutes / 1440);
+        const h = Math.floor((totalMinutes % 1440) / 60);
+        const m = totalMinutes % 60;
+        const parts = [];
+
+        if (d > 0) parts.push(`${d}h`);
+        if (h > 0) parts.push(`${h}j`);
+        if (m > 0) parts.push(`${m}m`);
+
+        return parts.join(" ");
+    }
+
     function exportCSV() {
         const headers = [
             "ID",
@@ -208,7 +223,7 @@
             onclick={exportCSV}
             class="flex items-center gap-2 px-4 py-2 bg-green text-white text-sm font-semibold transition-colors cursor-pointer"
         >
-<Icon icon="mdi:download" class="w-4 h-4" /> Export
+            <Icon icon="mdi:download" class="w-4 h-4" /> Export
         </button>
     </div>
 </div>
@@ -254,25 +269,39 @@
                 <span class="text-xs text-ink/30">–</span>
             {:else if sla <= 0}
                 <div class="flex items-center gap-1 text-red-500">
-<Icon icon="mdi:alert" class="w-3.5 h-3.5 shrink-0" /><span class="text-xs font-semibold">Telat</span>
+                    <Icon icon="mdi:alert" class="w-3.5 h-3.5 shrink-0" /><span
+                        class="text-xs font-semibold">Telat</span
+                    >
                 </div>
             {:else if sla <= 15}
                 <div class="flex items-center gap-1 text-red-500">
-<Icon icon="mdi:clock-outline" class="w-3.5 h-3.5 shrink-0" /><span class="text-xs font-semibold">{sla}m</span>
+                    <Icon
+                        icon="mdi:clock-outline"
+                        class="w-3.5 h-3.5 shrink-0"
+                    /><span class="text-xs font-semibold">{sla}m</span>
                 </div>
             {:else if sla <= 30}
                 <div class="flex items-center gap-1 text-amber-500">
-<Icon icon="mdi:clock-outline" class="w-3.5 h-3.5 shrink-0" /><span class="text-xs font-semibold">{sla}m</span>
+                    <Icon
+                        icon="mdi:clock-outline"
+                        class="w-3.5 h-3.5 shrink-0"
+                    /><span class="text-xs font-semibold">{sla}m</span>
                 </div>
             {:else if sla < 60}
                 <div class="flex items-center gap-1 text-ink/55">
-<Icon icon="mdi:clock-outline" class="w-3.5 h-3.5 shrink-0" /><span class="text-xs font-semibold">{sla}m</span>
+                    <Icon
+                        icon="mdi:clock-outline"
+                        class="w-3.5 h-3.5 shrink-0"
+                    /><span class="text-xs font-semibold">{sla}m</span>
                 </div>
             {:else}
-                {@const h = Math.floor(sla / 60)}
-                {@const m = sla % 60}
                 <div class="flex items-center gap-1 text-ink/55">
-<Icon icon="mdi:clock-outline" class="w-3.5 h-3.5 shrink-0" /><span class="text-xs font-semibold">{h}j {m}m</span>
+                    <Icon
+                        icon="mdi:clock-outline"
+                        class="w-3.5 h-3.5 shrink-0"
+                    /><span class="text-xs font-semibold"
+                        >{formatSlaDuration(sla)}</span
+                    >
                 </div>
             {/if}
         {:else if cell.column.id === "_aksi"}
@@ -281,7 +310,7 @@
                 class="w-7 h-7 inline-flex items-center justify-center rounded-lg border border-black/10 hover:bg-black/4 text-ink/50 hover:text-ink transition-colors"
                 aria-label="Lihat detail"
             >
-<Icon icon="mdi:eye" class="w-3.5 h-3.5" />
+                <Icon icon="mdi:eye" class="w-3.5 h-3.5" />
             </a>
         {:else}
             <span class="text-sm text-ink/80">{cell.getValue()}</span>
@@ -311,7 +340,7 @@
             class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors cursor-pointer"
             aria-label="Tutup"
         >
-<Icon icon="mdi:close" class="w-4 h-4" />
+            <Icon icon="mdi:close" class="w-4 h-4" />
         </button>
     </div>
 {/if}
