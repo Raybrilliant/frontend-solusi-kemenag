@@ -38,7 +38,8 @@
     "editorjs-undo": "^2.0.28",
     "svelte": "^5.55.9",
     "tailwindcss": "^4.3.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@iconify-json/mdi": "^1.2.3"
