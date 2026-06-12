@@ -10,13 +10,14 @@ import {
 const { id } = Astro.params;
 const agent = getAgenPerubahanById(id);
 const innovation = getAgenPerubahanInovasiByAgenId(id);
+const notFound = !agent || !innovation;
 
-if (!agent || !innovation) {
-    return Astro.redirect("/portal/agen-perubahan");
+if (notFound) {
+    Astro.response.status = 404;
 }
 
 const fotoUrl = getAgenPerubahanFoto(agent);
-const backgroundParagraphs = String(innovation.latarBelakang ?? "")
+const backgroundParagraphs = String(innovation?.latarBelakang ?? "")
     .split("\n")
     .map((item) => item.trim())
     .filter(Boolean);
@@ -160,9 +161,28 @@ const backgroundParagraphs = String(innovation.latarBelakang ?? "")
 </style>
 
 <BaseLayout
-    title={`Agen Perubahan — ${agent.nama}`}
-    ogDescription={`${agent.nama} · ${innovation.inovasi} · Agen Perubahan Kementerian Agama Kota Probolinggo.`}
+    title={notFound ? "Agen Perubahan Tidak Ditemukan" : `Agen Perubahan — ${agent.nama}`}
+    ogDescription={notFound
+        ? "Halaman agen perubahan yang Anda cari tidak ditemukan."
+        : `${agent.nama} · ${innovation.inovasi} · Agen Perubahan Kementerian Agama Kota Probolinggo.`}
 >
+    {notFound ? (
+        <section class="py-16 max-w-3xl mx-auto">
+            <p class="text-xs font-bold uppercase tracking-widest text-red-600 mb-3">
+                Error 404
+            </p>
+            <h1 class="text-3xl md:text-4xl font-extrabold text-ink mb-3">
+                Agen perubahan tidak ditemukan
+            </h1>
+            <p class="text-sm md:text-base text-ink/60 leading-relaxed mb-6">
+                Data agen perubahan yang Anda cari tidak tersedia atau URL yang diakses tidak valid.
+            </p>
+            <a href="/portal/agen-perubahan" class="inline-flex items-center gap-2 bg-green text-white px-5 py-3 text-sm font-bold uppercase hover:bg-green/90 transition-colors">
+                Kembali ke daftar agen perubahan
+            </a>
+        </section>
+    ) : (
+    <>
     <section data-anim="down" class="pt-8 pb-6">
         <a
             href="/portal/agen-perubahan"
@@ -362,10 +382,7 @@ const backgroundParagraphs = String(innovation.latarBelakang ?? "")
         <div class="grid grid-cols-1 gap-5">
             {
                 innovation.hasil.map((item, index) => (
-                    <div
-                        class="grid grid-cols-1 lg:grid-cols-2 gap-5"
-                        key={index}
-                    >
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
                         <article
                             data-reveal="left"
                             data-delay="3"
@@ -492,4 +509,6 @@ const backgroundParagraphs = String(innovation.latarBelakang ?? "")
             initAgenPerubahanDetailReveal,
         );
     </script>
+    </>
+    )}
 </BaseLayout>

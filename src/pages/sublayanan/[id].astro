@@ -9,18 +9,29 @@ const { id } = Astro.params;
 let layanan: any = null;
 let kategoriList: any[] = [];
 let kategoriTitle = "Layanan";
+let notFound = false;
+let serverError = false;
 
 try {
-    const [layRes, catRes] = await Promise.all([
-        fetch(`${BACKEND_URL}/api/v1/layanan/${id}`),
-        fetch(`${BACKEND_URL}/api/v1/categories/`),
-    ]);
+    const layRes = await fetch(`${BACKEND_URL}/api/v1/layanan/${id}`);
 
-    const layJson = await layRes.json();
-    const catJson = await catRes.json();
+    if (layRes.status === 404) {
+        notFound = true;
+    } else if (!layRes.ok) {
+        throw new Error(`Backend returned ${layRes.status}`);
+    } else {
+        const layJson = await layRes.json();
+        layanan = layJson.data ?? null;
+        if (!layanan) notFound = true;
+    }
 
-    layanan = layJson.data ?? null;
-    kategoriList = catJson.data ?? [];
+    try {
+        const catRes = await fetch(`${BACKEND_URL}/api/v1/categories/`);
+        if (catRes.ok) {
+            const catJson = await catRes.json();
+            kategoriList = catJson.data ?? [];
+        }
+    } catch {}
 
     if (layanan?.categoryId) {
         const cat = kategoriList.find((c: any) => c.id === layanan.categoryId);
@@ -28,7 +39,11 @@ try {
     }
 } catch (e) {
     console.error("Failed to fetch layanan:", e);
+    serverError = true;
 }
+
+if (notFound) Astro.response.status = 404;
+if (serverError) Astro.response.status = 503;
 
 const subService = layanan;
 const serviceTitle = subService?.title ?? "Detail Layanan";
@@ -97,7 +112,38 @@ function isUrl(str: string): boolean {
     }
 </style>
 
-<BaseLayout title={serviceTitle}>
+<BaseLayout title={notFound ? "Layanan Tidak Ditemukan" : serverError ? "Layanan Tidak Tersedia" : serviceTitle}>
+    {notFound ? (
+        <section class="py-16 max-w-3xl mx-auto">
+            <p class="text-xs font-bold uppercase tracking-widest text-red-600 mb-3">
+                Error 404
+            </p>
+            <h1 class="text-3xl md:text-4xl font-extrabold text-ink mb-3">
+                Layanan tidak ditemukan
+            </h1>
+            <p class="text-sm md:text-base text-ink/60 leading-relaxed mb-6">
+                Layanan yang Anda cari mungkin sudah dihapus atau URL yang diakses tidak valid.
+            </p>
+            <a href="/" class="inline-flex items-center gap-2 bg-green text-white px-5 py-3 text-sm font-bold uppercase hover:bg-green/90 transition-colors">
+                Kembali ke layanan
+            </a>
+        </section>
+    ) : serverError ? (
+        <section class="py-16 max-w-3xl mx-auto">
+            <p class="text-xs font-bold uppercase tracking-widest text-yellow-700 mb-3">
+                Error 503
+            </p>
+            <h1 class="text-3xl md:text-4xl font-extrabold text-ink mb-3">
+                Layanan sementara tidak tersedia
+            </h1>
+            <p class="text-sm md:text-base text-ink/60 leading-relaxed mb-6">
+                Terjadi gangguan saat mengambil detail layanan dari server. Silakan coba lagi beberapa saat lagi.
+            </p>
+            <a href="/" class="inline-flex items-center gap-2 bg-green text-white px-5 py-3 text-sm font-bold uppercase hover:bg-green/90 transition-colors">
+                Kembali ke layanan
+            </a>
+        </section>
+    ) : (
     <section
         class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 my-6 md:my-12"
     >
@@ -511,4 +557,5 @@ function isUrl(str: string): boolean {
             )
         }
     </section>
+    )}
 </BaseLayout>

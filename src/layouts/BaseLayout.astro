@@ -23,7 +23,8 @@ const resolvedTitle = title
 const resolvedOgTitle = ogTitle ?? resolvedTitle;
 const resolvedOgDescription = ogDescription ?? DEFAULT_DESC;
 const resolvedOgImage = ogImage ?? DEFAULT_IMAGE;
-const resolvedOgUrl = Astro.url.href;
+const resolvedCanonicalUrl = new URL(Astro.url.pathname, SITE_URL).href;
+const resolvedOgUrl = resolvedCanonicalUrl;
 ---
 
 <html lang="id" class="scroll-smooth">
@@ -38,6 +39,7 @@ const resolvedOgUrl = Astro.url.href;
             name="keywords"
             content="Kantor Kementerian Agama, Kota Probolinggo, Solusi, Sistem Online Layanan Unggul Terintegrasi"
         />
+        <link rel="canonical" href={resolvedCanonicalUrl} />
         <title>{resolvedTitle}</title>
 
         <!-- Open Graph -->
