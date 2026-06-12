@@ -12,7 +12,9 @@
     // svelte-ignore state_referenced_locally
     let pesanTolak = $state(permohonan.rejectionReason ?? "");
     // svelte-ignore state_referenced_locally
-    let pesanSelesai = $state(permohonan.message ?? "");
+    let pesanSelesai = $state(
+        permohonan.rejectionReason ?? permohonan.message ?? "",
+    );
     let outputFile = $state<File | null>(null);
     let isDragging = $state(false);
     let submitting = $state(false);
@@ -147,7 +149,7 @@
                 body.rejectionReason = pesanTolak.trim();
             }
             if (newStatus === "Selesai") {
-                body.message = pesanSelesai.trim();
+                body.rejectionReason = pesanSelesai.trim();
             }
             if (newStatus === "Selesai" && outputFile) {
                 const fd = new FormData();
@@ -196,7 +198,7 @@
                     rejectionReason: pesanTolak.trim(),
                 }),
                 ...(newStatus === "Selesai" && {
-                    message: pesanSelesai.trim(),
+                    rejectionReason: pesanSelesai.trim(),
                 }),
                 ...(newStatus === "Selesai" && outputFile
                     ? {
@@ -559,7 +561,7 @@
         <!-- Informasi selesai -->
         {#if current.status === "Selesai"}
             <div class="space-y-4">
-                {#if current.message}
+                {#if current.rejectionReason}
                     <div class="bg-green/5 border border-green/30 px-5 py-4">
                         <div class="flex items-center gap-2 mb-2">
                             <Icon
@@ -577,7 +579,7 @@
                         <p
                             class="text-sm text-green/80 leading-relaxed whitespace-pre-wrap"
                         >
-                            {current.message}
+                            {current.rejectionReason}
                         </p>
                     </div>
                 {/if}

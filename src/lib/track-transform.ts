@@ -80,6 +80,10 @@ export async function transformTrackResponse(raw: any): Promise<any> {
   if (!raw.success || !raw.data) return raw;
 
   const d = raw.data;
+  const responseMessage =
+    typeof raw.message === "string" && raw.message.trim()
+      ? raw.message.trim()
+      : null;
   let durasiMenit = 0;
   let durasiLabel = "-";
 
@@ -104,7 +108,7 @@ export async function transformTrackResponse(raw: any): Promise<any> {
       durasiMenit,
       durasiLabel,
       iconBody: ICON_BODY,
-      message: d.message ?? d.rejectionReason ?? null,
+      message: responseMessage ?? d.rejectionReason ?? d.message ?? null,
       fileUrl: toUploadProxyUrl(d.outputFile?.url),
     },
   };
