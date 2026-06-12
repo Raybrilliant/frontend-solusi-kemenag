@@ -199,7 +199,8 @@ function renderBlock(block: any): string {
 }
 
 const contentHtml = (article?.content?.blocks ?? []).map(renderBlock).join("");
-const pageUrl = `${Astro.url.origin}/portal/berita/${slug}`;
+const articleUrl = `${Astro.url.origin}/portal/berita/${slug}`;
+const pageUrl = articleUrl;
 const shareText = encodeURIComponent(`${article?.judul ?? "Berita"} — ${pageUrl}`);
 const waUrl = `https://wa.me/?text=${shareText}`;
 const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`;
@@ -208,6 +209,59 @@ const ogImage = article?.thumbnail
     ? article.thumbnail.startsWith("http")
         ? article.thumbnail
         : `${Astro.url.origin}${article.thumbnail}`
+    : undefined;
+const structuredData = article
+    ? [
+          {
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                  {
+                      "@type": "ListItem",
+                      position: 1,
+                      name: "Portal",
+                      item: `${Astro.url.origin}/portal`,
+                  },
+                  {
+                      "@type": "ListItem",
+                      position: 2,
+                      name: "Berita",
+                      item: `${Astro.url.origin}/portal/berita`,
+                  },
+                  {
+                      "@type": "ListItem",
+                      position: 3,
+                      name: article.judul,
+                      item: articleUrl,
+                  },
+              ],
+          },
+          {
+              "@context": "https://schema.org",
+              "@type": "NewsArticle",
+              headline: article.judul,
+              description: article.ringkasan,
+              url: articleUrl,
+              mainEntityOfPage: articleUrl,
+              datePublished: article.publishedAt ?? article.createdAt,
+              dateModified:
+                  article.updatedAt ?? article.publishedAt ?? article.createdAt,
+              image: ogImage ? [ogImage] : undefined,
+              articleSection: article.kategori,
+              author: {
+                  "@type": "Organization",
+                  name: "Kantor Kementerian Agama Kota Probolinggo",
+              },
+              publisher: {
+                  "@type": "Organization",
+                  name: "Kantor Kementerian Agama Kota Probolinggo",
+                  logo: {
+                      "@type": "ImageObject",
+                      url: `${Astro.url.origin}/logo.png`,
+                  },
+              },
+          },
+      ]
     : undefined;
 ---
 
@@ -232,9 +286,12 @@ const ogImage = article?.thumbnail
         : serverError
           ? "Berita Tidak Tersedia"
           : article.judul}
+    description={article?.ringkasan ?? undefined}
     ogType="article"
     ogDescription={article?.ringkasan ?? undefined}
     ogImage={ogImage}
+    robots={notFound || serverError ? "noindex, nofollow" : undefined}
+    structuredData={structuredData}
 >
     {notFound ? (
         <section class="py-16 max-w-3xl mx-auto">

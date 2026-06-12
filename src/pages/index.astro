@@ -3,10 +3,38 @@ import Hero from "../components/Hero.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Layanan from "../components/Layanan.astro";
 
-
+const SITE_URL = "https://kemenagkotaprobolinggo.id";
+const structuredData = [
+    {
+        "@context": "https://schema.org",
+        "@type": "GovernmentOrganization",
+        name: "Kantor Kementerian Agama Kota Probolinggo",
+        url: SITE_URL,
+        logo: `${SITE_URL}/logo.png`,
+        image: `${SITE_URL}/logo.png`,
+        areaServed: "Kota Probolinggo",
+        sameAs: [
+            "https://www.instagram.com/kemenagkoprob/",
+            "https://www.facebook.com/kemenagkoprob/",
+        ],
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: "Kemenag Kota Probolinggo",
+        url: SITE_URL,
+        inLanguage: "id-ID",
+    },
+];
 ---
 
-<BaseLayout>
-    <Hero/>
-    <Layanan/>
+<BaseLayout
+    title="Layanan Publik & Portal Resmi"
+    description="Portal resmi Kantor Kementerian Agama Kota Probolinggo untuk layanan publik, berita, regulasi, pengaduan, dan informasi layanan terintegrasi."
+    ogTitle="Portal Resmi Kemenag Kota Probolinggo"
+    ogDescription="Akses layanan publik, berita resmi, regulasi, pengaduan, dan informasi layanan Kementerian Agama Kota Probolinggo dalam satu portal."
+    structuredData={structuredData}
+>
+    <Hero />
+    <Layanan />
 </BaseLayout>

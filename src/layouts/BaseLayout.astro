@@ -6,10 +6,14 @@ import { Icon } from "astro-icon/components";
 
 const {
     title,
+    description,
     ogTitle,
     ogDescription,
     ogImage,
     ogType = "website",
+    canonicalUrl,
+    robots = "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+    structuredData,
 } = Astro.props;
 
 const SITE_URL = "https://kemenagkotaprobolinggo.id";
@@ -20,11 +24,19 @@ const DEFAULT_IMAGE = `${SITE_URL}/logo.png`;
 const resolvedTitle = title
     ? `${title} — Kantor Kementerian Agama Kota Probolinggo`
     : "Kantor Kementerian Agama Kota Probolinggo";
+const resolvedDescription = description ?? ogDescription ?? DEFAULT_DESC;
 const resolvedOgTitle = ogTitle ?? resolvedTitle;
-const resolvedOgDescription = ogDescription ?? DEFAULT_DESC;
+const resolvedOgDescription = ogDescription ?? resolvedDescription;
 const resolvedOgImage = ogImage ?? DEFAULT_IMAGE;
-const resolvedCanonicalUrl = new URL(Astro.url.pathname, SITE_URL).href;
+const resolvedCanonicalUrl = canonicalUrl
+    ? new URL(canonicalUrl, SITE_URL).href
+    : new URL(Astro.url.pathname, SITE_URL).href;
 const resolvedOgUrl = resolvedCanonicalUrl;
+const structuredDataItems = Array.isArray(structuredData)
+    ? structuredData
+    : structuredData
+      ? [structuredData]
+      : [];
 ---
 
 <html lang="id" class="scroll-smooth">
@@ -34,7 +46,17 @@ const resolvedOgUrl = resolvedCanonicalUrl;
         <link rel="icon" href="/favicon.ico" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="generator" content={Astro.generator} />
-        <meta name="description" content={resolvedOgDescription} />
+        <meta name="description" content={resolvedDescription} />
+        <meta name="robots" content={robots} />
+        <meta
+            name="author"
+            content="Kantor Kementerian Agama Kota Probolinggo"
+        />
+        <meta name="theme-color" content="#0F6B44" />
+        <meta
+            name="format-detection"
+            content="telephone=no, address=no, email=no"
+        />
         <meta
             name="keywords"
             content="Kantor Kementerian Agama, Kota Probolinggo, Solusi, Sistem Online Layanan Unggul Terintegrasi"
@@ -50,6 +72,7 @@ const resolvedOgUrl = resolvedCanonicalUrl;
         <meta property="og:title" content={resolvedOgTitle} />
         <meta property="og:description" content={resolvedOgDescription} />
         <meta property="og:image" content={resolvedOgImage} />
+        <meta property="og:image:alt" content={resolvedOgTitle} />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
 
@@ -58,6 +81,16 @@ const resolvedOgUrl = resolvedCanonicalUrl;
         <meta name="twitter:title" content={resolvedOgTitle} />
         <meta name="twitter:description" content={resolvedOgDescription} />
         <meta name="twitter:image" content={resolvedOgImage} />
+        <meta name="twitter:image:alt" content={resolvedOgTitle} />
+
+        {
+            structuredDataItems.map((item) => (
+                <script
+                    type="application/ld+json"
+                    set:html={JSON.stringify(item)}
+                />
+            ))
+        }
     </head>
     <body class="px-4 sm:px-8 md:px-14 lg:px-20 bg-cream">
         <Navbar />

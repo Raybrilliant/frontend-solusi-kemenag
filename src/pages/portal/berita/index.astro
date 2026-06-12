@@ -41,11 +41,12 @@ try {
         const katData = await katRes.json();
         rawKategori = [
             ...new Set(
-                (katData?.data ?? [])
-                    .map((b: any) => (b.kategori ?? "").trim().toLowerCase())
+                ((katData?.data ?? []) as any[])
+                    .map((b) => String(b.kategori ?? "").trim().toLowerCase())
                     .filter(Boolean),
             ),
-        ].sort();
+        ];
+        rawKategori.sort();
     }
 } catch {}
 
@@ -81,6 +82,27 @@ const firstThumb = berita[0]?.thumbnail;
 const ogImage = firstThumb
     ? (firstThumb.startsWith("http") ? firstThumb : `${SITE_URL}${firstThumb}`)
     : undefined;
+const shouldNoindex = Boolean(kategori || q || page > 1);
+const collectionTitle = kategori
+    ? `Berita ${kategori.charAt(0).toUpperCase() + kategori.slice(1)}`
+    : "Berita & Informasi";
+const collectionDescription = q
+    ? `Hasil pencarian berita untuk kata kunci \"${q}\" di portal resmi Kemenag Kota Probolinggo.`
+    : kategori
+      ? `Kumpulan berita kategori ${kategori} dari Kantor Kementerian Agama Kota Probolinggo.`
+      : "Informasi dan pengumuman resmi terkini dari Kantor Kementerian Agama Kota Probolinggo.";
+const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: collectionTitle,
+    description: collectionDescription,
+    url: `${SITE_URL}${url.pathname}`,
+    isPartOf: {
+        "@type": "WebSite",
+        name: "Kemenag Kota Probolinggo",
+        url: SITE_URL,
+    },
+};
 ---
 
 <style>
@@ -106,9 +128,12 @@ const ogImage = firstThumb
 </style>
 
 <BaseLayout
-    title="Berita & Informasi"
-    ogDescription="Informasi dan pengumuman resmi terkini dari Kantor Kementerian Agama Kota Probolinggo."
+    title={collectionTitle}
+    description={collectionDescription}
+    ogDescription={collectionDescription}
     ogImage={ogImage}
+    robots={shouldNoindex ? "noindex, follow" : undefined}
+    structuredData={structuredData}
 >
 
     <!-- ── Page header ────────────────────────────────── -->

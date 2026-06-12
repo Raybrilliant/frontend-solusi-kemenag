@@ -48,6 +48,61 @@ if (serverError) Astro.response.status = 503;
 const subService = layanan;
 const serviceTitle = subService?.title ?? "Detail Layanan";
 const dokumen = subService?.persyaratan ?? [];
+const serviceUrl = `${Astro.url.origin}/sublayanan/${id}`;
+const serviceDescription = subService?.description
+    ? String(subService.description)
+    : "Informasi detail layanan publik Kantor Kementerian Agama Kota Probolinggo.";
+const structuredData = subService
+    ? [
+          {
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                  {
+                      "@type": "ListItem",
+                      position: 1,
+                      name: "Layanan",
+                      item: `${Astro.url.origin}/`,
+                  },
+                  {
+                      "@type": "ListItem",
+                      position: 2,
+                      name: kategoriTitle,
+                      item: `${Astro.url.origin}/?kat=${subService.categoryId ?? ""}`,
+                  },
+                  {
+                      "@type": "ListItem",
+                      position: 3,
+                      name: serviceTitle,
+                      item: serviceUrl,
+                  },
+              ],
+          },
+          {
+              "@context": "https://schema.org",
+              "@type": "GovernmentService",
+              name: serviceTitle,
+              description: serviceDescription,
+              url: serviceUrl,
+              provider: {
+                  "@type": "GovernmentOrganization",
+                  name: "Kantor Kementerian Agama Kota Probolinggo",
+                  url: Astro.url.origin,
+              },
+              areaServed: "Kota Probolinggo",
+              serviceType: kategoriTitle,
+              hoursAvailable: undefined,
+              offers:
+                  subService?.cost && subService.cost !== "0 Rupiah"
+                      ? {
+                            "@type": "Offer",
+                            priceCurrency: "IDR",
+                            price: subService.cost,
+                        }
+                      : undefined,
+          },
+      ]
+    : undefined;
 
 function isUrl(str: string): boolean {
     return /^https?:\/\//i.test(str ?? "");
@@ -112,7 +167,13 @@ function isUrl(str: string): boolean {
     }
 </style>
 
-<BaseLayout title={notFound ? "Layanan Tidak Ditemukan" : serverError ? "Layanan Tidak Tersedia" : serviceTitle}>
+<BaseLayout
+    title={notFound ? "Layanan Tidak Ditemukan" : serverError ? "Layanan Tidak Tersedia" : serviceTitle}
+    description={serviceDescription}
+    ogDescription={serviceDescription}
+    robots={notFound || serverError ? "noindex, nofollow" : undefined}
+    structuredData={structuredData}
+>
     {notFound ? (
         <section class="py-16 max-w-3xl mx-auto">
             <p class="text-xs font-bold uppercase tracking-widest text-red-600 mb-3">

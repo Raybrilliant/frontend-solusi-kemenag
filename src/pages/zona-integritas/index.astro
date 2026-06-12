@@ -84,6 +84,40 @@ const slotImage = [
   { label: "SLOT GAMBAR PELAYANAN", src: "/zona-integritas/pelayanan.webp", alt: "Foto Pelayanan Zona Integritas", scale: 100, objectPosition: "center" },
   { label: "SLOT GAMBAR TTD PAKTA", src: "/zona-integritas/tandatangan.webp", alt: "Foto TTD Pakta Zona Integritas", scale: 100, objectPosition: "center" },
 ]
+
+const pageUrl = `${Astro.url.origin}/zona-integritas`;
+const structuredData = [
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Zona Integritas", item: pageUrl },
+        ],
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "AboutPage",
+        name: "Zona Integritas Kemenag Kota Probolinggo",
+        description: "Informasi komitmen pembangunan Zona Integritas menuju WBK dan WBBM di Kemenag Kota Probolinggo.",
+        url: pageUrl,
+        about: {
+            "@type": "GovernmentOrganization",
+            name: "Kantor Kementerian Agama Kota Probolinggo",
+            url: Astro.url.origin,
+        },
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: "Perjalanan Zona Integritas",
+        itemListElement: journey.map((item, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: `${item.year} - ${item.title}`,
+            description: item.desc,
+        })),
+    },
+];
 ---
 
 <style>
@@ -214,7 +248,12 @@ const slotImage = [
     }
 </style>
 
-<BaseLayout title="Zona Integritas">
+<BaseLayout
+    title="Zona Integritas"
+    description="Komitmen Kemenag Kota Probolinggo dalam pembangunan Zona Integritas menuju WBK dan WBBM."
+    ogDescription="Pelajari komitmen, progres, dan saluran pengaduan Zona Integritas Kemenag Kota Probolinggo."
+    structuredData={structuredData}
+>
 <main>
 
     <!-- ══ HERO ══════════════════════════════════════════ -->

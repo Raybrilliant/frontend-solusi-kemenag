@@ -53,11 +53,12 @@ try {
         const katData = await katRes.json();
         rawKategori = [
             ...new Set(
-                (katData?.data ?? [])
-                    .map((b: any) => (b.kategori ?? "").trim().toLowerCase())
+                ((katData?.data ?? []) as any[])
+                    .map((b) => String(b.kategori ?? "").trim().toLowerCase())
                     .filter(Boolean),
             ),
-        ].sort();
+        ];
+        rawKategori.sort();
     }
 } catch {}
 
@@ -76,6 +77,20 @@ function regulasiBadge(type: string) {
         default:        return "bg-white/10 text-white/50";
     }
 }
+
+const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "Portal Resmi Kemenag Kota Probolinggo",
+    description:
+        "Portal resmi berisi berita, regulasi, profil, statistik, PPID, KUA, dan informasi publik Kantor Kementerian Agama Kota Probolinggo.",
+    url: `${Astro.url.origin}/portal`,
+    isPartOf: {
+        "@type": "WebSite",
+        name: "Kemenag Kota Probolinggo",
+        url: Astro.url.origin,
+    },
+};
 ---
 
 <style is:global>
@@ -205,7 +220,13 @@ function regulasiBadge(type: string) {
     }
 </style>
 
-<BaseLayout title="Portal">
+<BaseLayout
+    title="Portal Resmi"
+    description="Portal resmi Kantor Kementerian Agama Kota Probolinggo berisi berita, regulasi, profil, statistik, PPID, dan informasi publik."
+    ogTitle="Portal Resmi Kemenag Kota Probolinggo"
+    ogDescription="Jelajahi berita resmi, regulasi, PPID, profil, statistik, dan layanan publik Kemenag Kota Probolinggo."
+    structuredData={structuredData}
+>
 
     <!-- ══ HERO ════════════════════════════════════════════ -->
     <section

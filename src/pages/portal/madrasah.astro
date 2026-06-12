@@ -69,6 +69,40 @@ const summaryStats = [
     { label: "Siswa", value: madrasah.reduce((acc, m) => acc + m.siswa, 0) },
     { label: "Guru", value: madrasah.reduce((acc, m) => acc + m.guru, 0) },
 ];
+
+const pageUrl = `${Astro.url.origin}/portal/madrasah`;
+const structuredData = [
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Portal", item: `${Astro.url.origin}/portal` },
+            { "@type": "ListItem", position: 2, name: "Madrasah", item: pageUrl },
+        ],
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        name: "Informasi Madrasah Kemenag Kota Probolinggo",
+        description: "Daftar madrasah negeri di bawah naungan Kementerian Agama Kota Probolinggo.",
+        url: pageUrl,
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: "Daftar Madrasah Negeri Kota Probolinggo",
+        itemListElement: madrasah.map((item, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            item: {
+                "@type": "School",
+                name: item.nama,
+                address: item.alamat,
+                url: item.website && item.website !== "-" ? (item.website.startsWith("http") ? item.website : `https://${item.website}`) : undefined,
+            },
+        })),
+    },
+];
 ---
 
 <style>
@@ -96,7 +130,12 @@ const summaryStats = [
     [data-delay="3"] { transition-delay: 0.24s; }
 </style>
 
-<BaseLayout title="Informasi Madrasah — Kemenag Kota Probolinggo">
+<BaseLayout
+    title="Informasi Madrasah"
+    description="Daftar madrasah negeri di bawah naungan Kementerian Agama Kota Probolinggo."
+    ogDescription="Temukan informasi madrasah negeri di Kota Probolinggo, termasuk alamat, akreditasi, kepala madrasah, dan website."
+    structuredData={structuredData}
+>
 
     <!-- ── Page header ────────────────────────────────── -->
     <div data-anim="down" class="pt-8 pb-6">

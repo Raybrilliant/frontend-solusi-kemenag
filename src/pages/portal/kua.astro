@@ -76,6 +76,41 @@ const layananUtama = [
         desc: "Layanan konsultasi masalah keagamaan, keluarga, dan pernikahan.",
     },
 ];
+
+const pageUrl = `${Astro.url.origin}/portal/kua`;
+const structuredData = [
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Portal", item: `${Astro.url.origin}/portal` },
+            { "@type": "ListItem", position: 2, name: "KUA", item: pageUrl },
+        ],
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        name: "Informasi KUA Kemenag Kota Probolinggo",
+        description: "Daftar Kantor Urusan Agama di lima kecamatan wilayah Kota Probolinggo beserta layanan dan informasi kontaknya.",
+        url: pageUrl,
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: "Daftar Kantor Urusan Agama Kota Probolinggo",
+        itemListElement: kuaList.map((kua, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            item: {
+                "@type": "GovernmentOffice",
+                name: kua.nama,
+                address: kua.alamat,
+                areaServed: kua.kecamatan,
+                url: kua.website ? `https://${kua.website}` : undefined,
+            },
+        })),
+    },
+];
 ---
 
 <style>
@@ -110,7 +145,12 @@ const layananUtama = [
     .kua-card:hover { transform: translateY(-2px); }
 </style>
 
-<BaseLayout title="Informasi KUA — Kemenag Kota Probolinggo">
+<BaseLayout
+    title="Informasi KUA"
+    description="Daftar Kantor Urusan Agama di lima kecamatan wilayah Kota Probolinggo beserta layanan dan informasinya."
+    ogDescription="Temukan informasi KUA di Kota Probolinggo, termasuk alamat, wilayah layanan, dan website resmi."
+    structuredData={structuredData}
+>
 
     <!-- ── Page header ────────────────────────────────── -->
     <div data-anim="down" class="pt-8 pb-6">
