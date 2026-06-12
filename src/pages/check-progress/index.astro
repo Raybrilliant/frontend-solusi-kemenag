@@ -1,79 +1,107 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import FormCheckProgress from '../../components/Svelte/FormCheckProgress.svelte';
-import { Icon } from 'astro-icon/components';
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import FormCheckProgress from "../../components/Svelte/FormCheckProgress.svelte";
+import { Icon } from "astro-icon/components";
 ---
 
 <style>
-  [data-anim="badge"] {
-    animation: slideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
-  }
-  [data-anim="heading"] {
-    animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
-  }
-  [data-anim="desc"] {
-    animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
-  }
-  [data-anim="form"] {
-    animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.45s both;
-  }
+    [data-anim="badge"] {
+        animation: slideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+    }
+    [data-anim="heading"] {
+        animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+    }
+    [data-anim="desc"] {
+        animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+    }
+    [data-anim="form"] {
+        animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.45s both;
+    }
 
-  @keyframes slideDown {
-    from { opacity: 0; transform: translateY(-14px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes slideUp {
-    from { opacity: 0; transform: translateY(28px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-14px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(28px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 </style>
 
-<BaseLayout title="Cek Progres Layanan">
-  <section class="py-8 md:py-16 flex flex-col gap-5 md:gap-8">
-    <div>
-      <div data-anim="badge" class="font-semibold mb-2 bg-yellow w-fit px-3 md:px-4 py-1.5 md:py-2 uppercase text-xs md:text-sm tracking-wide">
-        Cek Progres Layanan
-      </div>
-      <h1 data-anim="heading" class="text-3xl sm:text-4xl md:text-5xl font-bold mb-2 md:mb-3 uppercase">Pantau Progres Layanan Anda</h1>
-      <p data-anim="desc" class="text-sm md:text-base opacity-70 max-w-xl">Masukkan nomor tiket yang Anda terima saat pendaftaran untuk melihat status terkini layanan Anda secara real-time.</p>
-    </div>
-
-    <div data-anim="form">
-      <FormCheckProgress client:load />
-    </div>
-
-    <!-- Zona Integritas -->
-    <div class="border border-green bg-green/10 p-4 flex items-center justify-between gap-3 my-3 md:my-5">
+<BaseLayout title="Cek Status Layanan">
+    <section class="py-8 md:py-16 flex flex-col gap-5 md:gap-8">
         <div>
+            <div
+                data-anim="badge"
+                class="font-semibold mb-2 bg-yellow w-fit px-3 md:px-4 py-1.5 md:py-2 uppercase text-xs md:text-sm tracking-wide"
+            >
+                Cek Status Layanan
+            </div>
+            <h1
+                data-anim="heading"
+                class="text-3xl sm:text-4xl md:text-5xl font-bold mb-2 md:mb-3 uppercase"
+            >
+                Pantau Status Layanan Anda
+            </h1>
             <p
-                class="text-lg md:text-2xl font-bold uppercase tracking-wide text-green"
+                data-anim="desc"
+                class="text-sm md:text-base opacity-70 max-w-xl"
             >
-                Zona Integritas
+                Masukkan nomor tiket yang Anda terima saat pendaftaran untuk
+                melihat status terkini layanan Anda secara real-time.
             </p>
-            <p class="text-sm md:text-base opacity-80 mt-0.5">
-                Kantor Kementerian Agama Kota Probolinggo berkomitmen memberikan
-                pelayanan prima menuju Wilayah Bebas dari Korupsi (WBK) dan
-                Wilayah Birokrasi Bersih dan Melayani (WBBM).
-            </p>
+        </div>
 
-            <a
-                href="/pengaduan"
-                class="text-green text-sm font-semibold mt-1 inline-block hover:underline"
-            >
-                Laporkan Penyelewengan →
-            </a>
+        <div data-anim="form">
+            <FormCheckProgress client:load />
         </div>
+
+        <!-- Zona Integritas -->
         <div
-            class="w-14 h-14 md:w-20 md:h-20 bg-green/10 rounded-full flex items-center justify-center animate-pulse shrink-0"
-            style="color:#0F6B44"
+            class="border border-green bg-green/10 p-4 flex items-center justify-between gap-3 my-3 md:my-5"
         >
-            <Icon
-                name="mdi:shield-check"
-                class="text-green"
-                width="26"
-                height="26"
-            />
+            <div>
+                <p
+                    class="text-lg md:text-2xl font-bold uppercase tracking-wide text-green"
+                >
+                    Zona Integritas
+                </p>
+                <p class="text-sm md:text-base opacity-80 mt-0.5">
+                    Kantor Kementerian Agama Kota Probolinggo berkomitmen
+                    memberikan pelayanan prima menuju Wilayah Bebas dari Korupsi
+                    (WBK) dan Wilayah Birokrasi Bersih dan Melayani (WBBM).
+                </p>
+
+                <a
+                    href="/pengaduan"
+                    class="text-green text-sm font-semibold mt-1 inline-block hover:underline"
+                >
+                    Laporkan Penyelewengan →
+                </a>
+            </div>
+            <div
+                class="w-14 h-14 md:w-20 md:h-20 bg-green/10 rounded-full flex items-center justify-center animate-pulse shrink-0"
+                style="color:#0F6B44"
+            >
+                <Icon
+                    name="mdi:shield-check"
+                    class="text-green"
+                    width="26"
+                    height="26"
+                />
+            </div>
         </div>
-    </div>
-  </section>
+    </section>
 </BaseLayout>

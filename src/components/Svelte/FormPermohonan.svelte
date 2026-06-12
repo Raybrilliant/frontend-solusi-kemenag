@@ -26,6 +26,13 @@
     let formEl = $state<HTMLFormElement | null>(null);
     let fileError = $state("");
     let rejectedFiles = $state<{ name: string; reason: string }[]>([]);
+    type ActivePermohonanInfo = {
+        ticket: string;
+        status?: string;
+        serviceTitle?: string;
+        message: string;
+    };
+    let activePermohonanInfo = $state<ActivePermohonanInfo | null>(null);
 
     const kelurahanOptions = $derived(
         kecamatan ? (kelurahanMap[kecamatan] ?? []) : [],
@@ -122,6 +129,100 @@
             : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
     }
 
+    function extractTicket(value: unknown) {
+        if (typeof value !== "string") return "";
+        const match = value.match(/[A-Z]+-\d{6,8}-\d+/i);
+        return match?.[0]?.toUpperCase() ?? "";
+    }
+
+    function extractActivePermohonanInfo(
+        payload: any,
+    ): ActivePermohonanInfo | null {
+        const message =
+            typeof payload?.message === "string" ? payload.message.trim() : "";
+        const candidates = [
+            payload,
+            payload?.data,
+            payload?.data?.activePermohonan,
+            payload?.data?.existingPermohonan,
+            payload?.data?.permohonan,
+            payload?.activePermohonan,
+            payload?.existingPermohonan,
+            payload?.permohonan,
+        ].filter(Boolean);
+
+        for (const candidate of candidates) {
+            const ticket =
+                String(
+                    candidate?.activeTicketId ??
+                        candidate?.ticketId ??
+                        candidate?.permohonanId ??
+                        candidate?.id ??
+                        candidate?.kode ??
+                        "",
+                ).trim() || extractTicket(message);
+            const status =
+                typeof candidate?.status === "string"
+                    ? candidate.status.trim()
+                    : undefined;
+            const serviceTitle =
+                typeof candidate?.serviceTitle === "string"
+                    ? candidate.serviceTitle.trim()
+                    : typeof candidate?.title === "string"
+                      ? candidate.title.trim()
+                      : undefined;
+
+            if (ticket && (status === "Diproses" || status === "Diterima")) {
+                return {
+                    ticket,
+                    status,
+                    serviceTitle,
+                    message:
+                        message ||
+                        `Masih ada permohonan layanan aktif${serviceTitle ? ` untuk ${serviceTitle}` : ""} dengan nomor tiket ${ticket}.`,
+                };
+            }
+        }
+
+        const fallbackTicket =
+            String(payload?.activeTicketId ?? "").trim() ||
+            extractTicket(message);
+        const lowerMessage = message.toLowerCase();
+        if (
+            fallbackTicket &&
+            (lowerMessage.includes("aktif") ||
+                lowerMessage.includes("diproses") ||
+                lowerMessage.includes("diterima") ||
+                lowerMessage.includes("dalam proses") ||
+                lowerMessage.includes("tidak bisa mengajukan ulang"))
+        ) {
+            return {
+                ticket: fallbackTicket,
+                message,
+            };
+        }
+
+        return null;
+    }
+
+    function resetForm() {
+        status = "idle";
+        successKode = "";
+        errorMsg = "";
+        copied = false;
+        fileError = "";
+        rejectedFiles = [];
+        activePermohonanInfo = null;
+        nama = whatsapp = kecamatan = kelurahan = alamat = keterangan = "";
+        files = [];
+    }
+
+    function showActivePermohonanState(info: ActivePermohonanInfo) {
+        activePermohonanInfo = info;
+        errorMsg = info.message;
+        status = "error";
+    }
+
     // ── Submit ────────────────────────────────────────────
     async function handleSubmit(e: SubmitEvent) {
         e.preventDefault();
@@ -130,6 +231,7 @@
         fileError = "";
         rejectedFiles = [];
         uploadProgress = null;
+        activePermohonanInfo = null;
 
         if (!formEl?.reportValidity()) {
             return;
@@ -201,8 +303,15 @@
                 }),
             });
             const json = await res.json();
-            if (!json.success)
+            if (!res.ok || json.success === false) {
+                const activeInfo = extractActivePermohonanInfo(json);
+                if (activeInfo) {
+                    showActivePermohonanState(activeInfo);
+                    return;
+                }
+
                 throw new Error(json.message ?? "Gagal mengirim permohonan.");
+            }
             successKode = json.data?.id ?? json.data?.kode ?? "";
             status = "success";
         } catch (err: any) {
@@ -321,7 +430,7 @@
                     <p class="text-xs text-yellow-800 leading-relaxed">
                         Jika notifikasi WhatsApp tidak diterima, gunakan nomor
                         tiket di atas untuk memantau status di halaman <strong
-                            >Cek Progress</strong
+                            >Cek Status</strong
                         >.
                     </p>
                 </div>
@@ -340,18 +449,7 @@
                         />
                     </a>
                     <button
-                        onclick={() => {
-                            status = "idle";
-                            successKode = "";
-                            nama =
-                                whatsapp =
-                                kecamatan =
-                                kelurahan =
-                                alamat =
-                                keterangan =
-                                    "";
-                            files = [];
-                        }}
+                        onclick={resetForm}
                         class="border border-ink/15 text-sm font-bold uppercase px-5 py-3 hover:bg-ink/5 transition-colors"
                     >
                         Buat Permohonan Baru
@@ -359,22 +457,69 @@
                 </div>
             {:else}
                 <button
-                    onclick={() => {
-                        status = "idle";
-                        nama =
-                            whatsapp =
-                            kecamatan =
-                            kelurahan =
-                            alamat =
-                            keterangan =
-                                "";
-                        files = [];
-                    }}
+                    onclick={resetForm}
                     class="self-center border border-ink/15 text-sm font-bold uppercase px-6 py-3 hover:bg-ink/5 transition-colors"
                 >
                     Buat Permohonan Baru
                 </button>
             {/if}
+        </div>
+    {:else if activePermohonanInfo?.ticket}
+        <div class="px-4 md:px-6 pb-6 md:pb-8 flex flex-col gap-5 pt-2">
+            <div class="flex flex-col items-center gap-3 py-6 text-center">
+                <div
+                    class="w-16 h-16 bg-yellow/30 flex items-center justify-center"
+                >
+                    <Icon
+                        icon="mdi:clock-alert-outline"
+                        width="36"
+                        height="36"
+                        class="text-yellow-800"
+                    />
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold uppercase mb-1">
+                        Masih Ada Pengajuan Aktif
+                    </h2>
+                    <p class="text-sm opacity-70 max-w-xl">
+                        Anda belum dapat mengajukan layanan ini kembali karena
+                        masih ada permohonan yang aktif.
+                    </p>
+                </div>
+            </div>
+
+            <div class="border border-yellow-300 bg-yellow/15 p-4 space-y-3">
+                <p
+                    class="text-[10px] font-bold uppercase tracking-widest text-ink/50"
+                >
+                    Nomor Tiket Aktif
+                </p>
+                <p
+                    class="font-mono font-bold text-lg md:text-xl text-ink break-all"
+                >
+                    {activePermohonanInfo.ticket}
+                </p>
+                <p class="text-sm text-ink/70 leading-relaxed">
+                    {activePermohonanInfo.message}
+                </p>
+            </div>
+
+            <div class="flex flex-wrap gap-3">
+                <a
+                    href={`/check-progress?kode=${encodeURIComponent(activePermohonanInfo.ticket)}`}
+                    class="inline-flex items-center gap-2 bg-green text-cream text-xs font-bold uppercase px-5 py-3 hover:bg-green/90 transition-colors"
+                >
+                    Pantau Status
+                    <Icon icon="mdi:arrow-top-right" width="13" height="13" />
+                </a>
+                <button
+                    type="button"
+                    onclick={resetForm}
+                    class="border border-ink/15 text-sm font-bold uppercase px-5 py-3 hover:bg-ink/5 transition-colors"
+                >
+                    Ubah Data Pengajuan
+                </button>
+            </div>
         </div>
     {:else}
         <form

@@ -1,6 +1,8 @@
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
-export function toUploadProxyUrl(url: string | null | undefined): string | null {
+export function toUploadProxyUrl(
+  url: string | null | undefined,
+): string | null {
   if (!url) return null;
   const filename = url.split("/").pop();
   if (!filename) return null;
@@ -102,7 +104,7 @@ export async function transformTrackResponse(raw: any): Promise<any> {
       durasiMenit,
       durasiLabel,
       iconBody: ICON_BODY,
-      message: d.rejectionReason ?? null,
+      message: d.message ?? d.rejectionReason ?? null,
       fileUrl: toUploadProxyUrl(d.outputFile?.url),
     },
   };

@@ -13,6 +13,7 @@
     let now = $state(Date.now());
     let activeKode = $state("");
     let connected = $state(false);
+    let hasAutoLoaded = $state(false);
 
     const isPengaduan = $derived(
         typeof data?.kode === "string" && data.kode.startsWith("ADUAN-"),
@@ -124,27 +125,56 @@
         };
     });
 
-    async function search(e) {
-        e.preventDefault();
-        const q = query.trim();
+    function updateUrl(kode = "") {
+        if (typeof window === "undefined") return;
+        const url = new URL(window.location.href);
+
+        if (kode) {
+            url.searchParams.set("kode", kode);
+            url.searchParams.delete("ticket");
+        } else {
+            url.searchParams.delete("kode");
+            url.searchParams.delete("ticket");
+        }
+
+        window.history.replaceState(
+            {},
+            "",
+            `${url.pathname}${url.search}${url.hash}`,
+        );
+    }
+
+    async function runSearch(rawQuery) {
+        const q = rawQuery.trim().toUpperCase();
         if (!q) return;
+
         loading = true;
         error = "";
         data = null;
+        activeKode = "";
+
         try {
             const res = await fetch(`${apiUrl}?kode=${encodeURIComponent(q)}`);
             const json = await res.json();
             if (!json.success) {
                 error = json.message ?? "Terjadi kesalahan";
-            } else {
-                const payload = json.data ?? json;
-                data = payload;
-                now = Date.now();
-                activeKode = payload.id ?? payload.kode ?? "";
+                return;
             }
+
+            const payload = json.data ?? json;
+            data = payload;
+            now = Date.now();
+            activeKode = payload.id ?? payload.kode ?? q;
+            query = activeKode;
+            updateUrl(activeKode);
         } finally {
             loading = false;
         }
+    }
+
+    async function search(e) {
+        e.preventDefault();
+        await runSearch(query);
     }
 
     function reset() {
@@ -152,7 +182,24 @@
         error = "";
         query = "";
         activeKode = "";
+        updateUrl();
     }
+
+    $effect(() => {
+        if (hasAutoLoaded || typeof window === "undefined") return;
+
+        hasAutoLoaded = true;
+        const url = new URL(window.location.href);
+        const initialKode =
+            url.searchParams.get("kode")?.trim() ??
+            url.searchParams.get("ticket")?.trim() ??
+            "";
+
+        if (!initialKode) return;
+
+        query = initialKode.toUpperCase();
+        void runSearch(initialKode);
+    });
 </script>
 
 <!-- ── Search form ── -->
@@ -786,6 +833,28 @@
                     <div class="h-3 bg-green/20 overflow-hidden">
                         <div class="h-full bg-green" style="width:100%"></div>
                     </div>
+                    {#if data.message}
+                        <div class="mt-4 p-4 bg-green/8 border border-green/20">
+                            <div class="flex items-center gap-2 mb-2">
+                                <Icon
+                                    icon="mdi:message-text-outline"
+                                    width="14"
+                                    height="14"
+                                    class="text-green shrink-0"
+                                />
+                                <p
+                                    class="text-[10px] font-bold uppercase tracking-widest text-green"
+                                >
+                                    Pesan Petugas
+                                </p>
+                            </div>
+                            <p
+                                class="text-sm text-green/80 leading-relaxed whitespace-pre-wrap"
+                            >
+                                {data.message}
+                            </p>
+                        </div>
+                    {/if}
                 {:else if overtime}
                     <div class="flex items-center justify-between mb-2">
                         <span

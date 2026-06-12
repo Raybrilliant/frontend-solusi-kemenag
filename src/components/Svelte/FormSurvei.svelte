@@ -235,7 +235,7 @@
                 href="/check-progress"
                 class="inline-flex mt-6 bg-green text-white px-5 py-3 text-sm font-bold uppercase hover:bg-green/90 transition-colors"
             >
-                Kembali ke Cek Progress
+                Kembali ke Cek Status
             </a>
         </section>
     {:else}

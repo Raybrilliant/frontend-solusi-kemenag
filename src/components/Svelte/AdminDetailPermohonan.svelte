@@ -11,6 +11,8 @@
     let newStatus = $state(permohonan.status);
     // svelte-ignore state_referenced_locally
     let pesanTolak = $state(permohonan.rejectionReason ?? "");
+    // svelte-ignore state_referenced_locally
+    let pesanSelesai = $state(permohonan.message ?? "");
     let outputFile = $state<File | null>(null);
     let isDragging = $state(false);
     let submitting = $state(false);
@@ -124,10 +126,10 @@
         e.preventDefault();
         toast = null;
 
-        if (newStatus === "Selesai" && !outputFile) {
+        if (newStatus === "Selesai" && !pesanSelesai.trim()) {
             toast = {
                 type: "error",
-                msg: "Mohon unggah dokumen output terlebih dahulu.",
+                msg: "Mohon isi pesan untuk pemohon terlebih dahulu.",
             };
             return;
         }
@@ -143,6 +145,9 @@
             };
             if (newStatus === "Ditolak") {
                 body.rejectionReason = pesanTolak.trim();
+            }
+            if (newStatus === "Selesai") {
+                body.message = pesanSelesai.trim();
             }
             if (newStatus === "Selesai" && outputFile) {
                 const fd = new FormData();
@@ -190,6 +195,9 @@
                 ...(newStatus === "Ditolak" && {
                     rejectionReason: pesanTolak.trim(),
                 }),
+                ...(newStatus === "Selesai" && {
+                    message: pesanSelesai.trim(),
+                }),
                 ...(newStatus === "Selesai" && outputFile
                     ? {
                           outputFile: {
@@ -234,7 +242,12 @@
         {#if toast.type === "success"}
             <Icon icon="mdi:check" width="18" height="18" class="shrink-0" />
         {:else}
-            <Icon icon="mdi:alert-circle" width="18" height="18" class="shrink-0" />
+            <Icon
+                icon="mdi:alert-circle"
+                width="18"
+                height="18"
+                class="shrink-0"
+            />
         {/if}
         <p class="text-sm font-semibold">{toast.msg}</p>
         <button
@@ -242,7 +255,7 @@
             class="ml-auto opacity-70 hover:opacity-100 transition-opacity"
             aria-label="Tutup notifikasi"
         >
-<Icon icon="mdi:close" width="16" height="16" />
+            <Icon icon="mdi:close" width="16" height="16" />
         </button>
     </div>
 {/if}
@@ -251,11 +264,11 @@
 <div class="bg-white border-b border-black/8 px-6 md:px-8 py-5">
     <nav class="flex items-center gap-2 text-xs text-ink/40 mb-4">
         <a href="/admin" class="hover:text-ink transition-colors">Dashboard</a>
-<Icon icon="mdi:chevron-right" width="14" height="14" />
+        <Icon icon="mdi:chevron-right" width="14" height="14" />
         <a href="/admin/permohonan" class="hover:text-ink transition-colors"
             >Permohonan</a
         >
-<Icon icon="mdi:chevron-right" width="14" height="14" />
+        <Icon icon="mdi:chevron-right" width="14" height="14" />
         <span class="text-ink font-semibold font-mono">{current.id}</span>
     </nav>
 
@@ -359,7 +372,12 @@
                 <div
                     class="w-8 h-8 bg-green flex items-center justify-center shrink-0"
                 >
-                    <Icon icon="mdi:account" width="16" height="16" style="color: white;" />
+                    <Icon
+                        icon="mdi:account"
+                        width="16"
+                        height="16"
+                        style="color: white;"
+                    />
                 </div>
                 <h2 class="text-sm font-bold uppercase tracking-wide">
                     Informasi Pemohon
@@ -415,7 +433,12 @@
                 <div
                     class="w-8 h-8 bg-green flex items-center justify-center shrink-0"
                 >
-                    <Icon icon="mdi:file-document-multiple-outline" width="16" height="16" style="color: white;" />
+                    <Icon
+                        icon="mdi:file-document-multiple-outline"
+                        width="16"
+                        height="16"
+                        style="color: white;"
+                    />
                 </div>
                 <h2 class="text-sm font-bold uppercase tracking-wide">
                     Dokumen Diunggah Pemohon
@@ -438,11 +461,26 @@
                                   : '#F3F4F6'}"
                         >
                             {#if doc.tipe === "pdf"}
-                                <Icon icon="mdi:file-pdf-box" width="16" height="16" style="color: #EF4444;" />
+                                <Icon
+                                    icon="mdi:file-pdf-box"
+                                    width="16"
+                                    height="16"
+                                    style="color: #EF4444;"
+                                />
                             {:else if doc.tipe === "image"}
-                                <Icon icon="mdi:image" width="16" height="16" style="color: #3B82F6;" />
+                                <Icon
+                                    icon="mdi:image"
+                                    width="16"
+                                    height="16"
+                                    style="color: #3B82F6;"
+                                />
                             {:else}
-                                <Icon icon="mdi:file-document-outline" width="16" height="16" style="color: #6B7280;" />
+                                <Icon
+                                    icon="mdi:file-document-outline"
+                                    width="16"
+                                    height="16"
+                                    style="color: #6B7280;"
+                                />
                             {/if}
                         </div>
                         <div class="flex-1 min-w-0">
@@ -479,7 +517,12 @@
                 <div
                     class="w-8 h-8 bg-green flex items-center justify-center shrink-0"
                 >
-                    <Icon icon="mdi:clipboard-check-outline" width="16" height="16" style="color: white;" />
+                    <Icon
+                        icon="mdi:clipboard-check-outline"
+                        width="16"
+                        height="16"
+                        style="color: white;"
+                    />
                 </div>
                 <h2 class="text-sm font-bold uppercase tracking-wide">
                     Persyaratan Dokumen
@@ -513,37 +556,69 @@
             {/if}
         </div>
 
-        <!-- Output dokumen (jika selesai) -->
-        {#if current.status === "Selesai" && current.outputFile}
-            <div
-                class="bg-green/5 border border-green/30 px-5 py-4 flex items-center gap-4"
-            >
-                <div
-                    class="w-10 h-10 bg-green flex items-center justify-center shrink-0"
-                >
-                    <Icon icon="mdi:check" width="18" height="18" style="color: white;" />
-                </div>
-                <div class="flex-1 min-w-0">
-                    <p
-                        class="text-xs font-bold uppercase tracking-widest text-green mb-0.5"
+        <!-- Informasi selesai -->
+        {#if current.status === "Selesai"}
+            <div class="space-y-4">
+                {#if current.message}
+                    <div class="bg-green/5 border border-green/30 px-5 py-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <Icon
+                                icon="mdi:message-text-outline"
+                                width="16"
+                                height="16"
+                                class="text-green shrink-0"
+                            />
+                            <p
+                                class="text-xs font-bold uppercase tracking-widest text-green"
+                            >
+                                Pesan untuk Pemohon
+                            </p>
+                        </div>
+                        <p
+                            class="text-sm text-green/80 leading-relaxed whitespace-pre-wrap"
+                        >
+                            {current.message}
+                        </p>
+                    </div>
+                {/if}
+
+                {#if current.outputFile}
+                    <div
+                        class="bg-green/5 border border-green/30 px-5 py-4 flex items-center gap-4"
                     >
-                        Dokumen Output Tersedia
-                    </p>
-                    <p class="text-sm font-semibold truncate">
-                        {current.outputFile.nama}
-                    </p>
-                </div>
-                <button
-                    onclick={() =>
-                        downloadFile(
-                            current.outputFile.url,
-                            current.outputFile.nama,
-                        )}
-                    class="flex items-center gap-2 bg-green text-white text-sm font-bold px-4 py-2 hover:bg-green/90 transition-colors shrink-0"
-                >
-                    <Icon icon="mdi:download" width="14" height="14" />
-                    Unduh Output
-                </button>
+                        <div
+                            class="w-10 h-10 bg-green flex items-center justify-center shrink-0"
+                        >
+                            <Icon
+                                icon="mdi:check"
+                                width="18"
+                                height="18"
+                                style="color: white;"
+                            />
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p
+                                class="text-xs font-bold uppercase tracking-widest text-green mb-0.5"
+                            >
+                                Dokumen Output Tersedia
+                            </p>
+                            <p class="text-sm font-semibold truncate">
+                                {current.outputFile.nama}
+                            </p>
+                        </div>
+                        <button
+                            onclick={() =>
+                                downloadFile(
+                                    current.outputFile.url,
+                                    current.outputFile.nama,
+                                )}
+                            class="flex items-center gap-2 bg-green text-white text-sm font-bold px-4 py-2 hover:bg-green/90 transition-colors shrink-0"
+                        >
+                            <Icon icon="mdi:download" width="14" height="14" />
+                            Unduh Output
+                        </button>
+                    </div>
+                {/if}
             </div>
         {/if}
 
@@ -551,7 +626,12 @@
         {#if current.status === "Ditolak" && current.rejectionReason}
             <div class="bg-red-50 border border-red-200 px-5 py-4">
                 <div class="flex items-center gap-2 mb-2">
-                    <Icon icon="mdi:alert-circle" width="16" height="16" class="text-red-500 shrink-0" />
+                    <Icon
+                        icon="mdi:alert-circle"
+                        width="16"
+                        height="16"
+                        class="text-red-500 shrink-0"
+                    />
                     <p
                         class="text-xs font-bold uppercase tracking-widest text-red-600"
                     >
@@ -576,7 +656,12 @@
                     <div
                         class="w-8 h-8 bg-ink flex items-center justify-center shrink-0"
                     >
-                        <Icon icon="mdi:clock-outline" width="16" height="16" style="color: white;" />
+                        <Icon
+                            icon="mdi:clock-outline"
+                            width="16"
+                            height="16"
+                            style="color: white;"
+                        />
                     </div>
                     <h2 class="text-sm font-bold uppercase tracking-wide">
                         Ubah Status
@@ -625,63 +710,95 @@
                         {/each}
                     </div>
 
-                    <!-- Upload output (Selesai) -->
+                    <!-- Detail selesai (Selesai) -->
                     {#if newStatus === "Selesai"}
-                        <div class="space-y-2">
-                            <p
-                                class="text-xs font-bold uppercase tracking-widest text-ink/50"
-                            >
-                                Dokumen Output <span class="text-red-500"
-                                    >*</span
+                        <div class="space-y-4">
+                            <div class="space-y-2">
+                                <p
+                                    class="text-xs font-bold uppercase tracking-widest text-ink/50"
                                 >
-                            </p>
-                            <label
-                                class="flex flex-col items-center gap-2 p-5 border-2 border-dashed cursor-pointer transition-colors
-                  {isDragging
-                                    ? 'border-green bg-green/3'
-                                    : 'border-black/20 hover:border-green/50'}"
-                                ondragover={(e) => {
-                                    e.preventDefault();
-                                    isDragging = true;
-                                }}
-                                ondragleave={() => (isDragging = false)}
-                                ondrop={(e) => {
-                                    e.preventDefault();
-                                    isDragging = false;
-                                    handleOutputFile(e);
-                                }}
-                            >
-                                <Icon icon="mdi:cloud-upload-outline" width="28" height="28" class="text-green" />
-                                <p class="text-xs font-semibold text-center">
-                                    {outputFile
-                                        ? outputFile.name
-                                        : "Klik atau seret file output di sini"}
+                                    Pesan untuk Pemohon <span
+                                        class="text-red-500">*</span
+                                    >
                                 </p>
-                                {#if outputFile}
-                                    <p class="text-[10px] text-ink/40">
-                                        {(outputFile.size / 1024).toFixed(0)} KB
-                                    </p>
-                                {:else}
-                                    <p class="text-[10px] text-ink/40">
-                                        PDF, DOC, JPG — Maks. 10MB
-                                    </p>
-                                {/if}
-                                <input
-                                    type="file"
-                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                                    class="hidden"
-                                    onchange={handleOutputFile}
-                                />
-                            </label>
-                            {#if outputFile}
-                                <button
-                                    type="button"
-                                    onclick={() => (outputFile = null)}
-                                    class="text-xs text-red-500 hover:underline"
+                                <textarea
+                                    bind:value={pesanSelesai}
+                                    rows="4"
+                                    placeholder="Tulis pesan/catatan penyelesaian yang akan ditampilkan ke pemohon..."
+                                    class="w-full px-3 py-2.5 border border-black/15 bg-white text-sm outline-none
+                  focus:border-green focus:ring-2 focus:ring-green/10 transition-all resize-y min-h-24"
+                                ></textarea>
+                                <p class="text-[10px] text-ink/40">
+                                    Pesan ini akan ditampilkan ke pemohon saat
+                                    mengecek status layanan.
+                                </p>
+                            </div>
+
+                            <div class="space-y-2">
+                                <p
+                                    class="text-xs font-bold uppercase tracking-widest text-ink/50"
                                 >
-                                    Hapus file
-                                </button>
-                            {/if}
+                                    Dokumen Output <span class="text-ink/30"
+                                        >(Opsional)</span
+                                    >
+                                </p>
+                                <label
+                                    class="flex flex-col items-center gap-2 p-5 border-2 border-dashed cursor-pointer transition-colors
+                  {isDragging
+                                        ? 'border-green bg-green/3'
+                                        : 'border-black/20 hover:border-green/50'}"
+                                    ondragover={(e) => {
+                                        e.preventDefault();
+                                        isDragging = true;
+                                    }}
+                                    ondragleave={() => (isDragging = false)}
+                                    ondrop={(e) => {
+                                        e.preventDefault();
+                                        isDragging = false;
+                                        handleOutputFile(e);
+                                    }}
+                                >
+                                    <Icon
+                                        icon="mdi:cloud-upload-outline"
+                                        width="28"
+                                        height="28"
+                                        class="text-green"
+                                    />
+                                    <p
+                                        class="text-xs font-semibold text-center"
+                                    >
+                                        {outputFile
+                                            ? outputFile.name
+                                            : "Klik atau seret file output di sini"}
+                                    </p>
+                                    {#if outputFile}
+                                        <p class="text-[10px] text-ink/40">
+                                            {(outputFile.size / 1024).toFixed(
+                                                0,
+                                            )} KB
+                                        </p>
+                                    {:else}
+                                        <p class="text-[10px] text-ink/40">
+                                            PDF, DOC, JPG — Maks. 10MB
+                                        </p>
+                                    {/if}
+                                    <input
+                                        type="file"
+                                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                        class="hidden"
+                                        onchange={handleOutputFile}
+                                    />
+                                </label>
+                                {#if outputFile}
+                                    <button
+                                        type="button"
+                                        onclick={() => (outputFile = null)}
+                                        class="text-xs text-red-500 hover:underline"
+                                    >
+                                        Hapus file
+                                    </button>
+                                {/if}
+                            </div>
                         </div>
                     {/if}
 
@@ -717,7 +834,12 @@
               hover:bg-green/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {#if submitting}
-                            <Icon icon="mdi:loading" width="16" height="16" class="animate-spin" />
+                            <Icon
+                                icon="mdi:loading"
+                                width="16"
+                                height="16"
+                                class="animate-spin"
+                            />
                             Menyimpan...
                         {:else}
                             <Icon icon="mdi:check" width="15" height="15" />
