@@ -59,6 +59,7 @@
     let searchTerm = $state("");
     let pagination = $state({ page: 1, limit: 20, total: 0, totalPages: 1 });
     let page = $state(1);
+    const PAGE_SIZE = 20;
 
     let bulkOpen = $state(false);
     let bulkLoading = $state(false);
@@ -75,16 +76,16 @@
         loading = true;
         try {
             const [userRes, kategoriRes] = await Promise.all([
-                fetch(`${apiUrl}?page=${page}&limit=${pagination.limit}`),
+                fetch(`${apiUrl}?page=${page}&limit=${PAGE_SIZE}`),
                 fetch(apiKategori),
             ]);
             const [userData, katData] = await Promise.all([
                 userRes.json(),
-                kategoriRes.json(),
+                kategoriRes.json().catch(() => ({})),
             ]);
 
             data = Array.isArray(userData) ? userData : (userData.data ?? []);
-            pagination = userData.pagination ?? pagination;
+            if (userData.pagination) pagination = userData.pagination;
             kategoriList = Array.isArray(katData)
                 ? katData
                 : (katData.data ?? []);

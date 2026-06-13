@@ -12,16 +12,17 @@
     let searchTerm = $state("");
     let pagination = $state({ page: 1, limit: 20, total: 0, totalPages: 1 });
     let page = $state(1);
+    const PAGE_SIZE = 20;
 
     // ── Fetch ────────────────────────────────────────────
     $effect(() => {
         page; // track page changes
         loading = true;
-        fetch(`${apiUrl}?page=${page}&limit=${pagination.limit}`)
+        fetch(`${apiUrl}?page=${page}&limit=${PAGE_SIZE}`)
             .then((r) => r.json())
             .then((res) => {
                 data = Array.isArray(res) ? res : (res.data ?? []);
-                pagination = res.pagination ?? pagination;
+                if (res.pagination) pagination = res.pagination;
                 loading = false;
             })
             .catch(() => {

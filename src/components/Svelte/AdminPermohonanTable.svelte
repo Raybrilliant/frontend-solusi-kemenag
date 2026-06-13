@@ -12,6 +12,7 @@
     let searchTerm = $state("");
     let pagination = $state({ page: 1, limit: 20, total: 0, totalPages: 1 });
     let page = $state(1);
+    const PAGE_SIZE = 20;
 
     // Stats dari dashboard (fetch sekali)
     let dashboardStats = $state({
@@ -55,14 +56,14 @@
                 loading = true;
                 const params = new URLSearchParams();
                 params.set("page", String(p));
-                params.set("limit", String(pagination.limit));
+                params.set("limit", String(PAGE_SIZE));
                 if (tab !== "semua") params.set("status", tab);
                 if (q.trim()) params.set("q", q.trim());
                 fetch(`${apiUrl}?${params}`)
                     .then((r) => r.json())
                     .then((res) => {
                         data = res.data ?? [];
-                        pagination = res.pagination ?? pagination;
+                        if (res.pagination) pagination = res.pagination;
                         loading = false;
                     })
                     .catch(() => {

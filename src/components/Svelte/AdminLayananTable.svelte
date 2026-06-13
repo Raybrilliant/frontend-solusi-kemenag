@@ -15,25 +15,30 @@
 
     let pagination = $state({ page: 1, limit: 20, total: 0, totalPages: 1 });
     let page = $state(1);
+    const PAGE_SIZE = 20;
 
     // ── Fetch data & kategori ────────────────────────────
     $effect(() => {
         page; // track page
         loading = true;
         Promise.all([
-            fetch(`${apiUrl}?page=${page}&limit=${pagination.limit}`).then(
-                (r) => r.json(),
+            fetch(`${apiUrl}?page=${page}&limit=${PAGE_SIZE}`).then((r) =>
+                r.json(),
             ),
-            fetch(apiKategori).then((r) => r.json()),
+            fetch(apiKategori)
+                .then((r) => r.json())
+                .then((katData) => {
+                    kategoriList = Array.isArray(katData)
+                        ? katData
+                        : (katData.data ?? []);
+                })
+                .catch(() => {}),
         ])
-            .then(([layananData, katData]) => {
+            .then(([layananData]) => {
                 data = Array.isArray(layananData)
                     ? layananData
                     : (layananData.data ?? []);
-                pagination = layananData.pagination ?? pagination;
-                kategoriList = Array.isArray(katData)
-                    ? katData
-                    : (katData.data ?? []);
+                if (layananData.pagination) pagination = layananData.pagination;
                 loading = false;
             })
             .catch(() => {

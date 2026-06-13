@@ -14,6 +14,7 @@
     let toast = $state(null);
     let pagination = $state({ page: 1, limit: 20, total: 0, totalPages: 1 });
     let page = $state(1);
+    const PAGE_SIZE = 20;
 
     const categories = ["pendidikan", "bimas", "umum", "pengumuman", "kua"];
 
@@ -26,11 +27,11 @@
         loading = true;
         try {
             const res = await fetch(
-                `${apiUrl}?page=${page}&limit=${pagination.limit}`,
+                `${apiUrl}?page=${page}&limit=${PAGE_SIZE}`,
             );
             const json = await res.json();
             data = Array.isArray(json) ? json : (json.data ?? []);
-            pagination = json.pagination ?? pagination;
+            if (json.pagination) pagination = json.pagination;
         } catch {
             data = [];
         } finally {
