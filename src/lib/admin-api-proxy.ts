@@ -24,7 +24,29 @@ export async function getAdminUser(
 ): Promise<AuthUser | null> {
   const token = cookies?.get?.("auth_token")?.value;
   const cookieHeader = request?.headers.get("cookie") ?? "";
-  return getUserFromToken(token, cookieHeader);
+  return memoizedGetUser(token, cookieHeader);
+}
+
+// ── In-memory cache untuk auth/me ──────────────────────
+let _userCache: { key: string; user: AuthUser | null; ts: number } | null =
+  null;
+const USER_CACHE_TTL = 30_000; // 30 detik
+
+async function memoizedGetUser(
+  token: string | undefined,
+  cookieHeader?: string,
+): Promise<AuthUser | null> {
+  const key = `${token ?? ""}::${cookieHeader ?? ""}`;
+  if (
+    _userCache &&
+    _userCache.key === key &&
+    Date.now() - _userCache.ts < USER_CACHE_TTL
+  ) {
+    return _userCache.user;
+  }
+  const user = await getUserFromToken(token, cookieHeader);
+  _userCache = { key, user, ts: Date.now() };
+  return user;
 }
 
 export function missingAdminSessionResponse(): Response {
@@ -54,9 +76,14 @@ export async function readBackendJson(res: Response): Promise<any> {
   }
 }
 
-export function jsonProxyResponse(data: unknown, status = 200): Response {
+export function adminJsonResponse(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "private, max-age=30, stale-while-revalidate=60",
+    },
   });
 }
+
+export const jsonProxyResponse = adminJsonResponse;

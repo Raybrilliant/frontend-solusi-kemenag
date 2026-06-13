@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import {
   getAdminAuthHeaders,
   getAdminUser,
+  adminJsonResponse,
 } from "../../../lib/admin-api-proxy";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
@@ -56,18 +57,15 @@ export const GET: APIRoute = async ({ url, cookies, request }) => {
       data.data = data.data.filter((cat: any) => cat.id === user.categoryId);
     }
 
-    return new Response(JSON.stringify(data), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return adminJsonResponse(data, 200);
   } catch (e) {
-    return new Response(
-      JSON.stringify({
+    return adminJsonResponse(
+      {
         success: true,
         data: [],
         pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
-      }),
-      { status: 200, headers: { "Content-Type": "application/json" } },
+      },
+      200,
     );
   }
 };

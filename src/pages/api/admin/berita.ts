@@ -1,5 +1,8 @@
 import type { APIRoute } from "astro";
-import { getAdminAuthHeaders } from "../../../lib/admin-api-proxy";
+import {
+  getAdminAuthHeaders,
+  adminJsonResponse,
+} from "../../../lib/admin-api-proxy";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
@@ -39,18 +42,15 @@ export const GET: APIRoute = async ({ request, cookies }) => {
       );
     }
 
-    return new Response(JSON.stringify(data), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return adminJsonResponse(data, 200);
   } catch {
-    return new Response(
-      JSON.stringify({
+    return adminJsonResponse(
+      {
         success: true,
         data: [],
         pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
-      }),
-      { status: 200, headers: { "Content-Type": "application/json" } },
+      },
+      200,
     );
   }
 };
@@ -59,9 +59,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   try {
     const text = await request.text();
     if (!text) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Request body is empty" }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
+      return adminJsonResponse(
+        { success: false, message: "Request body is empty" },
+        200,
       );
     }
 
