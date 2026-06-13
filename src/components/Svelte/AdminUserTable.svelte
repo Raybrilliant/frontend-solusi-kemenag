@@ -753,6 +753,7 @@
     {data}
     {columns}
     {loading}
+    disablePagination
     enableSelection
     onSelectionChange={(rows: UserRow[]) => (selected = rows)}
     class="bg-white"

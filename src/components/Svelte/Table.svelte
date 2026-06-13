@@ -24,6 +24,7 @@
         columns = [],
         loading = false,
         initialPageSize = 10,
+        disablePagination = false,
         enableSelection = false,
         onSelectionChange = undefined,
         renderCell = undefined,
@@ -41,7 +42,9 @@
     // ── Row model factories — stable references ───────────────────────
     const coreModel = getCoreRowModel();
     const sortedModel = getSortedRowModel();
-    const paginatedModel = getPaginationRowModel();
+    const paginatedModel = disablePagination
+        ? undefined
+        : getPaginationRowModel();
 
     // ── Prepend selection column when enableSelection is on ──────────
     const allColumns = $derived(
@@ -248,7 +251,7 @@
     </div>
 
     <!-- ── Pagination ────────────────────────────────────────────── -->
-    {#if !loading}
+    {#if !loading && !disablePagination}
         {@const pageIndex = table.getState().pagination.pageIndex}
         {@const pageCount = table.getPageCount()}
         {@const currentPage = pageIndex + 1}

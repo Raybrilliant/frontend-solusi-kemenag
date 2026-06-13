@@ -215,7 +215,7 @@
 {/if}
 
 <!-- ── Table ──────────────────────────────────────────── -->
-<Table {data} {columns} {loading} class="bg-white">
+<Table {data} {columns} {loading} disablePagination class="bg-white">
     {#snippet renderCell(cell)}
         {#if cell.column.id === "id"}
             <span class="font-mono text-xs font-bold text-ink/60"
