@@ -16,7 +16,17 @@
     let pagination = $state({ page: 1, limit: 20, total: 0, totalPages: 1 });
     let page = $state(1);
 
-    const categories = ["pendidikan", "bimas", "umum", "pengumuman", "kua"];
+    let categories = $state([]);
+
+    // ── Fetch kategori dari backend ────────────────────
+    $effect(() => {
+        fetch("/api/admin/berita/kategori")
+            .then((r) => r.json())
+            .then((res) => {
+                if (res.data) categories = res.data;
+            })
+            .catch(() => {});
+    });
 
     function showToast(type, msg) {
         toast = { type, msg };
