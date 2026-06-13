@@ -10,9 +10,9 @@
     let activeTab = $state("Diproses");
     let selected = $state<any[]>([]);
     let searchTerm = $state("");
+    let limit = $state(20);
     let pagination = $state({ page: 1, limit: 20, total: 0, totalPages: 1 });
     let page = $state(1);
-    const PAGE_SIZE = 20;
 
     // Stats dari dashboard (fetch sekali)
     let dashboardStats = $state({
@@ -21,6 +21,17 @@
         diproses: 0,
         selesai: 0,
         ditolak: 0,
+    });
+
+    // ── Row range helper ─────────────────────────────────
+    const rowInfo = $derived.by(() => {
+        if (pagination.total === 0) return "";
+        const start = (pagination.page - 1) * pagination.limit + 1;
+        const end = Math.min(
+            pagination.page * pagination.limit,
+            pagination.total,
+        );
+        return `Menampilkan ${start}–${end} dari ${pagination.total}`;
     });
 
     $effect(() => {
@@ -56,14 +67,17 @@
                 loading = true;
                 const params = new URLSearchParams();
                 params.set("page", String(p));
-                params.set("limit", String(PAGE_SIZE));
+                params.set("limit", String(limit));
                 if (tab !== "semua") params.set("status", tab);
                 if (q.trim()) params.set("q", q.trim());
                 fetch(`${apiUrl}?${params}`)
                     .then((r) => r.json())
                     .then((res) => {
                         data = res.data ?? [];
-                        if (res.pagination) pagination = res.pagination;
+                        if (res.pagination) {
+                            pagination = res.pagination;
+                            limit = res.pagination.limit;
+                        }
                         loading = false;
                     })
                     .catch(() => {
@@ -241,6 +255,11 @@
         </button>
     </div>
 </div>
+
+<!-- ── Row info ─────────────────────────────────────────── -->
+{#if rowInfo}
+    <p class="text-xs text-ink/40 mb-3">{rowInfo}</p>
+{/if}
 
 <Table
     {data}

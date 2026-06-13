@@ -27,7 +27,7 @@ export const GET: APIRoute = async ({ url, cookies, request }) => {
     const user = await getAdminUser(cookies, request);
     const isOperator = user?.role === "operator" && user.categoryId !== null;
 
-    // Forward page/limit alongside categoryId
+    // Forward all client params (page, limit, q, etc.) alongside categoryId
     const params = new URLSearchParams();
     if (isOperator) {
       params.set("categoryId", String(user!.categoryId));
@@ -35,11 +35,10 @@ export const GET: APIRoute = async ({ url, cookies, request }) => {
       const catId = url.searchParams.get("categoryId");
       if (catId) params.set("categoryId", catId);
     }
-    // Forward pagination params
-    const page = url.searchParams.get("page");
-    const limit = url.searchParams.get("limit");
-    if (page) params.set("page", page);
-    if (limit) params.set("limit", limit);
+    // Forward all other params including page, limit, q
+    for (const [key, value] of url.searchParams) {
+      if (key !== "categoryId") params.set(key, value);
+    }
 
     const qs = params.toString();
     const res = await fetch(
