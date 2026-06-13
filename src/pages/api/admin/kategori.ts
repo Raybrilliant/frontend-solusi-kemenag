@@ -20,22 +20,30 @@ async function safeJson(res: Response): Promise<unknown> {
 }
 
 // Proxy: GET /api/v1/categories — operator hanya lihat kategori mereka
-export const GET: APIRoute = async ({ cookies, request }) => {
+export const GET: APIRoute = async ({ url, cookies, request }) => {
   try {
     const headers = getAdminAuthHeaders(cookies, request);
+    const qs = url.searchParams.toString();
+    const fetchUrl = qs
+      ? `${BACKEND_URL}/api/v1/categories/?${qs}`
+      : `${BACKEND_URL}/api/v1/categories/`;
 
     const [user, res] = await Promise.all([
       getAdminUser(cookies, request),
-      fetch(`${BACKEND_URL}/api/v1/categories/`, { headers }),
+      fetch(fetchUrl, { headers }),
     ]);
 
     const data = (await safeJson(res)) as any;
 
     if (!res.ok || data?.success === false) {
-      return new Response(JSON.stringify({ success: true, data: [] }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: [],
+          pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
     }
 
     // Operator: filter hanya kategori mereka
@@ -53,10 +61,14 @@ export const GET: APIRoute = async ({ cookies, request }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ success: true, data: [] }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({
+        success: true,
+        data: [],
+        pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    );
   }
 };
 

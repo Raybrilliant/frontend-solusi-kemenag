@@ -17,18 +17,25 @@ async function safeJson(res: Response): Promise<unknown> {
 }
 
 // Proxy: GET /api/v1/users
-export const GET: APIRoute = async ({ cookies, request }) => {
+export const GET: APIRoute = async ({ url, cookies, request }) => {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/v1/users/`, {
-      headers: getAdminAuthHeaders(cookies, request),
-    });
+    const headers = getAdminAuthHeaders(cookies, request);
+    const qs = url.searchParams.toString();
+    const fetchUrl = qs
+      ? `${BACKEND_URL}/api/v1/users/?${qs}`
+      : `${BACKEND_URL}/api/v1/users/`;
+    const res = await fetch(fetchUrl, { headers });
     const data = await safeJson(res);
 
     if (!res.ok || (data as any)?.success === false) {
-      return new Response(JSON.stringify({ success: true, data: [] }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: [],
+          pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
     }
 
     return new Response(JSON.stringify(data), {
@@ -36,10 +43,14 @@ export const GET: APIRoute = async ({ cookies, request }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch {
-    return new Response(JSON.stringify({ success: true, data: [] }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({
+        success: true,
+        data: [],
+        pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    );
   }
 };
 

@@ -27,13 +27,25 @@ export const GET: APIRoute = async ({ url, cookies, request }) => {
     const user = await getAdminUser(cookies, request);
     const isOperator = user?.role === "operator" && user.categoryId !== null;
 
-    // Operator: paksa filter ke kategori mereka, abaikan param dari client
-    const categoryId = isOperator
-      ? String(user!.categoryId)
-      : (url.searchParams.get("categoryId") ?? "");
+    // Forward page/limit alongside categoryId
+    const params = new URLSearchParams();
+    if (isOperator) {
+      params.set("categoryId", String(user!.categoryId));
+    } else {
+      const catId = url.searchParams.get("categoryId");
+      if (catId) params.set("categoryId", catId);
+    }
+    // Forward pagination params
+    const page = url.searchParams.get("page");
+    const limit = url.searchParams.get("limit");
+    if (page) params.set("page", page);
+    if (limit) params.set("limit", limit);
 
-    const qs = categoryId ? `?categoryId=${categoryId}` : "";
-    const res = await fetch(`${BACKEND_URL}/api/v1/layanan/${qs}`, { headers });
+    const qs = params.toString();
+    const res = await fetch(
+      `${BACKEND_URL}/api/v1/layanan/${qs ? `?${qs}` : ""}`,
+      { headers },
+    );
     const data = await res.json();
     return new Response(JSON.stringify(data), {
       status: res.status,

@@ -12,6 +12,8 @@
     let statusFilter = $state("all");
     let categoryFilter = $state("all");
     let toast = $state(null);
+    let pagination = $state({ page: 1, limit: 20, total: 0, totalPages: 1 });
+    let page = $state(1);
 
     const categories = ["pendidikan", "bimas", "umum", "pengumuman", "kua"];
 
@@ -23,9 +25,12 @@
     async function loadData() {
         loading = true;
         try {
-            const res = await fetch(`${apiUrl}?limit=100&page=1`);
+            const res = await fetch(
+                `${apiUrl}?page=${page}&limit=${pagination.limit}`,
+            );
             const json = await res.json();
             data = Array.isArray(json) ? json : (json.data ?? []);
+            pagination = json.pagination ?? pagination;
         } catch {
             data = [];
         } finally {
@@ -34,6 +39,7 @@
     }
 
     $effect(() => {
+        page; // track page changes
         loadData();
     });
 
@@ -116,6 +122,9 @@
         }
         data = data.filter((item) => item.id !== row.id);
         showToast("success", "Berita berhasil dihapus.");
+        if (data.length === 0 && page > 1) {
+            page = page - 1;
+        }
     }
 
     async function handleStatus(row, nextStatus) {
@@ -288,3 +297,30 @@
         {/if}
     {/snippet}
 </Table>
+
+<!-- ── Pagination ───────────────────────────────────────── -->
+{#if pagination.totalPages > 1}
+    <div class="flex items-center gap-2 mt-4 mb-4">
+        <button
+            onclick={() => {
+                page = Math.max(1, page - 1);
+            }}
+            disabled={page === 1}
+            class="px-3 py-1.5 border border-ink/20 text-xs font-bold uppercase hover:bg-ink/5 disabled:opacity-40 transition-colors cursor-pointer"
+        >
+            ← Prev
+        </button>
+        <span class="text-xs text-ink/50"
+            >Halaman {page} / {pagination.totalPages}</span
+        >
+        <button
+            onclick={() => {
+                page = Math.min(pagination.totalPages, page + 1);
+            }}
+            disabled={page === pagination.totalPages}
+            class="px-3 py-1.5 border border-ink/20 text-xs font-bold uppercase hover:bg-ink/5 disabled:opacity-40 transition-colors cursor-pointer"
+        >
+            Next →
+        </button>
+    </div>
+{/if}

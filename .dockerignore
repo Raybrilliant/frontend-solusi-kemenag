@@ -35,6 +35,7 @@ docker-compose*.yml
 # Documentation
 README*.md
 LICENSE
+api.yaml
 
 # Misc
 *.log

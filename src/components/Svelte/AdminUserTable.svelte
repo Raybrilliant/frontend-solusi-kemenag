@@ -57,6 +57,8 @@
     let loading = $state(true);
     let selected = $state<UserRow[]>([]);
     let searchTerm = $state("");
+    let pagination = $state({ page: 1, limit: 20, total: 0, totalPages: 1 });
+    let page = $state(1);
 
     let bulkOpen = $state(false);
     let bulkLoading = $state(false);
@@ -73,7 +75,7 @@
         loading = true;
         try {
             const [userRes, kategoriRes] = await Promise.all([
-                fetch(apiUrl),
+                fetch(`${apiUrl}?page=${page}&limit=${pagination.limit}`),
                 fetch(apiKategori),
             ]);
             const [userData, katData] = await Promise.all([
@@ -82,6 +84,7 @@
             ]);
 
             data = Array.isArray(userData) ? userData : (userData.data ?? []);
+            pagination = userData.pagination ?? pagination;
             kategoriList = Array.isArray(katData)
                 ? katData
                 : (katData.data ?? []);
@@ -91,6 +94,7 @@
     }
 
     $effect(() => {
+        page; // track page changes
         loadAll();
     });
 
@@ -187,6 +191,9 @@
         await fetch(`${apiUrl}/${row.id}`, { method: "DELETE" });
         data = data.filter((d) => d.id !== row.id);
         selected = selected.filter((s) => s.id !== row.id);
+        if (data.length === 0 && page > 1) {
+            page = page - 1;
+        }
     }
 
     function deleteSelected() {
@@ -199,6 +206,9 @@
             const ids = new Set(selected.map((r) => r.id));
             data = data.filter((d) => !ids.has(d.id));
             selected = [];
+            if (data.length === 0 && page > 1) {
+                page = page - 1;
+            }
         });
     }
 
@@ -1019,6 +1029,33 @@
         {/if}
     {/snippet}
 </Table>
+
+<!-- ── Pagination ───────────────────────────────────────── -->
+{#if pagination.totalPages > 1}
+    <div class="flex items-center gap-2 mt-4">
+        <button
+            onclick={() => {
+                page = Math.max(1, page - 1);
+            }}
+            disabled={page === 1}
+            class="px-3 py-1.5 border border-ink/20 text-xs font-bold uppercase hover:bg-ink/5 disabled:opacity-40 transition-colors cursor-pointer"
+        >
+            ← Prev
+        </button>
+        <span class="text-xs text-ink/50"
+            >Halaman {page} / {pagination.totalPages}</span
+        >
+        <button
+            onclick={() => {
+                page = Math.min(pagination.totalPages, page + 1);
+            }}
+            disabled={page === pagination.totalPages}
+            class="px-3 py-1.5 border border-ink/20 text-xs font-bold uppercase hover:bg-ink/5 disabled:opacity-40 transition-colors cursor-pointer"
+        >
+            Next →
+        </button>
+    </div>
+{/if}
 
 {#if selected.length > 0}
     <div

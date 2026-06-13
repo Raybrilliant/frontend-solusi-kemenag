@@ -13,17 +13,24 @@
     let selected = $state<any[]>([]);
     let searchTerm = $state("");
 
+    let pagination = $state({ page: 1, limit: 20, total: 0, totalPages: 1 });
+    let page = $state(1);
+
     // ── Fetch data & kategori ────────────────────────────
     $effect(() => {
+        page; // track page
         loading = true;
         Promise.all([
-            fetch(apiUrl).then((r) => r.json()),
+            fetch(`${apiUrl}?page=${page}&limit=${pagination.limit}`).then(
+                (r) => r.json(),
+            ),
             fetch(apiKategori).then((r) => r.json()),
         ])
             .then(([layananData, katData]) => {
                 data = Array.isArray(layananData)
                     ? layananData
                     : (layananData.data ?? []);
+                pagination = layananData.pagination ?? pagination;
                 kategoriList = Array.isArray(katData)
                     ? katData
                     : (katData.data ?? []);
@@ -107,6 +114,9 @@
         await fetch(`${apiUrl}/${row.id}`, { method: "DELETE" });
         data = data.filter((d) => d.id !== row.id);
         selected = selected.filter((s) => s.id !== row.id);
+        if (data.length === 0 && page > 1) {
+            page = page - 1;
+        }
     }
 
     function deleteSelected() {
@@ -119,6 +129,9 @@
             const ids = new Set(selected.map((r) => r.id));
             data = data.filter((d) => !ids.has(d.id));
             selected = [];
+            if (data.length === 0 && page > 1) {
+                page = page - 1;
+            }
         });
     }
 
@@ -262,6 +275,33 @@
         {/if}
     {/snippet}
 </Table>
+
+<!-- ── Pagination ───────────────────────────────────────── -->
+{#if pagination.totalPages > 1}
+    <div class="flex items-center gap-2 mt-4">
+        <button
+            onclick={() => {
+                page = Math.max(1, page - 1);
+            }}
+            disabled={page === 1}
+            class="px-3 py-1.5 border border-ink/20 text-xs font-bold uppercase hover:bg-ink/5 disabled:opacity-40 transition-colors cursor-pointer"
+        >
+            ← Prev
+        </button>
+        <span class="text-xs text-ink/50"
+            >Halaman {page} / {pagination.totalPages}</span
+        >
+        <button
+            onclick={() => {
+                page = Math.min(pagination.totalPages, page + 1);
+            }}
+            disabled={page === pagination.totalPages}
+            class="px-3 py-1.5 border border-ink/20 text-xs font-bold uppercase hover:bg-ink/5 disabled:opacity-40 transition-colors cursor-pointer"
+        >
+            Next →
+        </button>
+    </div>
+{/if}
 
 <!-- ── Bulk action bar ─────────────────────────────────── -->
 {#if selected.length > 0}
