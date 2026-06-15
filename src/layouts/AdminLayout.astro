@@ -15,33 +15,68 @@ let { title } = Astro.props;
         <title>Admin — {title}</title>
     </head>
 
-    <body class="flex h-screen overflow-hidden bg-cream">
-        <AdminSidebar />
-
-        <!-- ── Right column ──────────────────────────── -->
-        <div class="flex-1 flex flex-col overflow-hidden min-w-0">
-            <!-- Topbar -->
-            <header
-                class="shrink-0 h-16 bg-cream/90 backdrop-blur-sm border-b border-black/7 flex items-center gap-4 px-6"
+    <body class="h-screen overflow-hidden bg-cream">
+        <!-- ── Mobile blocker ─────────────────────────── -->
+        <div
+            class="md:hidden min-h-screen flex items-center justify-center px-6 bg-cream"
+        >
+            <div
+                class="max-w-sm w-full text-center bg-white border border-black/8 p-8 shadow-sm"
             >
-                <!-- Sidebar toggle -->
-                <button
-                    data-sidebar-toggle
-                    class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/6 transition-colors text-ink/60 hover:text-ink cursor-pointer"
-                    aria-label="Toggle sidebar"
+                <div
+                    class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-green/10 border border-green/20 flex items-center justify-center text-green"
                 >
-                    <svg viewBox="0 0 24 24" class="w-5 h-5">
+                    <svg viewBox="0 0 24 24" class="w-8 h-8">
                         <path
                             fill="currentColor"
-                            d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path>
+                            d="M17 19H7V5h10m0-2H7C5.89 3 5 3.89 5 5v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V5c0-1.11-.89-2-2-2m-5 15h2v1h-2zm-3-2h8V6H9z"
+                        ></path>
                     </svg>
-                </button>
-            </header>
+                </div>
+                <p
+                    class="text-[11px] font-extrabold uppercase tracking-[0.18em] text-green mb-3"
+                >
+                    Akses Terbatas
+                </p>
+                <h1 class="text-2xl font-extrabold text-ink leading-tight mb-3">
+                    Panel admin hanya tersedia di komputer atau laptop
+                </h1>
+                <p class="text-sm text-ink/50 leading-relaxed">
+                    Untuk pengalaman terbaik dan akses penuh ke seluruh fitur,
+                    silakan buka halaman admin menggunakan perangkat desktop.
+                </p>
+            </div>
+        </div>
 
-            <!-- Page content -->
-            <main class="flex-1 overflow-y-auto">
-                <slot />
-            </main>
+        <!-- ── Desktop admin layout ───────────────────── -->
+        <div class="hidden md:flex h-screen overflow-hidden">
+            <AdminSidebar />
+
+            <!-- ── Right column ──────────────────────────── -->
+            <div class="flex-1 flex flex-col overflow-hidden min-w-0">
+                <!-- Topbar -->
+                <header
+                    class="shrink-0 h-16 bg-cream/90 backdrop-blur-sm border-b border-black/7 flex items-center gap-4 px-6"
+                >
+                    <!-- Sidebar toggle -->
+                    <button
+                        data-sidebar-toggle
+                        class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/6 transition-colors text-ink/60 hover:text-ink cursor-pointer"
+                        aria-label="Toggle sidebar"
+                    >
+                        <svg viewBox="0 0 24 24" class="w-5 h-5">
+                            <path
+                                fill="currentColor"
+                                d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path>
+                        </svg>
+                    </button>
+                </header>
+
+                <!-- Page content -->
+                <main class="flex-1 overflow-y-auto">
+                    <slot />
+                </main>
+            </div>
         </div>
     </body>
 </html>
