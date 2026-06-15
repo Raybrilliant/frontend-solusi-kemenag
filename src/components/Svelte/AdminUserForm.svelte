@@ -15,6 +15,7 @@
     let password = $state("");
     let role = $state("operator");
     let categoryId = $state(0);
+    let kecamatan = $state("");
     let loading = $state(mode === "edit");
     let saving = $state(false);
     let toast = $state<{ type: string; msg: string } | null>(null);
@@ -39,6 +40,7 @@
                     nip = item.nip ?? "";
                     role = item.role ?? "operator";
                     categoryId = item.categoryId ?? 0;
+                    kecamatan = item.kecamatan ?? "";
                     loading = false;
                 })
                 .catch(() => {
@@ -84,6 +86,7 @@
                 nama: nama.trim(),
                 nip: nip.trim(),
                 role,
+                kecamatan: kecamatan.trim(),
             };
             if (password.trim()) {
                 payload.password = password.trim();
@@ -124,6 +127,7 @@
                 password = "";
                 role = "operator";
                 categoryId = 0;
+                kecamatan = "";
             }
         } catch (err) {
             showToast("error", (err as Error).message || "Terjadi kesalahan.");
@@ -243,6 +247,23 @@
                         {fieldErrors.password}
                     </p>
                 {/if}
+            </div>
+
+            <!-- Kecamatan -->
+            <div>
+                <label
+                    class="block text-xs font-bold text-ink/50 uppercase tracking-wider mb-2"
+                    >Kecamatan</label
+                >
+                <input
+                    type="text"
+                    placeholder="Contoh: Kanigaran"
+                    bind:value={kecamatan}
+                    class="w-full border bg-white/50 border-black/10 rounded-lg py-2.5 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors"
+                />
+                <p class="text-[10px] text-ink/30 mt-1">
+                    Kecamatan tempat user bertugas.
+                </p>
             </div>
 
             <!-- Role + Kategori (2-col) -->

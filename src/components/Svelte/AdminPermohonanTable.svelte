@@ -3,7 +3,7 @@
     import { createColumnHelper } from "@tanstack/table-core";
     import Table from "./Table.svelte";
 
-    let { apiUrl = "/api/admin/permohonan" } = $props();
+    let { apiUrl = "/api/admin/permohonan", userKecamatan = "" } = $props();
 
     let data = $state<any[]>([]);
     let loading = $state(true);
@@ -70,6 +70,7 @@
                 params.set("limit", String(limit));
                 if (tab !== "semua") params.set("status", tab);
                 if (q.trim()) params.set("q", q.trim());
+                if (userKecamatan) params.set("kecamatan", userKecamatan);
                 fetch(`${apiUrl}?${params}`)
                     .then((r) => r.json())
                     .then((res) => {

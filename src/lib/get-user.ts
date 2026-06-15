@@ -10,6 +10,7 @@ export interface AuthUser {
   role: UserRole;
   aktif: boolean;
   categoryId: number | null;
+  kecamatan: string;
 }
 
 export async function getUserFromToken(

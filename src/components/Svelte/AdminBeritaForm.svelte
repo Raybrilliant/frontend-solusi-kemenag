@@ -8,13 +8,14 @@
         beritaId = null,
         apiUrl = "/api/admin/berita",
         apiStatusUrl = "/api/admin/berita",
+        userKecamatan = "",
     } = $props();
 
     let judul = $state("");
     let slug = $state("");
     let ringkasan = $state("");
     let thumbnail = $state("");
-    let kategori = $state("umum");
+    let kategori = $state(userKecamatan ? `KUA ${userKecamatan}` : "umum");
     let status = $state("draft");
     let publishedAt = $state("");
     let thumbnailFile = $state(null);
@@ -29,7 +30,7 @@
     let toast = $state(null);
     let kategoriOptions = $state([]);
     let kategoriOpen = $state(false);
-    let kategoriQuery = $state("umum");
+    let kategoriQuery = $state(userKecamatan ? `KUA ${userKecamatan}` : "umum");
     let copied = $state(false);
 
     const isEdit = $derived(mode === "edit" && beritaId);

@@ -1,6 +1,8 @@
 ---
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import AdminBeritaTable from "../../../components/Svelte/AdminBeritaTable.svelte";
+
+const userKecamatan = Astro.locals.user?.kecamatan ?? "";
 ---
 
 <style>
@@ -48,6 +50,7 @@ import AdminBeritaTable from "../../../components/Svelte/AdminBeritaTable.svelte
             <AdminBeritaTable
                 apiUrl="/api/admin/berita"
                 apiStatusUrl="/api/admin/berita"
+                userKecamatan={userKecamatan}
                 client:load
             />
         </div>

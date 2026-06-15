@@ -1,6 +1,9 @@
 <script>
     import Icon from "@iconify/svelte";
-    let { apiUrl = "/api/internal/services" } = $props();
+    let { apiUrl = "/api/internal/services", userRole = "" } = $props();
+
+    const adminRoles = ["super_admin", "admin", "operator", "humas"];
+    const hasAdminAccess = $derived(adminRoles.includes(userRole));
 
     // ── State ────────────────────────────────────────────
     let services = $state([]);
@@ -114,6 +117,53 @@
     <!-- ── Service List ────────────────────────────────── -->
     {#if !activeService}
         <div class="space-y-6">
+            {#if hasAdminAccess}
+                <!-- Admin Panel Card -->
+                <a
+                    href="/admin"
+                    class="group block bg-linear-to-br from-green/5 to-green/10 border border-green/20 rounded p-6 hover:border-green/50 hover:shadow-lg hover:shadow-green/5 hover:-translate-y-1 transition-all duration-300 mb-6 max-w-5xl mx-auto"
+                >
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-12 h-12 rounded-xl bg-green/15 border border-green/25 flex items-center justify-center shrink-0 group-hover:bg-green/25 transition-colors"
+                        >
+                            <svg
+                                viewBox="0 0 24 24"
+                                class="w-6 h-6 text-green"
+                                fill="currentColor"
+                            >
+                                <path
+                                    d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"
+                                />
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-bold text-ink text-lg">
+                                Panel Admin
+                            </h3>
+                            <p class="text-sm text-ink/50 leading-relaxed">
+                                Kelola layanan, permohonan, dan pengaturan
+                                lainnya.
+                            </p>
+                        </div>
+                        <div
+                            class="flex items-center gap-1 text-green text-sm font-semibold shrink-0"
+                        >
+                            <span class="hidden sm:inline">Buka Panel</span>
+                            <svg
+                                viewBox="0 0 24 24"
+                                class="w-4 h-4"
+                                fill="currentColor"
+                            >
+                                <path
+                                    d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"
+                                />
+                            </svg>
+                        </div>
+                    </div>
+                </a>
+            {/if}
+
             <!-- Cards -->
             <div
                 class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto"

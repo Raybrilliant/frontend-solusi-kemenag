@@ -3,8 +3,11 @@
     import { createColumnHelper } from "@tanstack/table-core";
     import Table from "./Table.svelte";
 
-    let { apiUrl = "/api/admin/berita", apiStatusUrl = "/api/admin/berita" } =
-        $props();
+    let {
+        apiUrl = "/api/admin/berita",
+        apiStatusUrl = "/api/admin/berita",
+        userKecamatan = "",
+    } = $props();
 
     let data = $state([]);
     let loading = $state(true);
@@ -33,6 +36,11 @@
         setTimeout(() => (toast = null), 3500);
     }
 
+    // ── Kecamatan override ──────────────────────────────
+    const kecamatanKategori = $derived(
+        userKecamatan ? `KUA ${userKecamatan}` : "",
+    );
+
     // ── Server-side fetch dengan debounce ────────────────
     let _debounce;
 
@@ -51,7 +59,11 @@
                 });
                 if (q.trim()) params.set("q", q.trim());
                 if (s !== "all") params.set("status", s);
-                if (c !== "all") params.set("kategori", c);
+                if (kecamatanKategori) {
+                    params.set("kategori", kecamatanKategori);
+                } else if (c !== "all") {
+                    params.set("kategori", c);
+                }
                 fetch(`${apiUrl}?${params}`)
                     .then((r) => r.json())
                     .then((res) => {
@@ -204,13 +216,22 @@
             <option value="published">Published</option>
             <option value="archived">Archived</option>
         </select>
-        <select
-            bind:value={categoryFilter}
-            class="border bg-white/50 border-black/10 rounded py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors"
-        >
-            <option value="all">Semua kategori</option>
-            {#each categories as k}<option value={k}>{k}</option>{/each}
-        </select>
+        {#if kecamatanKategori}
+            <span
+                class="inline-flex items-center gap-1.5 px-3 py-2 border border-green/20 bg-green/5 text-green text-sm font-semibold rounded"
+            >
+                <span class="w-1.5 h-1.5 rounded-full bg-green"></span>
+                KUA {userKecamatan}
+            </span>
+        {:else}
+            <select
+                bind:value={categoryFilter}
+                class="border bg-white/50 border-black/10 rounded py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors"
+            >
+                <option value="all">Semua kategori</option>
+                {#each categories as k}<option value={k}>{k}</option>{/each}
+            </select>
+        {/if}
     </div>
     <a
         href="/admin/berita/tambah"

@@ -8,6 +8,7 @@ const { url } = Astro;
 const isTambah = slug === "tambah";
 const beritaId = isTambah ? null : Number(url.searchParams.get("id"));
 const pageTitle = isTambah ? "Tambah Berita" : "Edit Berita";
+const userKecamatan = Astro.locals.user?.kecamatan ?? "";
 ---
 
 <style>
@@ -47,15 +48,28 @@ const pageTitle = isTambah ? "Tambah Berita" : "Edit Berita";
                 <a href="/admin" class="hover:text-ink transition-colors">
                     Dashboard
                 </a>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                >
                     <path
                         d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"
                     ></path>
                 </svg>
-                <a href="/admin/berita" class="hover:text-ink transition-colors">
+                <a
+                    href="/admin/berita"
+                    class="hover:text-ink transition-colors"
+                >
                     Berita
                 </a>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                >
                     <path
                         d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"
                     ></path>
@@ -82,6 +96,7 @@ const pageTitle = isTambah ? "Tambah Berita" : "Edit Berita";
                 client:load
                 mode={isTambah ? "tambah" : "edit"}
                 {beritaId}
+                userKecamatan={userKecamatan}
                 apiUrl="/api/admin/berita"
                 apiStatusUrl="/api/admin/berita"
             />

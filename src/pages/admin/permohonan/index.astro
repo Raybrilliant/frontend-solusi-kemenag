@@ -5,6 +5,7 @@ import AdminTambahPermohonan from "../../../components/Svelte/AdminTambahPermoho
 
 const userRole = Astro.locals.user?.role ?? "";
 const userCategoryId = Astro.locals.user?.categoryId ?? null;
+const userKecamatan = Astro.locals.user?.kecamatan ?? "";
 const canAdd =
     userRole === "super_admin" ||
     userRole === "admin" ||
@@ -63,7 +64,11 @@ const canAdd =
 
         <!-- ── Table ──────────────────────────────────── -->
         <div data-anim="content" class="px-8 py-6">
-            <AdminPermohonanTable apiUrl="/api/admin/permohonan" client:load />
+            <AdminPermohonanTable
+                apiUrl="/api/admin/permohonan"
+                userKecamatan={userKecamatan}
+                client:load
+            />
         </div>
     </div>
 </AdminLayout>

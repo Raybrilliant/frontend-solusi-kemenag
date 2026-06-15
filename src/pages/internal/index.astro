@@ -1,6 +1,8 @@
 ---
 import InternalLayout from "../../layouts/InternalLayout.astro";
 import InternalLayananForm from "../../components/Svelte/InternalLayananForm.svelte";
+
+const userRole = Astro.locals.user?.role ?? "";
 ---
 
 <style>
@@ -65,7 +67,7 @@ import InternalLayananForm from "../../components/Svelte/InternalLayananForm.sve
 
         <!-- ── Svelte Component ──────────────────────── -->
         <div data-anim="content">
-            <InternalLayananForm client:load />
+            <InternalLayananForm client:load userRole={userRole} />
         </div>
     </div>
 </InternalLayout>
