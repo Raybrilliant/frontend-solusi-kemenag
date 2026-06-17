@@ -16,8 +16,8 @@ let subServicesWithIcon: any[] = [];
 
 try {
     const [catRes, layRes] = await Promise.all([
-        fetch(`${BACKEND_URL}/api/v1/categories/`),
-        fetch(`${BACKEND_URL}/api/v1/layanan/`),
+        fetch(`${BACKEND_URL}/api/v1/categories/?limit=500`),
+        fetch(`${BACKEND_URL}/api/v1/layanan/?limit=500`),
     ]);
 
     const categories = (await catRes.json()).data ?? [];
