@@ -3,25 +3,52 @@
     import { fly, fade } from "svelte/transition";
     import { cubicOut } from "svelte/easing";
 
-    let { services, subServices } = $props();
+    let { services, apiUrl = "/api/layanan" } = $props();
 
     let layout = $state(/** @type {'grid'|'list'} */ ("grid"));
     let open = $state(false);
     let activeServiceId = $state(null);
+    let subServicesByCategory = $state({});
+    let loadingCategoryId = $state(null);
+    let loadError = $state("");
 
     const activeService = $derived(
         services.find((s) => s.id === activeServiceId),
     );
-    const relatedSubs = $derived(
-        subServices.filter((s) => s.relatedServiceId === activeServiceId),
-    );
+    const relatedSubs = $derived(subServicesByCategory[activeServiceId] ?? []);
+    const isLoadingActive = $derived(loadingCategoryId === activeServiceId);
 
-    function openModal(id) {
+    async function loadSubServices(id) {
+        if (subServicesByCategory[id]) return;
+
+        loadingCategoryId = id;
+        loadError = "";
+        try {
+            const res = await fetch(`${apiUrl}?categoryId=${id}&limit=30`);
+            const json = await res.json();
+            subServicesByCategory = {
+                ...subServicesByCategory,
+                [id]: json?.data ?? [],
+            };
+        } catch {
+            loadError = "Gagal memuat daftar layanan. Silakan coba lagi.";
+            subServicesByCategory = {
+                ...subServicesByCategory,
+                [id]: [],
+            };
+        } finally {
+            loadingCategoryId = null;
+        }
+    }
+
+    async function openModal(id) {
         activeServiceId = id;
         open = true;
+        await loadSubServices(id);
     }
     function closeModal() {
         open = false;
+        loadError = "";
     }
 
     $effect(() => {
@@ -62,7 +89,6 @@
 
 <svelte:window onkeydown={(e) => e.key === "Escape" && closeModal()} />
 
-<!-- ── Header + Toggle ────────────────────────────────── -->
 <div class="flex items-center gap-3 md:gap-5 my-5">
     <h3 class="text-base md:text-xl font-semibold uppercase shrink-0">
         Jelajahi Layanan Kami
@@ -90,7 +116,6 @@
     </div>
 </div>
 
-<!-- ── Cards ──────────────────────────────────────────── -->
 {#key layout}
     <section
         use:inView
@@ -101,7 +126,6 @@
     >
         {#each services as service, i}
             {#if layout === "grid"}
-                <!-- Grid card -->
                 <div
                     class="card col-span-1 border border-gray-300 bg-white flex flex-col group cursor-pointer"
                     style="--delay: {i * 90}ms"
@@ -113,9 +137,22 @@
                 >
                     <div class="p-3 md:p-5 flex flex-col flex-1">
                         {#if service.iconBody?.includes(":")}
-                            <Icon icon={service.iconBody} width="36" height="36" class="mb-2 md:mb-3 md:w-13 md:h-13" style="color:#0F6B44" />
+                            <Icon
+                                icon={service.iconBody}
+                                width="36"
+                                height="36"
+                                class="mb-2 md:mb-3 md:w-13 md:h-13"
+                                style="color:#0F6B44"
+                            />
                         {:else}
-                            <svg viewBox="0 0 24 24" width="36" height="36" fill="currentColor" class="mb-2 md:mb-3 md:w-13 md:h-13" style="color:#0F6B44">
+                            <svg
+                                viewBox="0 0 24 24"
+                                width="36"
+                                height="36"
+                                fill="currentColor"
+                                class="mb-2 md:mb-3 md:w-13 md:h-13"
+                                style="color:#0F6B44"
+                            >
                                 {@html service.iconBody}
                             </svg>
                         {/if}
@@ -142,25 +179,24 @@
                         <div
                             class="bg-yellow px-2 md:px-3 flex items-center border-l border-ink/10"
                         >
-                            <span class="block group-hover:hidden">
-                                <Icon
+                            <span class="block group-hover:hidden"
+                                ><Icon
                                     icon="mdi:arrow-right"
                                     width="14"
                                     height="14"
-                                />
-                            </span>
-                            <span class="hidden group-hover:block">
-                                <Icon
+                                /></span
+                            >
+                            <span class="hidden group-hover:block"
+                                ><Icon
                                     icon="mdi:arrow-top-right"
                                     width="14"
                                     height="14"
-                                />
-                            </span>
+                                /></span
+                            >
                         </div>
                     </div>
                 </div>
             {:else}
-                <!-- List card -->
                 <div
                     class="card border border-ink/10 bg-white flex items-center gap-3 md:gap-5 group cursor-pointer hover:border-green/40 transition-colors"
                     style="--delay: {i * 60}ms"
@@ -174,9 +210,20 @@
                         class="w-12 md:w-16 h-12 md:h-16 bg-green/8 flex items-center justify-center shrink-0 self-stretch border-r border-ink/8"
                     >
                         {#if service.iconBody?.includes(":")}
-                            <Icon icon={service.iconBody} width="22" height="22" style="color:#0F6B44" />
+                            <Icon
+                                icon={service.iconBody}
+                                width="22"
+                                height="22"
+                                style="color:#0F6B44"
+                            />
                         {:else}
-                            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" style="color:#0F6B44">
+                            <svg
+                                viewBox="0 0 24 24"
+                                width="22"
+                                height="22"
+                                fill="currentColor"
+                                style="color:#0F6B44"
+                            >
                                 {@html service.iconBody}
                             </svg>
                         {/if}
@@ -207,20 +254,20 @@
                         <div
                             class="w-10 md:w-12 h-full flex items-center justify-center border-l border-ink/8 bg-yellow"
                         >
-                            <span class="block group-hover:hidden">
-                                <Icon
+                            <span class="block group-hover:hidden"
+                                ><Icon
                                     icon="mdi:arrow-right"
                                     width="13"
                                     height="13"
-                                />
-                            </span>
-                            <span class="hidden group-hover:block">
-                                <Icon
+                                /></span
+                            >
+                            <span class="hidden group-hover:block"
+                                ><Icon
                                     icon="mdi:arrow-top-right"
                                     width="13"
                                     height="13"
-                                />
-                            </span>
+                                /></span
+                            >
                         </div>
                     </div>
                 </div>
@@ -229,7 +276,6 @@
     </section>
 {/key}
 
-<!-- ── Bottom Sheet Modal ─────────────────────────────── -->
 {#if open}
     <div
         class="fixed inset-0 z-40 bg-ink/50"
@@ -242,12 +288,10 @@
         class="fixed bottom-0 left-0 right-0 z-50 bg-cream rounded-t-2xl shadow-2xl max-h-[85vh] md:max-h-[75vh] flex flex-col"
         transition:fly={{ y: 400, duration: 420, easing: cubicOut }}
     >
-        <!-- Handle -->
         <div class="flex justify-center pt-3 pb-1 shrink-0">
             <div class="w-10 h-1 rounded-full bg-ink/20"></div>
         </div>
 
-        <!-- Header -->
         {#if activeService}
             <div
                 class="px-4 md:px-6 py-3 md:py-4 border-b border-ink/10 flex items-center gap-3 md:gap-4 shrink-0"
@@ -257,9 +301,18 @@
                     style="color:#0F6B44"
                 >
                     {#if activeService.iconBody?.includes(":")}
-                        <Icon icon={activeService.iconBody} width="20" height="20" />
+                        <Icon
+                            icon={activeService.iconBody}
+                            width="20"
+                            height="20"
+                        />
                     {:else}
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                        <svg
+                            viewBox="0 0 24 24"
+                            width="20"
+                            height="20"
+                            fill="currentColor"
+                        >
                             {@html activeService.iconBody}
                         </svg>
                     {/if}
@@ -286,23 +339,29 @@
             </div>
         {/if}
 
-        <!-- Body -->
         <div class="overflow-y-auto flex-1 px-4 md:px-6 py-3 md:py-4 space-y-2">
-            {#if relatedSubs.length === 0}
+            {#if isLoadingActive}
+                <div class="py-10 text-center">
+                    <div
+                        class="w-8 h-8 mx-auto border-2 border-green border-t-transparent rounded-full animate-spin"
+                    ></div>
+                    <p class="text-sm opacity-50 mt-3">Memuat layanan...</p>
+                </div>
+            {:else if loadError}
+                <div class="py-10 text-center">
+                    <p class="text-sm text-red-500 mb-4">{loadError}</p>
+                    <button
+                        onclick={() => loadSubServices(activeServiceId)}
+                        class="inline-flex items-center gap-2 bg-green text-cream text-xs font-bold uppercase px-5 py-3 hover:bg-yellow hover:text-ink transition-colors cursor-pointer"
+                    >
+                        Coba Lagi
+                    </button>
+                </div>
+            {:else if relatedSubs.length === 0}
                 <div class="py-10 text-center">
                     <p class="text-sm opacity-50 mb-4">
                         Belum ada layanan turunan tersedia.
                     </p>
-                    <button
-                        class="inline-flex items-center gap-2 bg-green text-cream text-xs font-bold uppercase px-5 py-3 hover:bg-yellow hover:text-ink transition-colors cursor-pointer"
-                    >
-                        Kunjungi Halaman
-                        <Icon
-                            icon="mdi:arrow-top-right"
-                            width="13"
-                            height="13"
-                        />
-                    </button>
                 </div>
             {:else}
                 {#each relatedSubs as sub, i}
@@ -316,60 +375,97 @@
                             style="color:#0F6B44"
                         >
                             {#if sub.iconBody?.includes(":")}
-                                <Icon icon={sub.iconBody} width="16" height="16" />
+                                <Icon
+                                    icon={sub.iconBody}
+                                    width="16"
+                                    height="16"
+                                />
                             {:else}
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    width="16"
+                                    height="16"
+                                    fill="currentColor"
+                                >
                                     {@html sub.iconBody}
                                 </svg>
                             {/if}
                         </div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-sm font-semibold leading-tight">
-                                {sub.title}
-                            </p>
-                            <p
-                                class="text-xs opacity-50 mt-0.5 truncate hidden sm:block"
+                            <h4
+                                class="text-sm md:text-base font-bold uppercase leading-tight mb-1"
                             >
+                                {sub.title}
+                            </h4>
+                            <p class="text-xs text-gray-500 line-clamp-2">
                                 {sub.description}
                             </p>
-                            <div class="flex flex-wrap gap-1 mt-1">
-                                <span
-                                    class="text-[10px] font-medium uppercase text-white bg-green px-2 py-0.5"
-                                    >{sub.progress}</span
-                                >
-                                <span
-                                    class="text-[10px] font-medium uppercase text-white bg-green px-2 py-0.5"
-                                    >{sub.cost}</span
-                                >
-                            </div>
                         </div>
                         <div
-                            class="w-7 h-7 bg-yellow items-center justify-center shrink-0 opacity-0 group-hover/item:opacity-100 transition-opacity hidden sm:flex"
+                            class="hidden md:flex flex-col items-end gap-1 shrink-0"
+                        >
+                            <span
+                                class="text-[10px] font-bold uppercase px-2 py-1 bg-ink/6"
+                                >{sub.progress}</span
+                            >
+                            <span
+                                class="text-[10px] font-bold uppercase px-2 py-1 bg-green/10 text-green"
+                                >{sub.cost}</span
+                            >
+                        </div>
+                        <div
+                            class="w-8 h-8 bg-yellow flex items-center justify-center shrink-0 group-hover/item:translate-x-0.5 transition-transform"
                         >
                             <Icon
                                 icon="mdi:arrow-top-right"
-                                width="12"
-                                height="12"
+                                width="13"
+                                height="13"
                             />
                         </div>
                     </a>
                 {/each}
             {/if}
         </div>
-
-        <div class="shrink-0 h-4 md:h-6"></div>
     </div>
 {/if}
 
 <style>
-    .lihat-detail {
-        background: linear-gradient(to right, #ffffff 50%, #f6c744 50%);
-        background-size: 200% 100%;
-        background-position: left center;
-        transition: background-position 0.4s ease;
+    .card {
+        opacity: 0;
+        transform: translateY(20px);
+        transition:
+            opacity 0.45s ease,
+            transform 0.45s ease,
+            border-color 0.2s ease,
+            box-shadow 0.2s ease;
+        transition-delay: var(--delay);
     }
-    :global(.group:hover) .lihat-detail {
+
+    .card:global(.visible) {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .card:hover {
+        border-color: rgba(246, 199, 68, 0.55);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+    }
+
+    .lihat-detail,
+    .list-action {
+        background-image: linear-gradient(#f6c744, #f6c744);
+        background-repeat: no-repeat;
+        background-size: 0% 100%;
         background-position: right center;
+        transition:
+            background-size 0.28s ease,
+            color 0.2s ease;
+    }
+
+    .card:hover .lihat-detail,
+    .card:hover .list-action {
+        background-size: 100% 100%;
+        color: #111111;
     }
 
     @keyframes slideUp {
@@ -381,35 +477,5 @@
             opacity: 1;
             transform: translateY(0);
         }
-    }
-
-    .list-action {
-        background: linear-gradient(to right, #ffffff 50%, #f6c744 50%);
-        background-size: 200% 100%;
-        background-position: left center;
-        transition: background-position 0.4s ease;
-    }
-    :global(.group:hover) .list-action {
-        background-position: right center;
-    }
-
-    @keyframes cardIn {
-        from {
-            opacity: 0;
-            transform: translateY(32px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .card {
-        opacity: 0;
-    }
-
-    .card:global(.visible) {
-        animation: cardIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) var(--delay, 0ms)
-            both;
     }
 </style>

@@ -3,31 +3,57 @@
     import { fly } from "svelte/transition";
     import { cubicOut } from "svelte/easing";
 
-    let { services, subServices } = $props();
+    let { apiUrl = "/api/layanan-search" } = $props();
 
     let query = $state("");
     let focused = $state(false);
     let rootEl = $state(null);
+    let loading = $state(false);
+    let results = $state([]);
 
     const isOpen = $derived(query.trim().length >= 3 && focused);
 
+    let _debounce;
+    $effect(() => {
+        const q = query.trim();
+        clearTimeout(_debounce);
+
+        if (q.length < 3) {
+            results = [];
+            loading = false;
+            return;
+        }
+
+        _debounce = setTimeout(async () => {
+            loading = true;
+            try {
+                const res = await fetch(
+                    `${apiUrl}?q=${encodeURIComponent(q)}&limit=30`,
+                );
+                const json = await res.json();
+                results = json?.data ?? [];
+            } catch {
+                results = [];
+            } finally {
+                loading = false;
+            }
+        }, 300);
+
+        return () => clearTimeout(_debounce);
+    });
+
     const grouped = $derived.by(() => {
         if (query.trim().length < 3) return [];
-        const q = query.trim().toLowerCase();
-
-        const matched = subServices.filter(
-            (s) =>
-                s.title.toLowerCase().includes(q) ||
-                s.description.toLowerCase().includes(q),
-        );
 
         const map = new Map();
-        for (const sub of matched) {
+        for (const sub of results) {
             if (!map.has(sub.relatedServiceId)) {
                 map.set(sub.relatedServiceId, {
-                    service: services.find(
-                        (s) => s.id === sub.relatedServiceId,
-                    ),
+                    service: {
+                        id: sub.relatedServiceId,
+                        title: sub.categoryTitle,
+                        iconBody: sub.categoryIconBody,
+                    },
                     items: [],
                 });
             }
@@ -43,7 +69,7 @@
     function highlight(text, q) {
         if (!q || q.length < 3) return text;
         const safe = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        return text.replace(
+        return String(text ?? "").replace(
             new RegExp(`(${safe})`, "gi"),
             '<mark style="background:#F6C744;padding:0 2px;font-style:normal">$1</mark>',
         );
@@ -67,7 +93,6 @@
     bind:this={rootEl}
     class="relative md:border-2 md:border-ink md:bg-white/60 md:p-5"
 >
-    <!-- ── Input ─────────────────────────────────────────── -->
     <div class="relative">
         <Icon
             icon="mdi:magnify"
@@ -81,8 +106,7 @@
             placeholder="Cari layanan... (minimal 3 huruf)"
             bind:value={query}
             onfocus={() => (focused = true)}
-            class="w-full pl-12 pr-10 py-4 border-2 border-ink/10 bg-white text-sm outline-none
-             focus:border-green transition-colors"
+            class="w-full pl-12 pr-10 py-4 border-2 border-ink/10 bg-white text-sm outline-none focus:border-green transition-colors"
         />
         {#if query.length > 0}
             <button
@@ -101,13 +125,19 @@
         {/if}
     </div>
 
-    <!-- ── Dropdown ───────────────────────────────────────── -->
     {#if isOpen}
         <div
             class="absolute top-full left-0 right-0 z-50 bg-white border border-ink/10 shadow-xl mt-1 max-h-120 overflow-y-auto"
             transition:fly={{ y: -8, duration: 200, easing: cubicOut }}
         >
-            {#if grouped.length === 0}
+            {#if loading}
+                <div class="px-5 py-10 text-center">
+                    <div
+                        class="w-8 h-8 mx-auto border-2 border-green border-t-transparent rounded-full animate-spin"
+                    ></div>
+                    <p class="text-sm opacity-50 mt-3">Mencari layanan...</p>
+                </div>
+            {:else if grouped.length === 0}
                 <div class="px-5 py-10 text-center">
                     <Icon
                         icon="mdi:magnify"
@@ -122,7 +152,6 @@
                 </div>
             {:else}
                 {#each grouped as group}
-                    <!-- Group header -->
                     <div
                         class="flex items-center gap-3 px-5 py-2.5 border-b border-ink/8 sticky top-0 bg-ink/3"
                     >
@@ -130,7 +159,12 @@
                             <div
                                 style="color:#0F6B44;width:16px;height:16px;display:flex;align-items:center;shrink-0:true"
                             >
-                                <Icon icon={group.service.iconBody || "mdi:folder"} width="16" height="16" />
+                                <Icon
+                                    icon={group.service.iconBody ||
+                                        "mdi:folder"}
+                                    width="16"
+                                    height="16"
+                                />
                             </div>
                             <span
                                 class="text-xs font-black uppercase tracking-wider"
@@ -145,8 +179,7 @@
                         </span>
                     </div>
 
-                    <!-- Items -->
-                    {#each group.items as sub, idx}
+                    {#each group.items as sub}
                         <a
                             href={`/sublayanan/${sub.id}`}
                             onclick={close}
@@ -158,15 +191,17 @@
                             onmouseleave={(e) =>
                                 (e.currentTarget.style.background = "white")}
                         >
-                            <!-- Icon -->
                             <div
                                 class="w-9 h-9 flex items-center justify-center shrink-0"
                                 style="background:rgba(15,107,68,.08);color:#0F6B44"
                             >
-                                <Icon icon={sub.iconBody || "mdi:folder"} width="16" height="16" />
+                                <Icon
+                                    icon={sub.iconBody || "mdi:folder"}
+                                    width="16"
+                                    height="16"
+                                />
                             </div>
 
-                            <!-- Text -->
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm font-semibold leading-tight">
                                     {@html highlight(sub.title, query)}
@@ -179,7 +214,6 @@
                                 </p>
                             </div>
 
-                            <!-- Badges + Arrow -->
                             <div class="flex items-center gap-1.5 shrink-0">
                                 <span
                                     class="text-[10px] font-bold uppercase px-2 py-1"
@@ -206,7 +240,6 @@
                     {/each}
                 {/each}
 
-                <!-- Total found -->
                 <div
                     class="px-5 py-3 border-t border-ink/8 text-center"
                     style="opacity:.4"

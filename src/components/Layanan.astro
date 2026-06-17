@@ -1,55 +1,28 @@
 ---
 import LayananSection from "./Svelte/LayananSection.svelte";
 import SearchLayanan from "./Svelte/SearchLayanan.svelte";
-import mdiData from "@iconify-json/mdi/icons.json";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
-function iconBody(name: string): string {
-    const key = name.includes(":") ? name.split(":")[1] : name;
-    return (mdiData.icons as Record<string, { body: string }>)[key]?.body ?? "";
-}
-
-// Fetch categories and layanan from backend
 let servicesWithIcon: any[] = [];
-let subServicesWithIcon: any[] = [];
 
 try {
-    const [catRes, layRes] = await Promise.all([
-        fetch(`${BACKEND_URL}/api/v1/categories/?limit=500`),
-        fetch(`${BACKEND_URL}/api/v1/layanan/?limit=500`),
-    ]);
-
+    const catRes = await fetch(`${BACKEND_URL}/api/v1/categories/?limit=30`);
     const categories = (await catRes.json()).data ?? [];
-    const layanan = (await layRes.json()).data ?? [];
 
     servicesWithIcon = categories.map((s: any) => ({
         ...s,
         iconBody: s.icon ?? "",
     }));
-    subServicesWithIcon = layanan.map((s: any) => ({
-        ...s,
-        iconBody: s.icon ?? "",
-        relatedServiceId: s.categoryId,
-        progress: `${s.slaDuration} ${s.slaUnit === "menit" ? "Menit" : s.slaUnit === "jam" ? "Jam" : "Hari"}`,
-    }));
 } catch (e) {
-    console.error("Failed to fetch services:", e);
+    console.error("Failed to fetch service categories:", e);
 }
 ---
 
 <!-- Search Section -->
 <section class="mt-4 md:-mt-10 bg-cream z-30 relative">
-    <SearchLayanan
-        services={servicesWithIcon}
-        subServices={subServicesWithIcon}
-        client:load
-    />
+    <SearchLayanan apiUrl="/api/layanan-search" client:load />
 </section>
 
 <!-- Service List -->
-<LayananSection
-    services={servicesWithIcon}
-    subServices={subServicesWithIcon}
-    client:load
-/>
+<LayananSection services={servicesWithIcon} apiUrl="/api/layanan" client:load />
