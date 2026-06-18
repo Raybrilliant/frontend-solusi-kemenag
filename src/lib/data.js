@@ -19,8 +19,8 @@ export const agenPerubahan = [
     unitKerja: "KUA Kanigaran Kota Probolinggo",
     tahun: 2026,
     foto: "/agen-perubahan/2026/2.png",
-    inovasi: "Program Kampung Zakat",
-    deskripsi: "Program Kampung Zakat merupakan inovasi pemberdayaan masyarakat berbasis zakat yang bertujuan untuk meningkatkan kesejahteraan dan kemandirian ekonomi masyarakat di wilayah sasaran melalui pengelolaan dana zakat yang terintegrasi, produktif, dan berkelanjutan. Program ini mengkolaborasikan berbagai pemangku kepentingan, seperti pemerintah, lembaga pengelola zakat, penyuluh agama, dan masyarakat dalam pelaksanaan kegiatan pemberdayaan di bidang ekonomi, pendidikan, kesehatan, sosial, dan keagamaan. Melalui Program Kampung Zakat, masyarakat tidak hanya menerima bantuan konsumtif, tetapi juga memperoleh pendampingan dan pembinaan untuk meningkatkan kapasitas, produktivitas, serta kualitas hidup sehingga tercipta masyarakat yang mandiri, sejahtera, dan berdaya saing.",
+    inovasi: "Gawes",
+    deskripsi: "GAWES (Gerakan Wakaf, Infak, dan Sedekah) adalah kegiatan yang bertujuan menumbuhkan semangat berbagi dan kepedulian sosial melalui penghimpunan serta penyaluran dana wakaf, infak, dan sedekah. Program ini mengajak seluruh masyarakat untuk berpartisipasi dalam membantu sesama, mendukung kegiatan keagamaan, pendidikan, dan sosial kemasyarakatan, sehingga tercipta manfaat yang berkelanjutan serta meningkatkan kesejahteraan umat."
   },
   {
     id: 3,
@@ -94,7 +94,7 @@ export const agenPerubahanInovasi = [
   {
     id: 2,
     relatedTo: 2,
-    inovasi: "Program Kampung Zakat",
+    inovasi: "Gawes",
     latarBelakang: `
     `,
     tujuan: [
