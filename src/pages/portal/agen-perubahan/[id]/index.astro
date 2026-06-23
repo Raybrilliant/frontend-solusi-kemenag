@@ -219,22 +219,22 @@ const pageDescription = notFound
                 </div>
             </article>
 
-            {#if hasTujuan}
-            <article data-reveal="left" data-delay="2" class="border border-black/8 bg-white/70 p-6 md:p-7">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-1 h-6 bg-yellow shrink-0"></div>
-                    <h2 class="text-xl font-extrabold uppercase tracking-tight text-ink">Tujuan Inovasi</h2>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {d.tujuan.map((item, index) => (
-                        <div class="border border-black/6 bg-cream/80 px-4 py-3 flex gap-3 items-start">
-                            <span class="w-7 h-7 shrink-0 flex items-center justify-center bg-green text-white text-xs font-bold">{index + 1}</span>
-                            <p class="text-sm text-ink/65 leading-relaxed">{item}</p>
-                        </div>
-                    ))}
-                </div>
-            </article>
-            {/if}
+            {hasTujuan && (
+                <article data-reveal="left" data-delay="2" class="border border-black/8 bg-white/70 p-6 md:p-7">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-1 h-6 bg-yellow shrink-0"></div>
+                        <h2 class="text-xl font-extrabold uppercase tracking-tight text-ink">Tujuan Inovasi</h2>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {d.tujuan.map((item, index) => (
+                            <div class="border border-black/6 bg-cream/80 px-4 py-3 flex gap-3 items-start">
+                                <span class="w-7 h-7 shrink-0 flex items-center justify-center bg-green text-white text-xs font-bold">{index + 1}</span>
+                                <p class="text-sm text-ink/65 leading-relaxed">{item}</p>
+                            </div>
+                        ))}
+                    </div>
+                </article>
+            )}
         </div>
 
         <aside data-reveal="right" data-delay="2" class="border border-black/8 bg-white/70 p-6 md:p-7 h-fit">
@@ -263,8 +263,8 @@ const pageDescription = notFound
         </aside>
     </section>
 
-    {#if hasHasil}
-    <section data-reveal="up" data-delay="1" class="pb-10">
+    {hasHasil && (
+        <section data-reveal="up" data-delay="1" class="pb-10">
         <div class="flex items-center gap-3 mb-5">
             <div class="w-1 h-6 bg-green shrink-0"></div>
             <h2 class="text-xl font-extrabold uppercase tracking-tight text-ink">Before &amp; After</h2>
@@ -314,9 +314,9 @@ const pageDescription = notFound
                     </article>
                 </div>
             ))}
-        </div>
-    </section>
-    {/if}
+            </div>
+        </section>
+    )}
     <script>
         function initAgenPerubahanDetailReveal() {
             const items = document.querySelectorAll("[data-reveal]");
