@@ -3,10 +3,23 @@
     import Icon from "@iconify/svelte";
     import { createColumnHelper } from "@tanstack/table-core";
     import Table from "./Table.svelte";
-    import {
-        getAgenPerubahanMockList,
-        type AgenPerubahanItem,
-    } from "../../lib/agen-perubahan-mock";
+    type AgenPerubahanItem = {
+        id: string;
+        nama: string;
+        jabatan: string;
+        unitKerja: string;
+        tahun: number;
+        foto: string;
+        inovasi: string;
+        deskripsi: string;
+        latarBelakang: string;
+        tujuan: string[];
+        hasil: Array<{
+            sebelum: { foto: string; deskripsi: string };
+            sesudah: { foto: string; deskripsi: string };
+        }>;
+        updatedAt?: string;
+    };
 
     let { apiUrl = "/api/admin/agen-perubahan" } = $props();
 
@@ -14,7 +27,6 @@
     let loading = $state(true);
     let searchTerm = $state("");
     let toast = $state<{ type: string; msg: string } | null>(null);
-    let usingMock = $state(false);
     let limit = $state(20);
     let pagination = $state({ page: 1, limit: 20, total: 0, totalPages: 1 });
     let page = $state(1);
@@ -32,7 +44,9 @@
             nama: String(item?.nama ?? item?.name ?? "Agen Perubahan"),
             jabatan: String(item?.jabatan ?? item?.position ?? ""),
             unitKerja: String(item?.unitKerja ?? item?.workUnit ?? ""),
-            tahun: Number(item?.tahun ?? item?.year ?? new Date().getFullYear()),
+            tahun: Number(
+                item?.tahun ?? item?.year ?? new Date().getFullYear(),
+            ),
             foto: String(item?.foto ?? item?.photo ?? item?.image ?? ""),
             inovasi: String(item?.inovasi ?? item?.innovation ?? ""),
             deskripsi: String(item?.deskripsi ?? item?.description ?? ""),
@@ -46,36 +60,6 @@
             updatedAt:
                 item?.updatedAt ?? item?.updated_at ?? item?.createdAt ?? "",
         };
-    }
-
-    function applyMock(query = "") {
-        const all = getAgenPerubahanMockList().map(normalizeItem);
-        const q = query.trim().toLowerCase();
-        const filtered = !q
-            ? all
-            : all.filter((item) =>
-                  [
-                      item.id,
-                      item.nama,
-                      item.jabatan,
-                      item.unitKerja,
-                      item.inovasi,
-                      item.deskripsi,
-                  ]
-                      .join(" ")
-                      .toLowerCase()
-                      .includes(q),
-              );
-
-        data = filtered;
-        pagination = {
-            page: 1,
-            limit: filtered.length || limit,
-            total: filtered.length,
-            totalPages: 1,
-        };
-        usingMock = true;
-        loading = false;
     }
 
     $effect(() => {
@@ -104,9 +88,9 @@
                         total: data.length,
                         totalPages: 1,
                     };
-                    usingMock = false;
                 } catch {
-                    applyMock(q);
+                    data = [];
+                    pagination = { page: 1, limit, total: 0, totalPages: 0 };
                 } finally {
                     loading = false;
                 }
@@ -171,10 +155,9 @@
     ];
 
     function formatDate(value?: string) {
-        if (!value) return usingMock ? "Data mock" : "Belum ada";
+        if (!value) return "Belum ada";
         const d = new Date(value);
-        if (Number.isNaN(d.getTime()))
-            return usingMock ? "Data mock" : "Belum ada";
+        if (Number.isNaN(d.getTime())) return "Belum ada";
         return new Intl.DateTimeFormat("id-ID", {
             dateStyle: "medium",
             timeStyle: "short",
@@ -183,16 +166,6 @@
 
     async function handleDelete(row: AgenPerubahanItem) {
         if (!confirm(`Hapus agen perubahan \"${row.nama}\"?`)) return;
-
-        if (usingMock) {
-            data = data.filter((item) => item.id !== row.id);
-            pagination = {
-                ...pagination,
-                total: Math.max(0, pagination.total - 1),
-            };
-            showToast("success", "Data dihapus pada mode demo.");
-            return;
-        }
 
         try {
             const res = await fetch(`${apiUrl}/${row.id}`, {
@@ -234,14 +207,6 @@
             class="border bg-white/50 border-black/10 rounded py-2 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors w-72"
             bind:value={searchTerm}
         />
-        {#if usingMock}
-            <span
-                class="inline-flex items-center gap-1.5 px-3 py-2 border border-amber-200 bg-amber-50 text-amber-700 text-sm font-semibold rounded"
-            >
-                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                Mode demo mock
-            </span>
-        {/if}
     </div>
 
     <a
@@ -265,7 +230,9 @@
         {:else if cell.column.id === "nama"}
             {@const row = cell.row.original}
             <div class="min-w-0 flex items-center gap-3">
-                <div class="w-11 h-11 rounded-xl overflow-hidden bg-black/5 border border-black/8 shrink-0">
+                <div
+                    class="w-11 h-11 rounded-xl overflow-hidden bg-black/5 border border-black/8 shrink-0"
+                >
                     {#if row.foto}
                         <img
                             src={row.foto}
@@ -273,7 +240,9 @@
                             class="w-full h-full object-cover"
                         />
                     {:else}
-                        <div class="w-full h-full flex items-center justify-center text-ink/25">
+                        <div
+                            class="w-full h-full flex items-center justify-center text-ink/25"
+                        >
                             <Icon icon="mdi:account" class="w-5 h-5" />
                         </div>
                     {/if}

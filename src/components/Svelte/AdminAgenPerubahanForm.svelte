@@ -1,7 +1,6 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
     import { toUploadProxyUrl } from "../../lib/upload-url";
-    import { getAgenPerubahanMockById } from "../../lib/agen-perubahan-mock";
 
     type TujuanItem = {
         id: string;
@@ -43,7 +42,6 @@
     let deleting = $state(false);
     let toast = $state<{ type: string; msg: string } | null>(null);
     let fieldErrors = $state<Record<string, string>>({});
-    let usingMock = $state(false);
 
     const isEdit = $derived(mode === "edit" && agenId);
 
@@ -112,17 +110,10 @@
             .then((res) => {
                 const item = res.data ?? res.item ?? res;
                 applyItem(item);
-                usingMock = false;
                 loading = false;
             })
             .catch(() => {
-                const item = getAgenPerubahanMockById(String(agenId));
-                if (item) {
-                    applyItem(item);
-                    usingMock = true;
-                } else {
-                    showToast("error", "Gagal memuat data agen perubahan.");
-                }
+                showToast("error", "Gagal memuat data agen perubahan.");
                 loading = false;
             });
     });
@@ -362,18 +353,7 @@
                 }, 400);
             }
         } catch (err) {
-            if (!isEdit) {
-                usingMock = true;
-                showToast(
-                    "success",
-                    "Endpoint backend belum tersedia. Form berhasil ditampilkan dalam mode demo.",
-                );
-            } else {
-                showToast(
-                    "error",
-                    (err as Error).message || "Terjadi kesalahan.",
-                );
-            }
+            showToast("error", (err as Error).message || "Terjadi kesalahan.");
         } finally {
             saving = false;
         }
@@ -382,14 +362,6 @@
     async function handleDelete() {
         if (!agenId) return;
         if (!confirm("Hapus data agen perubahan ini?")) return;
-
-        if (usingMock) {
-            showToast("success", "Data mock dihapus pada mode demo.");
-            setTimeout(() => {
-                window.location.href = "/admin/agen-perubahan";
-            }, 500);
-            return;
-        }
 
         deleting = true;
         try {
@@ -442,24 +414,6 @@
     </div>
 {:else}
     <form onsubmit={handleSubmit} class="space-y-6 max-w-7xl">
-        {#if usingMock}
-            <div
-                class="flex items-start gap-3 border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
-            >
-                <Icon
-                    icon="mdi:flask-outline"
-                    class="w-5 h-5 shrink-0 mt-0.5"
-                />
-                <div>
-                    <p class="font-semibold">Mode demo aktif</p>
-                    <p class="text-amber-700/90 mt-1">
-                        Data sedang menggunakan fallback mock karena endpoint
-                        backend belum tersedia atau gagal diakses.
-                    </p>
-                </div>
-            </div>
-        {/if}
-
         <div
             class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6 items-start"
         >

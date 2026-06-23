@@ -3,7 +3,6 @@ import {
   adminJsonResponse,
   getAdminAuthHeaders,
 } from "../../../../lib/admin-api-proxy";
-import { getAgenPerubahanMockById } from "../../../../lib/agen-perubahan-mock";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
@@ -31,24 +30,15 @@ export const GET: APIRoute = async ({ params, cookies, request }) => {
     const data = await safeJson(res);
 
     if (!res.ok || data?.success === false) {
-      const mock = getAgenPerubahanMockById(params.id);
       return adminJsonResponse(
-        mock
-          ? { success: true, data: mock, mock: true }
-          : { success: false, message: "Gagal memuat data agen perubahan." },
+        { success: false, message: "Gagal memuat data agen perubahan." },
         200,
       );
     }
 
     return adminJsonResponse(data, 200);
   } catch (e) {
-    const mock = getAgenPerubahanMockById(params.id);
-    return adminJsonResponse(
-      mock
-        ? { success: true, data: mock, mock: true }
-        : { success: false, message: String(e) },
-      200,
-    );
+    return adminJsonResponse({ success: false, message: String(e) }, 200);
   }
 };
 
@@ -63,14 +53,17 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
     }
 
     const body = JSON.parse(text);
-    const res = await fetch(`${BACKEND_URL}/api/v1/agen-perubahan/${params.id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        ...getAdminAuthHeaders(cookies, request),
+    const res = await fetch(
+      `${BACKEND_URL}/api/v1/agen-perubahan/${params.id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAdminAuthHeaders(cookies, request),
+        },
+        body: JSON.stringify(body),
       },
-      body: JSON.stringify(body),
-    });
+    );
     const data = await safeJson(res);
 
     if (!res.ok || data?.success === false) {
@@ -85,19 +78,19 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
 
     return adminJsonResponse(data, 200);
   } catch (e) {
-    return adminJsonResponse(
-      { success: false, message: String(e) },
-      200,
-    );
+    return adminJsonResponse({ success: false, message: String(e) }, 200);
   }
 };
 
 export const DELETE: APIRoute = async ({ params, cookies, request }) => {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/v1/agen-perubahan/${params.id}`, {
-      method: "DELETE",
-      headers: getAdminAuthHeaders(cookies, request),
-    });
+    const res = await fetch(
+      `${BACKEND_URL}/api/v1/agen-perubahan/${params.id}`,
+      {
+        method: "DELETE",
+        headers: getAdminAuthHeaders(cookies, request),
+      },
+    );
     const data = await safeJson(res);
 
     if (!res.ok || data?.success === false) {
@@ -112,9 +105,6 @@ export const DELETE: APIRoute = async ({ params, cookies, request }) => {
 
     return adminJsonResponse(data, 200);
   } catch (e) {
-    return adminJsonResponse(
-      { success: false, message: String(e) },
-      200,
-    );
+    return adminJsonResponse({ success: false, message: String(e) }, 200);
   }
 };

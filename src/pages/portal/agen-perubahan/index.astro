@@ -1,27 +1,27 @@
 ---
 import { Icon } from "astro-icon/components";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
-import {
-    getAgenPerubahanMockList,
-    type AgenPerubahanItem,
-} from "../../../lib/agen-perubahan-mock";
 
-type PublicAgentItem = AgenPerubahanItem & {
+type PublicAgentItem = {
+    id: string;
+    nama: string;
+    jabatan: string;
+    unitKerja: string;
+    tahun: number;
+    foto: string;
     fotoUrl: string;
+    inovasi: string;
+    deskripsi: string;
 };
 
-let _idCounter = 0;
+function normalizeAgent(item: any): PublicAgentItem | null {
+    if (!item?.id) return null;
 
-function fallbackId(): string {
-    return `ap-fallback-${Date.now()}-${++_idCounter}`;
-}
-
-function normalizeAgent(item: any): PublicAgentItem {
     const foto = String(item?.foto ?? item?.photo ?? item?.image ?? "");
 
     return {
-        id: String(item?.id ?? item?._id ?? fallbackId()),
-        nama: String(item?.nama ?? item?.name ?? "Agen Perubahan"),
+        id: String(item.id),
+        nama: String(item?.nama ?? item?.name ?? ""),
         jabatan: String(item?.jabatan ?? item?.position ?? ""),
         unitKerja: String(item?.unitKerja ?? item?.workUnit ?? ""),
         tahun: Number(item?.tahun ?? item?.year ?? new Date().getFullYear()),
@@ -29,30 +29,24 @@ function normalizeAgent(item: any): PublicAgentItem {
         fotoUrl: foto,
         inovasi: String(item?.inovasi ?? item?.innovation ?? ""),
         deskripsi: String(item?.deskripsi ?? item?.description ?? ""),
-        latarBelakang: String(item?.latarBelakang ?? item?.background ?? ""),
-        tujuan: Array.isArray(item?.tujuan)
-            ? item.tujuan.map((value: unknown) => String(value ?? ""))
-            : [],
-        hasil: Array.isArray(item?.hasil) ? item.hasil : [],
-        updatedAt: item?.updatedAt ?? item?.updated_at ?? "",
     };
 }
 
-let sourceAgents: any[] = [];
+let agents: PublicAgentItem[] = [];
 
 try {
     const apiUrl = new URL("/api/agen-perubahan?limit=200", Astro.url.origin);
     const res = await fetch(apiUrl);
     const json = await res.json();
-    sourceAgents = Array.isArray(json?.data) ? json.data : [];
+    const raw = Array.isArray(json?.data) ? json.data : [];
+    agents = raw
+        .map(normalizeAgent)
+        .filter(Boolean)
+        .sort((a, b) => {
+            if (b.tahun !== a.tahun) return b.tahun - a.tahun;
+            return a.nama.localeCompare(b.nama, "id");
+        });
 } catch {}
-
-const agents = (sourceAgents.length ? sourceAgents : getAgenPerubahanMockList())
-    .map(normalizeAgent)
-    .sort((a, b) => {
-        if (b.tahun !== a.tahun) return b.tahun - a.tahun;
-        return a.nama.localeCompare(b.nama, "id");
-    });
 
 const groupedAgents = agents.reduce(
     (groups, agent) => {
@@ -209,8 +203,7 @@ const groupedAgents = agents.reduce(
         </div>
         <p class="text-sm text-ink/45 mt-1 ml-4 max-w-3xl">
             Deretan agen perubahan beserta inovasi yang dikembangkan. Data
-            diurutkan berdasarkan tahun inovasi terbaru agar memudahkan
-            penelusuran perkembangan setiap tahunnya.
+            diurutkan berdasarkan tahun inovasi terbaru.
         </p>
     </section>
 
@@ -254,7 +247,7 @@ const groupedAgents = agents.reduce(
                                     data-delay={String((index % 6) + 1)}
                                     class="agent-card group border border-black/8 bg-white/70 overflow-hidden"
                                 >
-                                    <div class="agent-visual relative min-h-[320px] flex items-end justify-center overflow-hidden px-6 pt-8">
+                                    <div class="agent-visual relative min-h-80 flex items-end justify-center overflow-hidden px-6 pt-8">
                                         <div class="absolute top-4 left-4 inline-flex items-center gap-1 rounded-full bg-green/8 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-green border border-green/10">
                                             <Icon
                                                 name="mdi:calendar"
@@ -267,11 +260,11 @@ const groupedAgents = agents.reduce(
                                             <img
                                                 src={agent.fotoUrl}
                                                 alt={agent.nama}
-                                                class="agent-photo relative z-10 max-h-[290px] w-auto object-contain object-bottom"
+                                                class="agent-photo relative z-10 max-h-72.5 w-auto object-contain object-bottom"
                                                 loading="lazy"
                                             />
                                         ) : (
-                                            <div class="agent-placeholder relative z-10 mb-6 flex h-64 w-full max-w-[240px] items-center justify-center border border-black/6">
+                                            <div class="agent-placeholder relative z-10 mb-6 flex h-64 w-full max-w-60 items-center justify-center border border-black/6">
                                                 <div class="text-center px-6">
                                                     <Icon
                                                         name="mdi:account-tie"

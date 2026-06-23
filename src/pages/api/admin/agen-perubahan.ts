@@ -3,7 +3,6 @@ import {
   adminJsonResponse,
   getAdminAuthHeaders,
 } from "../../../lib/admin-api-proxy";
-import { getAgenPerubahanMockList } from "../../../lib/agen-perubahan-mock";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
@@ -20,21 +19,6 @@ async function safeJson(res: Response): Promise<any> {
   }
 }
 
-function mockListResponse() {
-  const data = getAgenPerubahanMockList();
-  return {
-    success: true,
-    data,
-    pagination: {
-      page: 1,
-      limit: data.length || 10,
-      total: data.length,
-      totalPages: data.length ? 1 : 0,
-    },
-    mock: true,
-  };
-}
-
 export const GET: APIRoute = async ({ request, cookies }) => {
   try {
     const url = new URL(request.url);
@@ -48,12 +32,26 @@ export const GET: APIRoute = async ({ request, cookies }) => {
     const data = await safeJson(res);
 
     if (!res.ok || data?.success === false) {
-      return adminJsonResponse(mockListResponse(), 200);
+      return adminJsonResponse(
+        {
+          success: true,
+          data: [],
+          pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
+        },
+        200,
+      );
     }
 
     return adminJsonResponse(data, 200);
   } catch {
-    return adminJsonResponse(mockListResponse(), 200);
+    return adminJsonResponse(
+      {
+        success: true,
+        data: [],
+        pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
+      },
+      200,
+    );
   }
 };
 
@@ -91,9 +89,6 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     return adminJsonResponse(data, 200);
   } catch (e) {
-    return adminJsonResponse(
-      { success: false, message: String(e) },
-      200,
-    );
+    return adminJsonResponse({ success: false, message: String(e) }, 200);
   }
 };

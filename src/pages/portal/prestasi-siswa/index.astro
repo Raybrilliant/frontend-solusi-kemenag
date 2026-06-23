@@ -2,7 +2,6 @@
 import { Icon } from "astro-icon/components";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import { toUploadProxyUrl } from "../../../lib/upload-url";
-import { getPrestasiSiswaMockList } from "../../../lib/prestasi-siswa-mock";
 
 const PRESTASI_ENDPOINT = new URL(
     "/api/prestasi-siswa",
@@ -92,7 +91,6 @@ function normalizePrestasi(item: any) {
 }
 
 let prestasiList: ReturnType<typeof normalizePrestasi>[] = [];
-let usingMockData = false;
 
 try {
     const res = await fetch(PRESTASI_ENDPOINT);
@@ -103,11 +101,6 @@ try {
         );
     }
 } catch {}
-
-if (prestasiList.length === 0) {
-    prestasiList = getPrestasiSiswaMockList().map(normalizePrestasi);
-    usingMockData = true;
-}
 
 const pageUrl = `${Astro.url.origin}/portal/prestasi-siswa`;
 const firstImage = prestasiList[0]?.image;
@@ -285,33 +278,6 @@ const structuredData = {
             </div>
         ) : (
             <>
-                {usingMockData && (
-                    <div
-                        data-anim="up"
-                        class="mb-6 border border-yellow/30 bg-yellow/10 px-4 py-3 text-sm text-ink/70"
-                    >
-                        <div class="flex items-start gap-3">
-                            <Icon
-                                name="mdi:flask-outline"
-                                class="w-5 h-5 text-yellow shrink-0 mt-0.5"
-                            />
-                            <div>
-                                <p class="font-bold uppercase tracking-wider text-[11px] text-yellow/90 mb-1">
-                                    Mode Preview
-                                </p>
-                                <p>
-                                    Halaman ini sedang menampilkan{" "}
-                                    <span class="font-semibold">
-                                        data mockup
-                                    </span>
-                                    sementara sampai endpoint backend prestasi
-                                    siswa tersedia.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
                 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-10">
                     {prestasiList.map((item, index) => (
                         <a

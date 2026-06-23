@@ -2,7 +2,6 @@
 import { Icon } from "astro-icon/components";
 import BaseLayout from "../../../../layouts/BaseLayout.astro";
 import { toUploadProxyUrl } from "../../../../lib/upload-url";
-import { getPrestasiSiswaMockById } from "../../../../lib/prestasi-siswa-mock";
 
 const { id } = Astro.params;
 const DETAIL_ENDPOINT = new URL(
@@ -109,7 +108,6 @@ function normalizePrestasi(raw: any) {
 
 let prestasi: ReturnType<typeof normalizePrestasi> | null = null;
 let notFound = false;
-let usingMockData = false;
 
 try {
     const res = await fetch(DETAIL_ENDPOINT);
@@ -123,13 +121,7 @@ try {
 } catch {}
 
 if (!prestasi) {
-    const mockItem = getPrestasiSiswaMockById(id);
-    if (mockItem) {
-        prestasi = normalizePrestasi(mockItem);
-        usingMockData = true;
-    } else {
-        notFound = true;
-    }
+    notFound = true;
 }
 
 if (notFound) Astro.response.status = 404;
@@ -357,22 +349,6 @@ const structuredData = prestasi
     ) : (
         <>
             <section data-anim="down" class="pt-8 pb-6">
-                {usingMockData && (
-                    <div class="mb-6 border border-yellow/30 bg-yellow/10 px-4 py-3 text-sm text-ink/70">
-                        <div class="flex items-start gap-3">
-                            <Icon name="mdi:flask-outline" class="w-5 h-5 text-yellow shrink-0 mt-0.5" />
-                            <div>
-                                <p class="font-bold uppercase tracking-wider text-[11px] text-yellow/90 mb-1">
-                                    Mode Preview
-                                </p>
-                                <p>
-                                    Detail ini sedang menampilkan <span class="font-semibold">data mockup</span>
-                                    sementara sampai endpoint backend tersedia.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                )}
                 <a
                     href="/portal/prestasi-siswa"
                     class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink/35 hover:text-green transition-colors mb-4"

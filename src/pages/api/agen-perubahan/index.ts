@@ -1,12 +1,11 @@
 import type { APIRoute } from "astro";
-import { getAgenPerubahanMockList } from "../../../lib/agen-perubahan-mock";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 const SUCCESS_HEADERS = {
   "Content-Type": "application/json",
   "Cache-Control": "public, max-age=180, stale-while-revalidate=300",
 };
-const FALLBACK_HEADERS = {
+const ERROR_HEADERS = {
   "Content-Type": "application/json",
   "Cache-Control": "no-store",
 };
@@ -24,21 +23,6 @@ async function safeJson(res: Response): Promise<any> {
   }
 }
 
-function fallbackList() {
-  const data = getAgenPerubahanMockList();
-  return {
-    success: true,
-    data,
-    pagination: {
-      page: 1,
-      limit: data.length || 10,
-      total: data.length,
-      totalPages: data.length ? 1 : 0,
-    },
-    mock: true,
-  };
-}
-
 export const GET: APIRoute = async ({ url }) => {
   try {
     const params = new URLSearchParams(url.searchParams);
@@ -49,10 +33,17 @@ export const GET: APIRoute = async ({ url }) => {
     const data = await safeJson(res);
 
     if (!res.ok || data?.success === false) {
-      return new Response(JSON.stringify(fallbackList()), {
-        status: 200,
-        headers: FALLBACK_HEADERS,
-      });
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: [],
+          pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
+        }),
+        {
+          status: 200,
+          headers: ERROR_HEADERS,
+        },
+      );
     }
 
     return new Response(JSON.stringify(data), {
@@ -60,9 +51,16 @@ export const GET: APIRoute = async ({ url }) => {
       headers: SUCCESS_HEADERS,
     });
   } catch {
-    return new Response(JSON.stringify(fallbackList()), {
-      status: 200,
-      headers: FALLBACK_HEADERS,
-    });
+    return new Response(
+      JSON.stringify({
+        success: true,
+        data: [],
+        pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
+      }),
+      {
+        status: 200,
+        headers: ERROR_HEADERS,
+      },
+    );
   }
 };
