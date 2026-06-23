@@ -2,12 +2,22 @@
     import Icon from "@iconify/svelte";
     import { untrack } from "svelte";
 
-    let { apiUrl, periods = ["3 Bulan", "6 Bulan", "1 Tahun"] } = $props();
+    let {
+        apiUrl,
+        periods = ["3 Bulan", "6 Bulan", "1 Tahun"],
+        initialPeriod = "3 Bulan",
+        initialData = null,
+    } = $props();
 
-    let cache = {};
-    let period = $state(untrack(() => periods[0] ?? periods[0]));
-    let d = $state(null);
-    let loading = $state(true);
+    const initialPeriodValue = untrack(() => initialPeriod ?? periods[0]);
+    const initialDataValue = untrack(() => initialData);
+    const hasInitialData = initialDataValue !== null;
+    let cache = hasInitialData
+        ? { [initialPeriodValue]: initialDataValue }
+        : {};
+    let period = $state(initialPeriodValue);
+    let d = $state(hasInitialData ? initialDataValue : null);
+    let loading = $state(!hasInitialData);
     let dropOpen = $state(false);
 
     // ── SVG layout ─────────────────────────────────────────

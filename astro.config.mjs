@@ -13,6 +13,12 @@ import node from "@astrojs/node";
 export default defineConfig({
   site: "https://kemenagkotaprobolinggo.id",
   output: "server",
+  prefetch: {
+    defaultStrategy: "hover",
+  },
+  image: {
+    responsiveStyles: true,
+  },
   security: {
     allowedDomains: [
       { hostname: "kemenagkotaprobolinggo.id", protocol: "https" },

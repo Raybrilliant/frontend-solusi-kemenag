@@ -1,4 +1,6 @@
 ---
+export const prerender = true;
+
 import BaseLayout from "../layouts/BaseLayout.astro";
 
 const team = [
@@ -367,18 +369,18 @@ const team = [
     const CODE = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown",
                   "ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
     let pos = 0;
-    let idleTimer = null;
+    let idleTimer: ReturnType<typeof setTimeout> | null = null;
 
     document.addEventListener("keydown", (e) => {
         // Reset timer kalau idle > 2 detik
-        clearTimeout(idleTimer);
+        if (idleTimer) clearTimeout(idleTimer);
         idleTimer = setTimeout(() => { pos = 0; }, 2000);
 
         if (e.key === CODE[pos]) {
             pos++;
             if (pos === CODE.length) {
                 pos = 0;
-                clearTimeout(idleTimer);
+                if (idleTimer) clearTimeout(idleTimer);
                 document.body.style.transition = "filter .4s ease";
                 document.body.style.filter = "hue-rotate(180deg)";
                 setTimeout(() => {

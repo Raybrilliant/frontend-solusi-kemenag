@@ -5,6 +5,11 @@ import { categoryColor, categoryAccent } from "../../../lib/berita-kategori";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
+Astro.response.headers.set(
+    "Cache-Control",
+    "public, max-age=180, stale-while-revalidate=300",
+);
+
 const url = new URL(Astro.request.url);
 const kategori = url.searchParams.get("kategori") ?? "";
 const q = url.searchParams.get("q") ?? "";

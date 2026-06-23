@@ -1,7 +1,8 @@
 <script>
     import Icon from "@iconify/svelte";
+    import { untrack } from "svelte";
 
-    let { apiUrl } = $props();
+    let { apiUrl, initialDataByStatus = {} } = $props();
 
     const tabs = ["Sedang Diproses", "Selesai Terbaru"];
     const tabStatus = {
@@ -9,10 +10,17 @@
         "Selesai Terbaru": "Selesai",
     };
 
-    let cache = {};
+    const initialDataByStatusValue = untrack(() => ({
+        ...initialDataByStatus,
+    }));
+    let cache = initialDataByStatusValue;
     let activeTab = $state("Sedang Diproses");
-    let items = $state([]);
-    let loading = $state(true);
+    let items = $state(
+        initialDataByStatusValue[tabStatus["Sedang Diproses"]] ?? [],
+    );
+    let loading = $state(
+        !(tabStatus["Sedang Diproses"] in initialDataByStatusValue),
+    );
 
     const statusColor = {
         Diterima: { bg: "#DBEAFE", text: "#1E40AF" },
@@ -108,15 +116,24 @@
                         <div
                             class="w-10 h-10 rounded-lg bg-green flex items-center justify-center shrink-0"
                         >
-                            <svg
-                                width="18"
-                                height="18"
-                                viewBox="0 0 24 24"
-                                fill="currentColor"
-                                class="text-white"
-                            >
-                                {@html item.iconBody}
-                            </svg>
+                            {#if item.iconBody}
+                                <svg
+                                    width="18"
+                                    height="18"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                    class="text-white"
+                                >
+                                    {@html item.iconBody}
+                                </svg>
+                            {:else}
+                                <Icon
+                                    icon="mdi:file-document-outline"
+                                    width="18"
+                                    height="18"
+                                    class="text-white"
+                                />
+                            {/if}
                         </div>
 
                         <!-- Info -->

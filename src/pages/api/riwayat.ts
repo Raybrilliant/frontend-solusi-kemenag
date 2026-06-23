@@ -2,6 +2,14 @@ import type { APIRoute } from "astro";
 import mdiData from "@iconify-json/mdi/icons.json";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
+const SUCCESS_HEADERS = {
+  "Content-Type": "application/json",
+  "Cache-Control": "public, max-age=120, stale-while-revalidate=300",
+};
+const ERROR_HEADERS = {
+  "Content-Type": "application/json",
+  "Cache-Control": "no-store",
+};
 
 function resolveIconBody(iconName: string): string {
   const key = iconName.includes(":") ? iconName.split(":")[1] : iconName;
@@ -44,7 +52,7 @@ export const GET: APIRoute = async ({ url }) => {
     if (!json.success) {
       return new Response(JSON.stringify(json), {
         status: res.status,
-        headers: { "Content-Type": "application/json" },
+        headers: ERROR_HEADERS,
       });
     }
 
@@ -61,14 +69,14 @@ export const GET: APIRoute = async ({ url }) => {
     }));
 
     return new Response(JSON.stringify({ success: true, data }), {
-      headers: { "Content-Type": "application/json" },
+      headers: SUCCESS_HEADERS,
     });
   } catch (e) {
     return new Response(
       JSON.stringify({ success: false, message: String(e) }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: ERROR_HEADERS,
       },
     );
   }

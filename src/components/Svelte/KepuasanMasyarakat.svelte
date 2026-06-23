@@ -1,5 +1,10 @@
 <script>
-    let { apiUrl = "/api/survei/public-averages?period=12" } = $props();
+    import { untrack } from "svelte";
+
+    let {
+        apiUrl = "/api/survei/public-averages?period=12",
+        initialData = null,
+    } = $props();
 
     const surveyTypes = [
         {
@@ -27,8 +32,10 @@
         { value: 4, label: "Triwulan IV", months: [9, 10, 11] },
     ];
 
-    let data = $state([]);
-    let loading = $state(true);
+    const initialDataValue = untrack(() => initialData);
+    const hasInitialData = initialDataValue !== null;
+    let data = $state(Array.isArray(initialDataValue) ? initialDataValue : []);
+    let loading = $state(!hasInitialData);
     let error = $state("");
 
     const currentYear = new Date().getFullYear();
@@ -194,6 +201,7 @@
     }
 
     $effect(() => {
+        if (hasInitialData) return;
         load();
     });
 </script>

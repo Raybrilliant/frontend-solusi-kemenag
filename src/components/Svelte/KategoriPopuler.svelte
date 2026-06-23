@@ -1,8 +1,12 @@
 <script>
-    let { apiUrl } = $props();
+    import { untrack } from "svelte";
 
-    let items = $state([]);
-    let loading = $state(true);
+    let { apiUrl, initialData = null } = $props();
+
+    const initialDataValue = untrack(() => initialData);
+    const hasInitialData = initialDataValue !== null;
+    let items = $state(Array.isArray(initialDataValue) ? initialDataValue : []);
+    let loading = $state(!hasInitialData);
 
     const maxCount = $derived(
         items.length ? Math.max(...items.map((i) => i.count)) : 1,
@@ -20,6 +24,7 @@
     }
 
     $effect(() => {
+        if (hasInitialData) return;
         load();
     });
 </script>

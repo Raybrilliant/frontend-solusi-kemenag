@@ -5,30 +5,34 @@ import RiwayatLayanan from "../../components/Svelte/RiwayatLayanan.svelte";
 import TrendLayanan from "../../components/Svelte/TrendLayanan.svelte";
 import KepuasanMasyarakat from "../../components/Svelte/KepuasanMasyarakat.svelte";
 import KategoriPopuler from "../../components/Svelte/KategoriPopuler.svelte";
+import InformationCategoryStats from "../../components/InformationCategoryStats.astro";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
-const [trendRes, categoryStatsRes] = await Promise.allSettled([
-    fetch(`${BACKEND_URL}/api/v1/dashboard/trend?period=3`),
-    fetch(`${BACKEND_URL}/api/v1/dashboard/stats/per-kategori`),
-]);
+Astro.response.headers.set(
+    "Cache-Control",
+    "public, max-age=180, stale-while-revalidate=300",
+);
 
-const categoryStats: {
-    categoryId: number;
-    categoryTitle: string;
-    total: number;
-    selesai: number;
-    ditolak: number;
-    tingkatPenyelesaian: number;
-}[] = [];
-if (categoryStatsRes.status === "fulfilled" && categoryStatsRes.value.ok) {
-    try {
-        const json = await categoryStatsRes.value.json();
-        if (json.success && Array.isArray(json.data)) {
-            categoryStats.push(...json.data);
-        }
-    } catch {}
-}
+const [
+    trendRes,
+    riwayatDiprosesRes,
+    riwayatSelesaiRes,
+    surveyRes,
+    kategoriPopulerRes,
+] = await Promise.allSettled([
+    fetch(`${BACKEND_URL}/api/v1/dashboard/trend?period=3`),
+    fetch(
+        `${BACKEND_URL}/api/v1/dashboard/permohonan-terbaru?limit=5&status=Diproses`,
+    ),
+    fetch(
+        `${BACKEND_URL}/api/v1/dashboard/permohonan-terbaru?limit=5&status=Selesai`,
+    ),
+    fetch(`${BACKEND_URL}/api/v1/survei/public/averages?period=12`, {
+        headers: { Accept: "application/json" },
+    }),
+    fetch(`${BACKEND_URL}/api/v1/dashboard/kategori-populer`),
+]);
 
 function calcPct(curr: number, prev: number): number {
     if (prev === 0) return curr > 0 ? 100 : 0;
@@ -110,10 +114,18 @@ let percentTotal = 0,
     percentDitolak = 0,
     percentTingkatPenyelesaian = 0;
 
+let initialTrendData: {
+    labels?: string[];
+    masuk?: number[];
+    selesai?: number[];
+    ditolak?: number[];
+} | null = null;
+
 if (trendRes.status === "fulfilled" && trendRes.value.ok) {
     try {
         const json = await trendRes.value.json();
         if (json.success && json.data) {
+            initialTrendData = json.data;
             const {
                 labels = [],
                 masuk = [],
@@ -159,6 +171,60 @@ if (trendRes.status === "fulfilled" && trendRes.value.ok) {
                 currentTingkatPenyelesaian,
                 previousTingkatPenyelesaian,
             );
+        }
+    } catch {}
+}
+
+function mapRiwayatItems(items: any[]) {
+    return items.map((item: any) => ({
+        kode: item.id,
+        tanggal: new Date(item.submittedAt).toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+        }),
+        status: item.status,
+        title: item.serviceTitle ?? "",
+        iconBody: item.icon ?? "",
+    }));
+}
+
+let initialRiwayatByStatus: Record<string, any[]> = {};
+if (riwayatDiprosesRes.status === "fulfilled" && riwayatDiprosesRes.value.ok) {
+    try {
+        const json = await riwayatDiprosesRes.value.json();
+        initialRiwayatByStatus = {
+            ...initialRiwayatByStatus,
+            Diproses: mapRiwayatItems(json.data ?? []),
+        };
+    } catch {}
+}
+if (riwayatSelesaiRes.status === "fulfilled" && riwayatSelesaiRes.value.ok) {
+    try {
+        const json = await riwayatSelesaiRes.value.json();
+        initialRiwayatByStatus = {
+            ...initialRiwayatByStatus,
+            Selesai: mapRiwayatItems(json.data ?? []),
+        };
+    } catch {}
+}
+
+let initialSurveyData: any[] | null = null;
+if (surveyRes.status === "fulfilled" && surveyRes.value.ok) {
+    try {
+        const json = await surveyRes.value.json();
+        if (json.success !== false && Array.isArray(json.data)) {
+            initialSurveyData = json.data;
+        }
+    } catch {}
+}
+
+let initialKategoriPopuler: any[] | null = null;
+if (kategoriPopulerRes.status === "fulfilled" && kategoriPopulerRes.value.ok) {
+    try {
+        const json = await kategoriPopulerRes.value.json();
+        if (Array.isArray(json.data)) {
+            initialKategoriPopuler = json.data;
         }
     } catch {}
 }
@@ -267,22 +333,14 @@ const cardData = [
                                 {card.value}
                             </p>
                             <p
-                                class={`text-xs md:text-sm flex items-center gap-1 ${card.badgeClass ?? trendTone(card.percentage ?? 0, card.positiveIsGood)} rounded-full py-1 px-2 md:px-3 font-semibold`}
+                                class={`text-xs md:text-sm flex items-center gap-1 ${trendTone(card.percentage ?? 0, card.positiveIsGood)} rounded-full py-1 px-2 md:px-3 font-semibold`}
                             >
-                                {card.badgeLabel ? (
-                                    <span>{card.badgeLabel}</span>
-                                ) : (
-                                    <>
-                                        <Icon
-                                            name={trendIcon(
-                                                card.percentage ?? 0,
-                                            )}
-                                            width="14"
-                                            height="14"
-                                        />
-                                        {Math.abs(card.percentage ?? 0)}%
-                                    </>
-                                )}
+                                <Icon
+                                    name={trendIcon(card.percentage ?? 0)}
+                                    width="14"
+                                    height="14"
+                                />
+                                {Math.abs(card.percentage ?? 0)}%
                             </p>
                         </div>
                         <p class="text-xs md:text-sm text-gray-600 mt-0.5">
@@ -294,88 +352,49 @@ const cardData = [
         }
     </section>
 
-    {
-        categoryStats.length > 0 && (
-            <section class="my-3 md:my-5 border rounded-lg p-4 md:p-5">
-                <div class="flex items-center justify-between gap-3 mb-4">
-                    <div>
-                        <h2 class="font-bold uppercase text-sm md:text-xl tracking-tight">
-                            Statistik Per Kategori
-                        </h2>
-                        <p class="text-xs md:text-sm text-gray-500 mt-1">
-                            Ringkasan total, selesai, ditolak, dan rasio
-                            penyelesaian berdasarkan kategori layanan.
-                        </p>
-                    </div>
-                    <Icon
-                        name="mdi:shape-outline"
-                        width="22"
-                        height="22"
-                        class="text-green shrink-0"
-                    />
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                    {categoryStats.map((item) => (
-                        <article class="border border-black/10 rounded-lg p-4 bg-white/40">
-                            <div class="flex items-start justify-between gap-3">
-                                <h3 class="font-bold text-sm md:text-base leading-tight">
-                                    {item.categoryTitle}
-                                </h3>
-                                <span class="text-xs font-bold text-green bg-green/10 rounded-full px-2.5 py-1 shrink-0">
-                                    {item.tingkatPenyelesaian.toLocaleString(
-                                        "id-ID",
-                                    )}
-                                    %
-                                </span>
+    <InformationCategoryStats server:defer>
+        <div
+            slot="fallback"
+            class="my-3 md:my-5 border rounded-lg p-4 md:p-5 animate-pulse"
+        >
+            <div class="h-6 w-48 bg-gray-200 rounded mb-3"></div>
+            <div class="h-4 w-80 max-w-full bg-gray-100 rounded mb-5"></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                {
+                    Array.from({ length: 3 }).map(() => (
+                        <div class="border border-black/10 rounded-lg p-4 space-y-4">
+                            <div class="h-5 w-2/3 bg-gray-200 rounded" />
+                            <div class="h-2.5 w-full bg-gray-100 rounded-full" />
+                            <div class="grid grid-cols-3 gap-2">
+                                <div class="h-12 bg-gray-100 rounded" />
+                                <div class="h-12 bg-gray-100 rounded" />
+                                <div class="h-12 bg-gray-100 rounded" />
                             </div>
-                            <div class="mt-4 h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                                <div
-                                    class="h-full bg-green rounded-full"
-                                    style={`width:${Math.min(100, Math.max(0, item.tingkatPenyelesaian))}%`}
-                                />
-                            </div>
-                            <dl class="grid grid-cols-3 gap-2 mt-4 text-center">
-                                <div>
-                                    <dt class="text-[10px] uppercase font-semibold text-gray-400">
-                                        Total
-                                    </dt>
-                                    <dd class="text-lg font-bold">
-                                        {item.total.toLocaleString("id-ID")}
-                                    </dd>
-                                </div>
-                                <div class="border-l border-gray-100">
-                                    <dt class="text-[10px] uppercase font-semibold text-gray-400">
-                                        Selesai
-                                    </dt>
-                                    <dd class="text-lg font-bold text-green">
-                                        {item.selesai.toLocaleString("id-ID")}
-                                    </dd>
-                                </div>
-                                <div class="border-l border-gray-100">
-                                    <dt class="text-[10px] uppercase font-semibold text-gray-400">
-                                        Ditolak
-                                    </dt>
-                                    <dd class="text-lg font-bold text-red-500">
-                                        {item.ditolak.toLocaleString("id-ID")}
-                                    </dd>
-                                </div>
-                            </dl>
-                        </article>
-                    ))}
-                </div>
-            </section>
-        )
-    }
+                        </div>
+                    ))
+                }
+            </div>
+        </div>
+    </InformationCategoryStats>
 
     <!-- Statistik -->
     <section
         class="grid grid-cols-1 md:grid-cols-5 gap-3 md:gap-5 my-3 md:my-5"
     >
         <div class="md:col-span-3 h-full">
-            <TrendLayanan apiUrl="/api/trend" client:load />
+            <TrendLayanan
+                apiUrl="/api/trend"
+                initialPeriod="3 Bulan"
+                initialData={initialTrendData}
+                client:visible
+            />
         </div>
         <div class="md:col-span-2 h-full">
-            <RiwayatLayanan apiUrl="/api/riwayat" client:load />
+            <RiwayatLayanan
+                apiUrl="/api/riwayat"
+                initialDataByStatus={initialRiwayatByStatus}
+                client:visible
+            />
         </div>
     </section>
 
@@ -398,7 +417,8 @@ const cardData = [
             </div>
             <KepuasanMasyarakat
                 apiUrl="/api/survei/public-averages?period=12"
-                client:load
+                initialData={initialSurveyData}
+                client:visible
             />
         </div>
         <div class="md:col-span-5 h-full border rounded-lg p-4 md:p-5">
@@ -407,7 +427,11 @@ const cardData = [
             >
                 Kategori Layanan Terpopuler
             </h2>
-            <KategoriPopuler apiUrl="/api/kategori-populer" client:load />
+            <KategoriPopuler
+                apiUrl="/api/kategori-populer"
+                initialData={initialKategoriPopuler}
+                client:visible
+            />
         </div>
     </section>
 

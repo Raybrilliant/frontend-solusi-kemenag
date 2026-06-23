@@ -1,6 +1,14 @@
 import type { APIRoute } from "astro";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
+const SUCCESS_HEADERS = {
+  "Content-Type": "application/json",
+  "Cache-Control": "public, max-age=300, stale-while-revalidate=600",
+};
+const FALLBACK_HEADERS = {
+  "Content-Type": "application/json",
+  "Cache-Control": "no-store",
+};
 
 async function safeJson(res: Response): Promise<any> {
   const text = await res.text();
@@ -8,7 +16,10 @@ async function safeJson(res: Response): Promise<any> {
   try {
     return JSON.parse(text);
   } catch {
-    return { success: false, message: `Invalid JSON response (HTTP ${res.status})` };
+    return {
+      success: false,
+      message: `Invalid JSON response (HTTP ${res.status})`,
+    };
   }
 }
 
@@ -25,13 +36,15 @@ export const GET: APIRoute = async ({ url }) => {
     if (categoryId) params.set("categoryId", categoryId);
     params.set("limit", limit);
 
-    const res = await fetch(`${BACKEND_URL}/api/v1/layanan/?${params.toString()}`);
+    const res = await fetch(
+      `${BACKEND_URL}/api/v1/layanan/?${params.toString()}`,
+    );
     const data = await safeJson(res);
 
     if (!res.ok || data?.success === false) {
       return new Response(JSON.stringify({ success: true, data: [] }), {
         status: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: FALLBACK_HEADERS,
       });
     }
 
@@ -44,12 +57,12 @@ export const GET: APIRoute = async ({ url }) => {
 
     return new Response(JSON.stringify({ success: true, data: items }), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: SUCCESS_HEADERS,
     });
   } catch {
     return new Response(JSON.stringify({ success: true, data: [] }), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: FALLBACK_HEADERS,
     });
   }
 };

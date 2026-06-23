@@ -1,5 +1,7 @@
 ---
+import { Image } from "astro:assets";
 import { Icon } from "astro-icon/components";
+import logoImage from "../assets/images/logo.png";
 
 const pathname = Astro.url.pathname;
 
@@ -37,7 +39,16 @@ const navButtons = [
     <nav class="flex justify-between items-center py-4 lg:py-5">
         <!-- Logo -->
         <div class="flex gap-3 items-center">
-            <img src="/logo.png" class="w-10 lg:w-13" alt="Logo" />
+            <Image
+                src={logoImage}
+                alt="Logo Kantor Kementerian Agama Kota Probolinggo"
+                class="w-10 lg:w-13 h-auto"
+                widths={[40, 52, 80, 104]}
+                sizes="(min-width: 1024px) 52px, 40px"
+                loading="eager"
+                decoding="async"
+                format="webp"
+            />
             <div
                 class="font-semibold -space-y-1 lg:-space-y-2 uppercase leading-tight"
             >
@@ -53,6 +64,7 @@ const navButtons = [
                     <li>
                         <a
                             href={l.href}
+                            data-astro-prefetch
                             class={`nav-link ${isActive(l.href) ? "active" : ""}`}
                         >
                             {l.label}
@@ -69,6 +81,7 @@ const navButtons = [
                     <li>
                         <a
                             href={b.href}
+                            data-astro-prefetch
                             class={`btn-asn py-3 uppercase ${b.label == "Masuk" ? "text-white" : ""} ${b.label == "Masuk" ? "px-7" : "px-10"} flex items-center gap-2 cursor-pointer ${b.bg}`}
                         >
                             <Icon name={b.icon} />
@@ -111,6 +124,7 @@ const navButtons = [
                     navLinks.map((l) => (
                         <a
                             href={l.href}
+                            data-astro-prefetch
                             class={`flex items-center gap-3 px-3 py-2.5 text-sm font-semibold uppercase rounded-lg transition-colors
                 ${isActive(l.href) ? "text-green bg-green/5" : "text-ink/60 hover:text-ink hover:bg-black/4"}`}
                         >
@@ -132,6 +146,7 @@ const navButtons = [
                     navButtons.map((b) => (
                         <a
                             href={b.href}
+                            data-astro-prefetch
                             class={`btn-asn ${b.bg} font-bold uppercase text-sm px-5 py-3
                 flex items-center justify-between sm:justify-center gap-2 cursor-pointer sm:flex-1`}
                         >

@@ -5,6 +5,14 @@
  * Redirect ke login jika tidak valid.
  */
 import { defineMiddleware } from "astro:middleware";
+import {
+  buildAuditEntry,
+  getAuditActor,
+  isAdminApiMutation,
+  safeParseRequestBody,
+  safeParseResponseBody,
+  writeAuditLog,
+} from "./lib/audit-log";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
@@ -72,6 +80,43 @@ async function validateToken(
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const { url, cookies, redirect, request } = context;
+  const isAdminApiMutationRequest = isAdminApiMutation(
+    url.pathname,
+    request.method,
+  );
+
+  if (isAdminApiMutationRequest) {
+    const token = cookies.get("auth_token")?.value;
+    const cookieHeader = request.headers.get("cookie") ?? "";
+    const requestBody = await safeParseRequestBody(request);
+
+    let actor: any = null;
+    if (token || cookieHeader) {
+      const authResult = await validateToken(token, cookieHeader);
+      actor = authResult.valid ? authResult.user : null;
+    }
+
+    const response = await next();
+    const responseData = await safeParseResponseBody(response);
+    const forwardedFor = request.headers.get("x-forwarded-for");
+    const realIp = request.headers.get("x-real-ip");
+    const ip = forwardedFor?.split(",")[0]?.trim() || realIp || null;
+
+    writeAuditLog(
+      buildAuditEntry({
+        pathname: url.pathname,
+        method: request.method,
+        requestBody,
+        responseData,
+        statusCode: response.status,
+        actor: getAuditActor(actor),
+        userAgent: request.headers.get("user-agent") ?? undefined,
+        ip,
+      }),
+    );
+
+    return response;
+  }
 
   // Skip public paths
   if (isPublicPath(url.pathname)) {

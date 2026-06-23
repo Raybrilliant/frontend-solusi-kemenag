@@ -1,11 +1,18 @@
 ---
+import { Image } from "astro:assets";
 import { Icon } from "astro-icon/components";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { toUploadProxyUrl } from "../../lib/upload-url";
 import { categoryColor, categoryAccent } from "../../lib/berita-kategori";
+import kemenagImage from "../../assets/images/kemenag.png";
 
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
+
+Astro.response.headers.set(
+    "Cache-Control",
+    "public, max-age=300, stale-while-revalidate=600",
+);
 
 // Hierarchy order — strongest to weakest
 const TYPE_ORDER = [
@@ -282,12 +289,18 @@ const structuredData = {
             </div>
 
             <!-- ── Parallax image ─────────────────────── -->
-            <img
+            <Image
                 id="parallax-img"
-                src="/kemenag.png"
+                src={kemenagImage}
                 alt="Kantor Kementerian Agama Kota Probolinggo"
                 class="absolute left-0 right-0 bottom-0 w-full object-cover object-bottom pointer-events-none select-none"
                 style="filter: grayscale(100%) brightness(0.5); will-change: transform;"
+                widths={[768, 1024, 1280, 1600, 1920]}
+                sizes="100vw"
+                loading="eager"
+                fetchpriority="high"
+                decoding="async"
+                format="webp"
             />
 
             <!-- Fade to dark at bottom -->

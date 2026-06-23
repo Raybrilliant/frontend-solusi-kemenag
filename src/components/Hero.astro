@@ -1,5 +1,8 @@
 ---
+import { Image } from "astro:assets";
 import { Icon } from "astro-icon/components";
+import kemenagImage from "../assets/images/kemenag.png";
+import solusiLogo from "../assets/images/logo-solusi.png";
 ---
 
 <style>
@@ -457,21 +460,31 @@ import { Icon } from "astro-icon/components";
             data-anim="solusi-logo"
             class="absolute top-16 right-34 md:right-36 z-25"
         >
-            <img
-                src="/logo-solusi.png"
+            <Image
+                src={solusiLogo}
                 alt="Logo SOLUSI"
                 class="w-32 md:w-44 h-auto block"
+                widths={[128, 176, 256, 352]}
+                sizes="(min-width: 768px) 176px, 128px"
                 loading="eager"
+                decoding="async"
+                format="webp"
             />
         </div>
 
         <!-- Main photo - grayscale -->
-        <img
+        <Image
             data-anim="photo"
-            src="/kemenag.png"
-            alt="Ilustrasi Masjid"
+            src={kemenagImage}
+            alt="Ilustrasi Kantor Kementerian Agama Kota Probolinggo"
             class="absolute bottom-0 left-[8%] w-[78%] object-cover object-bottom z-20"
             style="filter: grayscale(100%);"
+            widths={[640, 960, 1280, 1600]}
+            sizes="(min-width: 1024px) 78vw, 78vw"
+            loading="eager"
+            fetchpriority="high"
+            decoding="async"
+            format="webp"
         />
 
         <!-- Zona Integritas badge -->
@@ -546,11 +559,18 @@ import { Icon } from "astro-icon/components";
         const YT_VIDEO_ID = "GANTI_VIDEO_ID_DISINI";
 
         const modal = document.getElementById("tutorial-modal");
-        const iframe = document.getElementById("tutorial-iframe");
-        const btnOpen = document.getElementById("tutorial-btn");
-        const btnClose = document.getElementById("tutorial-close");
+        const iframe = document.getElementById(
+            "tutorial-iframe",
+        ) as HTMLIFrameElement | null;
+        const btnOpen = document.getElementById(
+            "tutorial-btn",
+        ) as HTMLButtonElement | null;
+        const btnClose = document.getElementById(
+            "tutorial-close",
+        ) as HTMLButtonElement | null;
 
         function openTutorial() {
+            if (!modal || !iframe || !btnClose) return;
             iframe.src = `https://www.youtube.com/embed/${YT_VIDEO_ID}?autoplay=1&rel=0`;
             modal.style.display = "flex";
             modal.setAttribute("aria-hidden", "false");
@@ -559,11 +579,12 @@ import { Icon } from "astro-icon/components";
         }
 
         function closeTutorial() {
+            if (!modal || !iframe) return;
             modal.style.display = "none";
             modal.setAttribute("aria-hidden", "true");
             iframe.src = "";
             document.body.style.overflow = "";
-            btnOpen.focus();
+            btnOpen?.focus();
         }
 
         function initTutorialModal() {
