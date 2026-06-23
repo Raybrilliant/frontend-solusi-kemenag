@@ -1,0 +1,100 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import AdminPrestasiSiswaForm from "../../../components/Svelte/AdminPrestasiSiswaForm.svelte";
+
+const { slug } = Astro.params;
+const isTambah = slug === "tambah";
+const prestasiId = isTambah ? null : slug;
+const pageTitle = isTambah ? "Tambah Prestasi Siswa" : "Edit Prestasi Siswa";
+---
+
+<style>
+    [data-anim="hero"] {
+        animation: fadeDown 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+    }
+    [data-anim="content"] {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+    }
+
+    @keyframes fadeDown {
+        from {
+            opacity: 0;
+            transform: translateY(-12px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    @keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<AdminLayout title={pageTitle}>
+    <div class="min-h-full">
+        <div data-anim="hero" class="px-8 py-6">
+            <nav class="flex items-center gap-2 text-xs text-ink/40 mb-4">
+                <a href="/admin" class="hover:text-ink transition-colors">
+                    Dashboard
+                </a>
+                <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                >
+                    <path
+                        d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"
+                    ></path>
+                </svg>
+                <a
+                    href="/admin/prestasi-siswa"
+                    class="hover:text-ink transition-colors"
+                >
+                    Prestasi Siswa
+                </a>
+                <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                >
+                    <path
+                        d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"
+                    ></path>
+                </svg>
+                <span class="text-ink font-semibold">
+                    {isTambah ? "Tambah" : "Edit"}
+                </span>
+            </nav>
+
+            <h1 class="text-4xl font-bold uppercase tracking-tight text-ink">
+                {pageTitle}
+            </h1>
+            <p class="text-sm text-ink/50 mt-1">
+                {
+                    isTambah
+                        ? "Tambahkan prestasi siswa baru beserta detail lomba dan daftar pemenangnya."
+                        : `Perbarui data prestasi siswa ${prestasiId ? `#${prestasiId}` : ""}.`
+                }
+            </p>
+        </div>
+
+        <div data-anim="content" class="px-8 py-6">
+            <AdminPrestasiSiswaForm
+                client:load
+                mode={isTambah ? "tambah" : "edit"}
+                {prestasiId}
+                apiUrl="/api/admin/prestasi-siswa"
+            />
+        </div>
+    </div>
+</AdminLayout>

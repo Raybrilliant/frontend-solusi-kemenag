@@ -2,16 +2,57 @@
 import { Icon } from "astro-icon/components";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import {
-    getAgenPerubahanSorted,
-    getAgenPerubahanInovasiByAgenId,
-    getAgenPerubahanFoto,
-} from "../../../lib/data.js";
+    getAgenPerubahanMockList,
+    type AgenPerubahanItem,
+} from "../../../lib/agen-perubahan-mock";
 
-const agents = getAgenPerubahanSorted().map((item) => ({
-    ...item,
-    detail: getAgenPerubahanInovasiByAgenId(item.id),
-    fotoUrl: getAgenPerubahanFoto(item),
-}));
+type PublicAgentItem = AgenPerubahanItem & {
+    fotoUrl: string;
+};
+
+let _idCounter = 0;
+
+function fallbackId(): string {
+    return `ap-fallback-${Date.now()}-${++_idCounter}`;
+}
+
+function normalizeAgent(item: any): PublicAgentItem {
+    const foto = String(item?.foto ?? item?.photo ?? item?.image ?? "");
+
+    return {
+        id: String(item?.id ?? item?._id ?? fallbackId()),
+        nama: String(item?.nama ?? item?.name ?? "Agen Perubahan"),
+        jabatan: String(item?.jabatan ?? item?.position ?? ""),
+        unitKerja: String(item?.unitKerja ?? item?.workUnit ?? ""),
+        tahun: Number(item?.tahun ?? item?.year ?? new Date().getFullYear()),
+        foto,
+        fotoUrl: foto,
+        inovasi: String(item?.inovasi ?? item?.innovation ?? ""),
+        deskripsi: String(item?.deskripsi ?? item?.description ?? ""),
+        latarBelakang: String(item?.latarBelakang ?? item?.background ?? ""),
+        tujuan: Array.isArray(item?.tujuan)
+            ? item.tujuan.map((value: unknown) => String(value ?? ""))
+            : [],
+        hasil: Array.isArray(item?.hasil) ? item.hasil : [],
+        updatedAt: item?.updatedAt ?? item?.updated_at ?? "",
+    };
+}
+
+let sourceAgents: any[] = [];
+
+try {
+    const apiUrl = new URL("/api/agen-perubahan?limit=200", Astro.url.origin);
+    const res = await fetch(apiUrl);
+    const json = await res.json();
+    sourceAgents = Array.isArray(json?.data) ? json.data : [];
+} catch {}
+
+const agents = (sourceAgents.length ? sourceAgents : getAgenPerubahanMockList())
+    .map(normalizeAgent)
+    .sort((a, b) => {
+        if (b.tahun !== a.tahun) return b.tahun - a.tahun;
+        return a.nama.localeCompare(b.nama, "id");
+    });
 
 const groupedAgents = agents.reduce(
     (groups, agent) => {
@@ -28,7 +69,7 @@ const groupedAgents = agents.reduce(
     },
     [] as Array<{
         year: string;
-        items: typeof agents;
+        items: PublicAgentItem[];
     }>,
 );
 ---

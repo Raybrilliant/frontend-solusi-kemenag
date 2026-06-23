@@ -2,21 +2,81 @@
 import { Icon } from "astro-icon/components";
 import BaseLayout from "../../../../layouts/BaseLayout.astro";
 import {
-    getAgenPerubahanById,
-    getAgenPerubahanFoto,
-    getAgenPerubahanInovasiByAgenId,
-} from "../../../../lib/data.js";
+    getAgenPerubahanMockById,
+    type AgenPerubahanItem,
+} from "../../../../lib/agen-perubahan-mock";
 
 const { id } = Astro.params;
-const agent = getAgenPerubahanById(id);
-const innovation = getAgenPerubahanInovasiByAgenId(id);
+
+function normalizeDetail(item: any): AgenPerubahanItem | null {
+    if (!item) return null;
+
+    return {
+        id: String(item?.id ?? item?._id ?? ""),
+        nama: String(item?.nama ?? item?.name ?? "Agen Perubahan"),
+        jabatan: String(item?.jabatan ?? item?.position ?? ""),
+        unitKerja: String(item?.unitKerja ?? item?.workUnit ?? ""),
+        tahun: Number(item?.tahun ?? item?.year ?? new Date().getFullYear()),
+        foto: String(item?.foto ?? item?.photo ?? item?.image ?? ""),
+        inovasi: String(item?.inovasi ?? item?.innovation ?? ""),
+        deskripsi: String(item?.deskripsi ?? item?.description ?? ""),
+        latarBelakang: String(item?.latarBelakang ?? item?.background ?? ""),
+        tujuan: Array.isArray(item?.tujuan)
+            ? item.tujuan.map((value: unknown) => String(value ?? ""))
+            : [],
+        hasil: Array.isArray(item?.hasil)
+            ? item.hasil.map((value: any) => ({
+                  sebelum: {
+                      foto: String(value?.sebelum?.foto ?? ""),
+                      deskripsi: String(value?.sebelum?.deskripsi ?? ""),
+                  },
+                  sesudah: {
+                      foto: String(value?.sesudah?.foto ?? ""),
+                      deskripsi: String(value?.sesudah?.deskripsi ?? ""),
+                  },
+              }))
+            : [],
+        updatedAt: item?.updatedAt ?? item?.updated_at ?? "",
+    };
+}
+
+let detail: AgenPerubahanItem | null = null;
+
+try {
+    const apiUrl = new URL(`/api/agen-perubahan/${id}`, Astro.url.origin);
+    const res = await fetch(apiUrl);
+    const json = await res.json();
+    detail = normalizeDetail(json?.data ?? null);
+} catch {}
+
+if (!detail) {
+    detail = getAgenPerubahanMockById(id) ?? null;
+}
+
+const agent = detail
+    ? {
+          nama: detail.nama,
+          jabatan: detail.jabatan,
+          unitKerja: detail.unitKerja,
+          tahun: detail.tahun,
+          deskripsi: detail.deskripsi,
+      }
+    : null;
+const innovation = detail
+    ? {
+          inovasi: detail.inovasi,
+          latarBelakang: detail.latarBelakang,
+          tujuan: detail.tujuan,
+          hasil: detail.hasil,
+      }
+    : null;
 const notFound = !agent || !innovation;
 
 if (notFound) {
     Astro.response.status = 404;
 }
 
-const fotoUrl = getAgenPerubahanFoto(agent);
+const fotoUrl = detail?.foto ?? "";
 const backgroundParagraphs = String(innovation?.latarBelakang ?? "")
     .split("\n")
     .map((item) => item.trim())

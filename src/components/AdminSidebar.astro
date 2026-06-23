@@ -24,6 +24,16 @@ const humasItems = [
         label: "Manajemen Berita",
     },
     {
+        href: "/admin/prestasi-siswa",
+        icon: "mdi:trophy-outline",
+        label: "Manajemen Prestasi Siswa",
+    },
+    {
+        href: "/admin/agen-perubahan",
+        icon: "mdi:account-switch-outline",
+        label: "Agen Perubahan",
+    },
+    {
         href: "/admin/pengaduan",
         icon: "mdi:message-alert-outline",
         label: "Pengaduan",
@@ -182,7 +192,9 @@ function isActive(href: string) {
             href="/pengaduan"
             class="flex items-center gap-2 bg-green hover:bg-green/90 transition-colors rounded-lg px-3 py-2"
         >
-            <span class="text-[11px] font-bold text-white">Laporkan Penyelewengan →</span>
+            <span class="text-[11px] font-bold text-white"
+                >Laporkan Penyelewengan →</span
+            >
         </a>
     </div>
 

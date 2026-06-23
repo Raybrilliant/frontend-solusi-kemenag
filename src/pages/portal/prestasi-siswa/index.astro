@@ -1,0 +1,437 @@
+---
+import { Icon } from "astro-icon/components";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { toUploadProxyUrl } from "../../../lib/upload-url";
+import { getPrestasiSiswaMockList } from "../../../lib/prestasi-siswa-mock";
+
+const PRESTASI_ENDPOINT = new URL(
+    "/api/prestasi-siswa",
+    Astro.url.origin,
+).toString();
+
+Astro.response.headers.set(
+    "Cache-Control",
+    "public, max-age=180, stale-while-revalidate=300",
+);
+
+function firstFilled(...values: unknown[]) {
+    for (const value of values) {
+        if (typeof value === "string" && value.trim()) return value.trim();
+        if (typeof value === "number" && Number.isFinite(value)) {
+            return String(value);
+        }
+    }
+    return "";
+}
+
+function toArray(value: unknown): any[] {
+    if (Array.isArray(value)) return value;
+    return [];
+}
+
+function normalizePrestasi(item: any) {
+    const peserta = toArray(
+        item?.pemenang ?? item?.winners ?? item?.siswa ?? item?.students,
+    );
+
+    return {
+        id: item?.id ?? item?._id ?? item?.slug ?? "",
+        title:
+            firstFilled(
+                item?.judul,
+                item?.title,
+                item?.namaPrestasi,
+                item?.namaLomba,
+                item?.lomba,
+                item?.prestasi,
+            ) || "Prestasi Siswa",
+        prestasi: firstFilled(
+            item?.prestasi,
+            item?.achievement,
+            item?.juara,
+            item?.peringkat,
+            item?.hasil,
+        ),
+        description: firstFilled(
+            item?.deskripsi,
+            item?.description,
+            item?.ringkasan,
+            item?.summary,
+        ),
+        tahun: firstFilled(item?.tahun, item?.year, item?.periode),
+        tingkat: firstFilled(item?.tingkat, item?.level, item?.kategoriLomba),
+        madrasah: firstFilled(
+            item?.madrasah,
+            item?.schoolName,
+            item?.namaMadrasah,
+        ),
+        image:
+            toUploadProxyUrl(
+                firstFilled(
+                    item?.fotoLomba,
+                    item?.thumbnail,
+                    item?.image,
+                    item?.foto,
+                    item?.cover,
+                ),
+            ) ||
+            firstFilled(
+                item?.fotoLomba,
+                item?.thumbnail,
+                item?.image,
+                item?.foto,
+                item?.cover,
+            ),
+        winnerCount:
+            peserta.length ||
+            Number(
+                item?.jumlahPemenang ?? item?.winnerCount ?? item?.totalSiswa,
+            ) ||
+            0,
+    };
+}
+
+let prestasiList: ReturnType<typeof normalizePrestasi>[] = [];
+let usingMockData = false;
+
+try {
+    const res = await fetch(PRESTASI_ENDPOINT);
+    if (res.ok) {
+        const json = await res.json();
+        prestasiList = toArray(json?.data ?? json?.items ?? json).map(
+            normalizePrestasi,
+        );
+    }
+} catch {}
+
+if (prestasiList.length === 0) {
+    prestasiList = getPrestasiSiswaMockList().map(normalizePrestasi);
+    usingMockData = true;
+}
+
+const pageUrl = `${Astro.url.origin}/portal/prestasi-siswa`;
+const firstImage = prestasiList[0]?.image;
+const ogImage = firstImage
+    ? firstImage.startsWith("http")
+        ? firstImage
+        : `${Astro.url.origin}${firstImage}`
+    : undefined;
+const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "Prestasi Siswa",
+    description:
+        "Daftar prestasi siswa madrasah di lingkungan Kementerian Agama Kota Probolinggo.",
+    url: pageUrl,
+};
+---
+
+<style>
+    [data-anim="down"] {
+        animation: fadeDown 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    [data-anim="up"] {
+        animation: fadeUp 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both;
+    }
+    [data-reveal] {
+        opacity: 0;
+        transition:
+            opacity 0.82s cubic-bezier(0.16, 1, 0.3, 1),
+            transform 0.82s cubic-bezier(0.16, 1, 0.3, 1),
+            filter 0.82s cubic-bezier(0.16, 1, 0.3, 1);
+        will-change: transform, opacity, filter;
+        filter: blur(6px);
+    }
+    [data-reveal="up"] {
+        transform: translateY(34px) scale(0.985);
+    }
+    [data-reveal].revealed {
+        opacity: 1;
+        transform: none;
+        filter: blur(0);
+    }
+    [data-delay="1"] {
+        transition-delay: 0.05s;
+    }
+    [data-delay="2"] {
+        transition-delay: 0.11s;
+    }
+    [data-delay="3"] {
+        transition-delay: 0.17s;
+    }
+    [data-delay="4"] {
+        transition-delay: 0.23s;
+    }
+    [data-delay="5"] {
+        transition-delay: 0.29s;
+    }
+    [data-delay="6"] {
+        transition-delay: 0.35s;
+    }
+    @keyframes fadeDown {
+        from {
+            opacity: 0;
+            transform: translateY(-12px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    @keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(22px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .achievement-card {
+        transition:
+            transform 0.25s ease,
+            box-shadow 0.25s ease,
+            border-color 0.25s ease;
+    }
+    .achievement-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 18px 36px rgba(0, 0, 0, 0.1);
+        border-color: rgba(15, 107, 68, 0.18);
+    }
+    .achievement-visual {
+        background:
+            radial-gradient(
+                circle at 30% 20%,
+                rgba(246, 199, 68, 0.28),
+                transparent 35%
+            ),
+            radial-gradient(
+                circle at 70% 30%,
+                rgba(15, 107, 68, 0.18),
+                transparent 40%
+            ),
+            linear-gradient(
+                180deg,
+                rgba(255, 255, 255, 0.72),
+                rgba(255, 255, 255, 0.94)
+            );
+    }
+    .achievement-image {
+        transition:
+            transform 0.45s ease,
+            filter 0.45s ease;
+        filter: grayscale(1) saturate(0.85)
+            drop-shadow(0 12px 24px rgba(0, 0, 0, 0.12));
+    }
+    .achievement-card:hover .achievement-image {
+        transform: scale(1.03);
+        filter: grayscale(0) saturate(1.04)
+            drop-shadow(0 18px 30px rgba(15, 107, 68, 0.14));
+    }
+    .achievement-placeholder {
+        background: linear-gradient(
+            180deg,
+            rgba(15, 107, 68, 0.08),
+            rgba(15, 107, 68, 0.02)
+        );
+    }
+</style>
+
+<BaseLayout
+    title="Prestasi Siswa"
+    description="Daftar prestasi siswa madrasah di lingkungan Kementerian Agama Kota Probolinggo."
+    ogDescription="Prestasi siswa madrasah, informasi lomba, dan daftar pemenang dari Kemenag Kota Probolinggo."
+    ogImage={ogImage}
+    structuredData={structuredData}
+>
+    <section data-anim="down" class="pt-8 pb-6">
+        <a
+            href="/portal"
+            class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink/35 hover:text-green transition-colors mb-4"
+        >
+            <Icon name="mdi:arrow-left" class="w-3.5 h-3.5" />
+            Beranda
+        </a>
+
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-1 h-7 bg-green shrink-0"></div>
+            <h1
+                class="text-4xl font-extrabold uppercase tracking-tight text-ink"
+            >
+                Prestasi Siswa
+            </h1>
+        </div>
+        <p class="text-sm text-ink/45 mt-1 ml-4 max-w-3xl">
+            Menampilkan daftar prestasi siswa dari madrasah di lingkungan
+            Kementerian Agama Kota Probolinggo beserta detail lomba dan
+            pemenangnya.
+        </p>
+    </section>
+
+    {
+        prestasiList.length === 0 ? (
+            <div
+                data-anim="up"
+                class="py-24 text-center border border-black/8 bg-white/60"
+            >
+                <Icon
+                    name="mdi:trophy-outline"
+                    class="w-10 h-10 text-ink/20 mx-auto mb-3"
+                />
+                <p class="text-sm font-semibold uppercase tracking-wider text-ink/35">
+                    Belum ada data prestasi siswa
+                </p>
+            </div>
+        ) : (
+            <>
+                {usingMockData && (
+                    <div
+                        data-anim="up"
+                        class="mb-6 border border-yellow/30 bg-yellow/10 px-4 py-3 text-sm text-ink/70"
+                    >
+                        <div class="flex items-start gap-3">
+                            <Icon
+                                name="mdi:flask-outline"
+                                class="w-5 h-5 text-yellow shrink-0 mt-0.5"
+                            />
+                            <div>
+                                <p class="font-bold uppercase tracking-wider text-[11px] text-yellow/90 mb-1">
+                                    Mode Preview
+                                </p>
+                                <p>
+                                    Halaman ini sedang menampilkan{" "}
+                                    <span class="font-semibold">
+                                        data mockup
+                                    </span>
+                                    sementara sampai endpoint backend prestasi
+                                    siswa tersedia.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-10">
+                    {prestasiList.map((item, index) => (
+                        <a
+                            href={`/portal/prestasi-siswa/${item.id}`}
+                            data-reveal="up"
+                            data-delay={String((index % 6) + 1)}
+                            class="achievement-card group border border-black/8 bg-white/70 overflow-hidden flex flex-col h-full"
+                        >
+                            <div class="achievement-visual relative h-64 overflow-hidden">
+                                <div class="absolute top-4 left-4 z-10 inline-flex items-center gap-1 rounded-full bg-green/8 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-green border border-green/10">
+                                    <Icon
+                                        name="mdi:trophy-award"
+                                        class="w-3.5 h-3.5"
+                                    />
+                                    {item.tahun || "Prestasi"}
+                                </div>
+
+                                {item.image ? (
+                                    <img
+                                        src={item.image}
+                                        alt={item.title}
+                                        class="achievement-image w-full h-full object-cover"
+                                        loading="lazy"
+                                    />
+                                ) : (
+                                    <div class="achievement-placeholder h-full w-full flex items-center justify-center border-b border-black/6">
+                                        <div class="text-center px-6">
+                                            <Icon
+                                                name="mdi:image-outline"
+                                                class="w-16 h-16 text-green/35 mx-auto mb-3"
+                                            />
+                                            <p class="text-xs font-semibold uppercase tracking-wider text-ink/35">
+                                                Foto lomba belum tersedia
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div class="border-t border-black/6 px-5 py-5 bg-cream/80 flex flex-col flex-1">
+                                <div class="flex items-start gap-3 justify-between mb-3">
+                                    <div>
+                                        <p class="text-[11px] uppercase tracking-wider text-green/70 font-black mb-1">
+                                            Prestasi Siswa
+                                        </p>
+                                        <h2 class="text-lg font-bold text-ink leading-tight group-hover:text-green transition-colors line-clamp-2">
+                                            {item.title}
+                                        </h2>
+                                    </div>
+                                    <Icon
+                                        name="mdi:arrow-top-right"
+                                        class="w-4 h-4 text-ink/30 group-hover:text-green transition-colors shrink-0 mt-1"
+                                    />
+                                </div>
+
+                                {item.prestasi && (
+                                    <div class="mb-3 border-l-4 border-yellow pl-3">
+                                        <p class="text-[11px] font-black uppercase tracking-wider text-yellow/80 mb-1">
+                                            Capaian
+                                        </p>
+                                        <p class="text-sm font-semibold text-ink">
+                                            {item.prestasi}
+                                        </p>
+                                    </div>
+                                )}
+
+                                <div class="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-ink/40 mb-3">
+                                    {item.tingkat && (
+                                        <span>{item.tingkat}</span>
+                                    )}
+                                    {item.tingkat && item.madrasah && (
+                                        <span>•</span>
+                                    )}
+                                    {item.madrasah && (
+                                        <span>{item.madrasah}</span>
+                                    )}
+                                </div>
+
+                                <p class="text-sm text-ink/55 leading-relaxed line-clamp-3 flex-1">
+                                    {item.description ||
+                                        "Lihat detail prestasi dan daftar siswa pemenang pada halaman ini."}
+                                </p>
+
+                                <div class="mt-4 flex items-center justify-between text-sm">
+                                    <span class="text-green font-semibold">
+                                        Lihat Detail
+                                    </span>
+                                    <span class="text-ink/35 font-medium">
+                                        {item.winnerCount} pemenang
+                                    </span>
+                                </div>
+                            </div>
+                        </a>
+                    ))}
+                </div>
+            </>
+        )
+    }
+
+    <script>
+        function initPrestasiReveal() {
+            const items = document.querySelectorAll("[data-reveal]");
+            if (!items.length) return;
+
+            const observer = new IntersectionObserver(
+                (entries) => {
+                    entries.forEach((entry) => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add("revealed");
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                },
+                { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
+            );
+
+            items.forEach((item) => observer.observe(item));
+        }
+
+        initPrestasiReveal();
+        document.addEventListener("astro:page-load", initPrestasiReveal);
+    </script>
+</BaseLayout>
