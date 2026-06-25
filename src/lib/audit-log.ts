@@ -307,14 +307,16 @@ function entityLabel(entity: string): string {
 }
 
 export function writeAuditLog(entry: AuditEntry) {
+  // Hanya log FAILED — SUCCESS sudah dicatat backend
+  if (entry.success) return;
+
   const actor = entry.actor?.nama ?? entry.actor?.nip ?? "unknown";
   const role = entry.actor?.role ?? "unknown";
-  const outcome = entry.success ? "SUCCESS" : "FAILED";
   const ip = entry.ip ?? "unknown-ip";
   const userAgent = compactUserAgent(entry.userAgent);
 
-  console.log(
-    `[audit] ${outcome} | ${actor} (${role}) | ${entry.summary} | ${entry.pathname} | ip=${ip} | ua=${userAgent}`,
+  console.warn(
+    `[audit] FAILED | ${actor} (${role}) | ${entry.summary} | ${entry.pathname} | ip=${ip} | ua=${userAgent}`,
   );
 }
 

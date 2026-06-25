@@ -64,7 +64,7 @@ async function validateToken(
       return { valid: true, user: data.found.user };
     }
 
-    console.log(
+    console.warn(
       "[middleware] Token validation failed:",
       JSON.stringify(data).slice(0, 200),
     );
@@ -135,9 +135,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const cookieHeader = request.headers.get("cookie") ?? "";
 
   if (!token && !cookieHeader) {
-    console.log(
-      "[middleware] No auth_token atau cookie sesi — redirecting to login",
-    );
     const loginPath = isAdminRoute ? "/admin/login" : "/internal/login";
     const redirectParam = `?redirect=${encodeURIComponent(url.pathname)}`;
     return redirect(`${loginPath}${redirectParam}`);
@@ -147,14 +144,14 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const { valid, user } = await validateToken(token, cookieHeader);
 
   if (!valid) {
-    console.log("[middleware] Token invalid — clearing cookie and redirecting");
+    console.warn(
+      "[middleware] Token invalid — clearing cookie and redirecting",
+    );
     cookies.delete("auth_token", { path: "/" });
     const loginPath = isAdminRoute ? "/admin/login" : "/internal/login";
     const redirectParam = `?redirect=${encodeURIComponent(url.pathname)}`;
     return redirect(`${loginPath}${redirectParam}`);
   }
-
-  console.log(`[middleware] Auth OK — user: ${user?.nama} (${user?.role})`);
 
   // ── Role-based access ─────────────────────────────────
 
@@ -163,7 +160,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     isAdminRoute &&
     !["super_admin", "admin", "operator", "humas"].includes(user?.role)
   ) {
-    console.log(
+    console.warn(
       "[middleware] Non-admin role cannot access admin routes:",
       user?.role,
     );
@@ -184,7 +181,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
 
     if (!allowedHumasPaths.some((path) => url.pathname.startsWith(path))) {
-      console.log(
+      console.warn(
         "[middleware] Humas cannot access admin route:",
         url.pathname,
       );
