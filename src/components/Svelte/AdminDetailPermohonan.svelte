@@ -128,29 +128,50 @@
         e.preventDefault();
         toast = null;
 
-        if (newStatus === "Selesai" && !pesanSelesai.trim()) {
+        const trimmedPesanSelesai = pesanSelesai.trim();
+        const trimmedPesanTolak = pesanTolak.trim();
+        const currentSelesaiMessage = String(
+            current.rejectionReason ?? current.message ?? "",
+        ).trim();
+        const currentTolakMessage = String(
+            current.rejectionReason ?? "",
+        ).trim();
+        const isStatusChanged = newStatus !== current.status;
+
+        if (newStatus === "Selesai" && !trimmedPesanSelesai) {
             toast = {
                 type: "error",
                 msg: "Mohon isi pesan untuk pemohon terlebih dahulu.",
             };
             return;
         }
-        if (newStatus === "Ditolak" && !pesanTolak.trim()) {
+        if (newStatus === "Ditolak" && !trimmedPesanTolak) {
             toast = { type: "error", msg: "Mohon isi alasan penolakan." };
             return;
         }
 
         submitting = true;
         try {
-            const body: Record<string, unknown> = {
-                status: newStatus,
-            };
-            if (newStatus === "Ditolak") {
-                body.rejectionReason = pesanTolak.trim();
+            const body: Record<string, unknown> = {};
+
+            if (isStatusChanged) {
+                body.status = newStatus;
             }
-            if (newStatus === "Selesai") {
-                body.rejectionReason = pesanSelesai.trim();
+
+            if (
+                newStatus === "Ditolak" &&
+                trimmedPesanTolak !== currentTolakMessage
+            ) {
+                body.rejectionReason = trimmedPesanTolak;
             }
+
+            if (
+                newStatus === "Selesai" &&
+                trimmedPesanSelesai !== currentSelesaiMessage
+            ) {
+                body.rejectionReason = trimmedPesanSelesai;
+            }
+
             if (newStatus === "Selesai" && outputFile) {
                 const fd = new FormData();
                 fd.append("file", outputFile);
@@ -170,6 +191,14 @@
                 };
             }
 
+            if (Object.keys(body).length === 0) {
+                toast = {
+                    type: "error",
+                    msg: "Tidak ada perubahan yang perlu disimpan.",
+                };
+                return;
+            }
+
             const res = await fetch(
                 `/api/admin/permohonan/${current.id}/status`,
                 {
@@ -181,38 +210,55 @@
 
             if (!res.ok) {
                 const errData = await res.json().catch(() => ({}));
-                throw new Error(errData.message ?? "Gagal memperbarui status");
+                throw new Error(
+                    errData.message ?? "Gagal memperbarui permohonan",
+                );
             }
 
             const result = await res.json();
 
             if (!result.success) {
-                throw new Error(result.message ?? "Gagal memperbarui status");
+                throw new Error(
+                    result.message ?? "Gagal memperbarui permohonan",
+                );
             }
 
-            // Update local state setelah API berhasil
             current = {
                 ...current,
-                status: newStatus,
-                ...(newStatus === "Ditolak" && {
-                    rejectionReason: pesanTolak.trim(),
-                }),
-                ...(newStatus === "Selesai" && {
-                    rejectionReason: pesanSelesai.trim(),
-                }),
-                ...(newStatus === "Selesai" && outputFile
+                ...(result.data ?? {}),
+                ...(isStatusChanged ? { status: newStatus } : {}),
+                ...(newStatus === "Selesai" &&
+                body.rejectionReason !== undefined
+                    ? { message: trimmedPesanSelesai }
+                    : {}),
+                ...(body.rejectionReason !== undefined
                     ? {
-                          outputFile: {
-                              nama: outputFile.name,
-                              url: result.data?.outputFile?.url ?? "#",
-                          },
+                          rejectionReason:
+                              newStatus === "Ditolak"
+                                  ? trimmedPesanTolak
+                                  : trimmedPesanSelesai,
                       }
+                    : {}),
+                ...(body.outputFile !== undefined
+                    ? { outputFile: body.outputFile }
+                    : {}),
+                ...(isStatusChanged &&
+                newStatus === "Diproses" &&
+                !result.data?.processedAt &&
+                !result.data?.processed_at
+                    ? { processedAt: new Date().toISOString() }
                     : {}),
             };
 
+            if (newStatus === "Selesai" && body.outputFile !== undefined) {
+                outputFile = null;
+            }
+
             toast = {
                 type: "success",
-                msg: `Status berhasil diubah menjadi "${newStatus}".`,
+                msg: isStatusChanged
+                    ? `Status berhasil diubah menjadi "${newStatus}".`
+                    : "Data permohonan berhasil diperbarui.",
             };
             setTimeout(() => {
                 toast = null;
@@ -674,17 +720,21 @@
                     <!-- Status options — gunakan onchange eksplisit, bukan bind:group -->
                     <div class="space-y-2">
                         {#each statusOptions as opt}
+                            {@const isCurrent = opt === current.status}
                             <label
-                                class="flex items-center gap-3 p-3 border cursor-pointer transition-all select-none
-                {newStatus === opt
-                                    ? 'border-green bg-green/3'
-                                    : 'border-black/10 hover:border-black/20 hover:bg-black/2'}"
+                                class="flex items-center gap-3 p-3 border transition-all select-none
+                {isCurrent
+                                    ? 'border-black/5 bg-black/2 opacity-50 cursor-not-allowed'
+                                    : newStatus === opt
+                                      ? 'border-green bg-green/3 cursor-pointer'
+                                      : 'border-black/10 hover:border-black/20 hover:bg-black/2 cursor-pointer'}"
                             >
                                 <input
                                     type="radio"
                                     name="status-selector"
                                     value={opt}
                                     checked={newStatus === opt}
+                                    disabled={isCurrent}
                                     onchange={() => (newStatus = opt)}
                                     class="sr-only"
                                 />
@@ -703,11 +753,18 @@
                                 <span class="text-sm font-semibold flex-1"
                                     >{opt}</span
                                 >
-                                <span
-                                    class="text-[10px] font-bold px-2 py-0.5 border {statusCls(
-                                        opt,
-                                    )}">{opt}</span
-                                >
+                                {#if isCurrent}
+                                    <span
+                                        class="text-[10px] font-bold px-2 py-0.5 bg-ink/10 text-ink/40"
+                                        >Aktif</span
+                                    >
+                                {:else}
+                                    <span
+                                        class="text-[10px] font-bold px-2 py-0.5 border {statusCls(
+                                            opt,
+                                        )}">{opt}</span
+                                    >
+                                {/if}
                             </label>
                         {/each}
                     </div>
