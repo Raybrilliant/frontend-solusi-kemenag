@@ -1,4 +1,7 @@
 User-agent: *
 Allow: /
+Disallow: /admin/
+Disallow: /internal/
+Disallow: /api/
 
 Sitemap: https://kemenagkotaprobolinggo.id/sitemap.xml

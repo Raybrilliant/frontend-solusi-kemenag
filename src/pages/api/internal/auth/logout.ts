@@ -21,7 +21,7 @@ async function clearSsoSession(cookieHeader: string): Promise<string> {
 export const GET: APIRoute = async ({ cookies, request }) => {
   cookies.delete("auth_token", { path: "/" });
 
-  const headers = new Headers({ Location: "/internal/login" });
+  const headers = new Headers({ Location: "/internal" });
   const ssoCookie = await clearSsoSession(request.headers.get("cookie") ?? "");
   if (ssoCookie) headers.append("Set-Cookie", ssoCookie);
 

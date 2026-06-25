@@ -18,7 +18,6 @@ const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
 // Halaman yang TIDAK perlu auth (public)
 const PUBLIC_PATHS = [
-  "/admin/login",
   "/internal/login",
   "/api",
   "/check-progress",
@@ -85,6 +84,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
     request.method,
   );
 
+  if (url.pathname === "/admin/login" || url.pathname === "/admin/login/") {
+    const redirectTarget = url.searchParams.get("redirect") ?? "/admin";
+    return redirect(
+      `/internal/login?redirect=${encodeURIComponent(redirectTarget)}`,
+    );
+  }
+
   if (isAdminApiMutationRequest) {
     const token = cookies.get("auth_token")?.value;
     const cookieHeader = request.headers.get("cookie") ?? "";
@@ -135,7 +141,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const cookieHeader = request.headers.get("cookie") ?? "";
 
   if (!token && !cookieHeader) {
-    const loginPath = isAdminRoute ? "/admin/login" : "/internal/login";
+    const loginPath = "/internal/login";
     const redirectParam = `?redirect=${encodeURIComponent(url.pathname)}`;
     return redirect(`${loginPath}${redirectParam}`);
   }
@@ -148,7 +154,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
       "[middleware] Token invalid — clearing cookie and redirecting",
     );
     cookies.delete("auth_token", { path: "/" });
-    const loginPath = isAdminRoute ? "/admin/login" : "/internal/login";
+    const loginPath = "/internal/login";
     const redirectParam = `?redirect=${encodeURIComponent(url.pathname)}`;
     return redirect(`${loginPath}${redirectParam}`);
   }
@@ -164,7 +170,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
       "[middleware] Non-admin role cannot access admin routes:",
       user?.role,
     );
-    return redirect("/admin/login");
+    return redirect("/internal");
   }
 
   if (isAdminRoute && user?.role === "humas") {
