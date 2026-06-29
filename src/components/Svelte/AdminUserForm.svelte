@@ -279,6 +279,7 @@
                     >
                         <option value="admin">Admin</option>
                         <option value="humas">Humas</option>
+                        <option value="satker">Satker</option>
                         <option value="operator">Operator</option>
                         <option value="asn">ASN</option>
                     </select>

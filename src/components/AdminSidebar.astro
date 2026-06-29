@@ -9,6 +9,7 @@ const userName = user?.nama ?? "Admin";
 const userEmail = user?.email ?? "";
 const userRole = user?.role ?? "";
 const isHumas = userRole === "humas";
+const isSatker = userRole === "satker";
 const isAdminManager = userRole === "super_admin" || userRole === "admin";
 const userInitials = userName
     .split(" ")
@@ -24,19 +25,9 @@ const humasItems = [
         label: "Manajemen Berita",
     },
     {
-        href: "/admin/prestasi-siswa",
-        icon: "mdi:trophy-outline",
-        label: "Manajemen Prestasi Siswa",
-    },
-    {
         href: "/admin/agen-perubahan",
         icon: "mdi:account-switch-outline",
         label: "Agen Perubahan",
-    },
-    {
-        href: "/admin/pengaduan",
-        icon: "mdi:message-alert-outline",
-        label: "Pengaduan",
     },
     {
         href: "/admin/survei",
@@ -45,26 +36,41 @@ const humasItems = [
     },
 ];
 
+const satkerItems = [
+    {
+        href: "/admin/berita",
+        icon: "mdi:newspaper-variant-outline",
+        label: "Manajemen Berita",
+    },
+    {
+        href: "/admin/prestasi-siswa",
+        icon: "mdi:trophy-outline",
+        label: "Manajemen Prestasi Siswa",
+    },
+];
+
 const navItems = [
     ...(isHumas
         ? humasItems
-        : [
-              {
-                  href: "/admin",
-                  icon: "mdi:view-dashboard-outline",
-                  label: "Dashboard",
-              },
-              {
-                  href: "/admin/permohonan",
-                  icon: "mdi:clipboard-list-outline",
-                  label: "Permohonan",
-              },
-              {
-                  href: "/admin/layanan",
-                  icon: "mdi:file-document-outline",
-                  label: "Layanan",
-              },
-          ]),
+        : isSatker
+          ? satkerItems
+          : [
+                {
+                    href: "/admin",
+                    icon: "mdi:view-dashboard-outline",
+                    label: "Dashboard",
+                },
+                {
+                    href: "/admin/permohonan",
+                    icon: "mdi:clipboard-list-outline",
+                    label: "Permohonan",
+                },
+                {
+                    href: "/admin/layanan",
+                    icon: "mdi:file-document-outline",
+                    label: "Layanan",
+                },
+            ]),
     ...(isAdminManager ? humasItems : []),
     ...(isAdminManager
         ? [

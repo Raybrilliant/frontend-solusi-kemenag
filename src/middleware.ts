@@ -164,7 +164,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // Admin routes: hanya role panel admin yang bisa masuk
   if (
     isAdminRoute &&
-    !["super_admin", "admin", "operator", "humas"].includes(user?.role)
+    !["super_admin", "admin", "operator", "humas", "satker"].includes(
+      user?.role,
+    )
   ) {
     console.warn(
       "[middleware] Non-admin role cannot access admin routes:",
@@ -176,7 +178,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   if (isAdminRoute && user?.role === "humas") {
     const allowedHumasPaths = [
       "/admin/berita",
-      "/admin/pengaduan",
+      "/admin/agen-perubahan",
       "/admin/survei",
       "/admin/profil",
       "/api/admin/auth/logout",
@@ -189,6 +191,27 @@ export const onRequest = defineMiddleware(async (context, next) => {
     if (!allowedHumasPaths.some((path) => url.pathname.startsWith(path))) {
       console.warn(
         "[middleware] Humas cannot access admin route:",
+        url.pathname,
+      );
+      return redirect("/admin/berita");
+    }
+  }
+
+  if (isAdminRoute && user?.role === "satker") {
+    const allowedSatkerPaths = [
+      "/admin/berita",
+      "/admin/prestasi-siswa",
+      "/admin/profil",
+      "/api/admin/auth/logout",
+    ];
+
+    if (url.pathname === "/admin" || url.pathname === "/admin/") {
+      return redirect("/admin/berita");
+    }
+
+    if (!allowedSatkerPaths.some((path) => url.pathname.startsWith(path))) {
+      console.warn(
+        "[middleware] Satker cannot access admin route:",
         url.pathname,
       );
       return redirect("/admin/berita");
