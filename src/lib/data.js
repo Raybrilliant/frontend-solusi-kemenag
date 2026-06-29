@@ -20,7 +20,8 @@ export const agenPerubahan = [
     tahun: 2026,
     foto: "/agen-perubahan/2026/2.png",
     inovasi: "Gawes",
-    deskripsi: "GAWES (Gerakan Wakaf, Infak, dan Sedekah) adalah kegiatan yang bertujuan menumbuhkan semangat berbagi dan kepedulian sosial melalui penghimpunan serta penyaluran dana wakaf, infak, dan sedekah. Program ini mengajak seluruh masyarakat untuk berpartisipasi dalam membantu sesama, mendukung kegiatan keagamaan, pendidikan, dan sosial kemasyarakatan, sehingga tercipta manfaat yang berkelanjutan serta meningkatkan kesejahteraan umat."
+    deskripsi:
+      "GAWES (Gerakan Wakaf, Infak, dan Sedekah) adalah kegiatan yang bertujuan menumbuhkan semangat berbagi dan kepedulian sosial melalui penghimpunan serta penyaluran dana wakaf, infak, dan sedekah. Program ini mengajak seluruh masyarakat untuk berpartisipasi dalam membantu sesama, mendukung kegiatan keagamaan, pendidikan, dan sosial kemasyarakatan, sehingga tercipta manfaat yang berkelanjutan serta meningkatkan kesejahteraan umat.",
   },
   {
     id: 3,
@@ -30,7 +31,8 @@ export const agenPerubahan = [
     tahun: 2026,
     foto: "/agen-perubahan/2026/3.png",
     inovasi: "Gerilya",
-    deskripsi: "GERILYA (Gerakan Lingkungan Eco Office) merupakan inovasi yang bertujuan untuk mewujudkan budaya kerja ramah lingkungan di lingkungan kantor melalui penerapan prinsip eco office secara berkelanjutan. Program ini mendorong seluruh pegawai untuk berpartisipasi aktif dalam menjaga kelestarian lingkungan melalui berbagai kegiatan seperti pengurangan penggunaan kertas dan plastik sekali pakai, pengelolaan sampah yang baik, penghematan energi dan air, penghijauan lingkungan kantor, serta pemanfaatan teknologi digital dalam proses administrasi. Melalui GERILYA, diharapkan tercipta lingkungan kerja yang bersih, sehat, efisien, dan berwawasan lingkungan, sekaligus meningkatkan kesadaran serta tanggung jawab bersama dalam mendukung pembangunan berkelanjutan dan pelestarian lingkungan hidup.",
+    deskripsi:
+      "GERILYA (Gerakan Lingkungan Eco Office) merupakan inovasi yang bertujuan untuk mewujudkan budaya kerja ramah lingkungan di lingkungan kantor melalui penerapan prinsip eco office secara berkelanjutan. Program ini mendorong seluruh pegawai untuk berpartisipasi aktif dalam menjaga kelestarian lingkungan melalui berbagai kegiatan seperti pengurangan penggunaan kertas dan plastik sekali pakai, pengelolaan sampah yang baik, penghematan energi dan air, penghijauan lingkungan kantor, serta pemanfaatan teknologi digital dalam proses administrasi. Melalui GERILYA, diharapkan tercipta lingkungan kerja yang bersih, sehat, efisien, dan berwawasan lingkungan, sekaligus meningkatkan kesadaran serta tanggung jawab bersama dalam mendukung pembangunan berkelanjutan dan pelestarian lingkungan hidup.",
   },
   {
     id: 4,
@@ -40,7 +42,8 @@ export const agenPerubahan = [
     tahun: 2026,
     foto: "/agen-perubahan/2026/4.png",
     inovasi: "Siap Maju",
-    deskripsi: "SIAP MAJU (Sistem Informasi Administrasi dan Pembelajaran Madrasah) merupakan inovasi digital yang dikembangkan untuk meningkatkan efektivitas dan efisiensi pengelolaan administrasi serta proses pembelajaran di madrasah. Sistem ini mengintegrasikan berbagai layanan dalam satu platform, mulai dari pengelolaan data peserta didik, pendidik dan tenaga kependidikan, administrasi akademik, penjadwalan, penilaian, hingga penyediaan media dan informasi pembelajaran. Melalui SIAP MAJU, seluruh proses administrasi dan pembelajaran dapat dilakukan secara lebih cepat, akurat, transparan, dan terdokumentasi dengan baik. Inovasi ini mendukung transformasi digital madrasah, meningkatkan kualitas layanan pendidikan, serta memudahkan komunikasi dan koordinasi antara madrasah, guru, peserta didik, dan orang tua dalam mendukung terciptanya pendidikan yang berkualitas dan berdaya saing.",
+    deskripsi:
+      "SIAP MAJU (Sistem Informasi Administrasi dan Pembelajaran Madrasah) merupakan inovasi digital yang dikembangkan untuk meningkatkan efektivitas dan efisiensi pengelolaan administrasi serta proses pembelajaran di madrasah. Sistem ini mengintegrasikan berbagai layanan dalam satu platform, mulai dari pengelolaan data peserta didik, pendidik dan tenaga kependidikan, administrasi akademik, penjadwalan, penilaian, hingga penyediaan media dan informasi pembelajaran. Melalui SIAP MAJU, seluruh proses administrasi dan pembelajaran dapat dilakukan secara lebih cepat, akurat, transparan, dan terdokumentasi dengan baik. Inovasi ini mendukung transformasi digital madrasah, meningkatkan kualitas layanan pendidikan, serta memudahkan komunikasi dan koordinasi antara madrasah, guru, peserta didik, dan orang tua dalam mendukung terciptanya pendidikan yang berkualitas dan berdaya saing.",
   },
   {
     id: 5,
@@ -61,7 +64,8 @@ export const agenPerubahan = [
     tahun: 2026,
     foto: "/agen-perubahan/2026/6.png",
     inovasi: "Dompet ASN",
-    deskripsi: "DOMPET ASN (Dokumen Online Manajemen Pendapatan dan Elektronik Tunjangan ASN) merupakan inovasi layanan digital yang menyediakan akses mudah, cepat, dan mandiri bagi Aparatur Sipil Negara (ASN) untuk memperoleh dokumen kepegawaian terkait penghasilan, seperti slip gaji, rincian tunjangan, dan bukti potong pajak secara online. Melalui aplikasi ini, ASN dapat mengakses, melihat, mengunduh, dan mencetak dokumen yang dibutuhkan kapan saja dan di mana saja tanpa harus datang langsung ke kantor atau mengajukan permintaan secara manual. Inovasi DOMPET ASN hadir untuk meningkatkan kualitas layanan administrasi kepegawaian melalui digitalisasi dokumen, mempercepat proses pelayanan, mengurangi penggunaan kertas, serta memberikan kemudahan, efisiensi, dan transparansi dalam pengelolaan informasi penghasilan ASN. Dengan demikian, ASN dapat memperoleh layanan yang lebih praktis, akurat, dan responsif sesuai dengan kebutuhan di era digital.",
+    deskripsi:
+      "DOMPET ASN (Dokumen Online Manajemen Pendapatan dan Elektronik Tunjangan ASN) merupakan inovasi layanan digital yang menyediakan akses mudah, cepat, dan mandiri bagi Aparatur Sipil Negara (ASN) untuk memperoleh dokumen kepegawaian terkait penghasilan, seperti slip gaji, rincian tunjangan, dan bukti potong pajak secara online. Melalui aplikasi ini, ASN dapat mengakses, melihat, mengunduh, dan mencetak dokumen yang dibutuhkan kapan saja dan di mana saja tanpa harus datang langsung ke kantor atau mengajukan permintaan secara manual. Inovasi DOMPET ASN hadir untuk meningkatkan kualitas layanan administrasi kepegawaian melalui digitalisasi dokumen, mempercepat proses pelayanan, mengurangi penggunaan kertas, serta memberikan kemudahan, efisiensi, dan transparansi dalam pengelolaan informasi penghasilan ASN. Dengan demikian, ASN dapat memperoleh layanan yang lebih praktis, akurat, dan responsif sesuai dengan kebutuhan di era digital.",
   },
 ];
 
@@ -282,12 +286,12 @@ export const kelurahanMap = {
     "Sumbertaman",
   ],
   Kedopok: [
-    "Kedopok",
+    "Sumber Wetan",
+    "Kareng Lor",
+    "Jrebeng Kulon",
     "Jrebeng Wetan",
     "Jrebeng Lor",
-    "Kareng Lor",
-    "Sumber Wetan",
-    "Triwung Lor",
+    "Kedopok",
   ],
   Kademangan: [
     "Kademangan",
