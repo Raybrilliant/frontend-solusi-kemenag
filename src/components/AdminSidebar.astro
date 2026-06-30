@@ -18,7 +18,7 @@ const userInitials = userName
     .toUpperCase()
     .slice(0, 2);
 
-const humasItems = [
+const contentItems = [
     {
         href: "/admin/berita",
         icon: "mdi:newspaper-variant-outline",
@@ -30,72 +30,93 @@ const humasItems = [
         label: "Agen Perubahan",
     },
     {
+        href: "/admin/prestasi-siswa",
+        icon: "mdi:trophy-outline",
+        label: "Manajemen Prestasi Siswa",
+    },
+    {
         href: "/admin/survei",
         icon: "mdi:clipboard-check-outline",
         label: "Manajemen Survei",
     },
 ];
 
-const satkerItems = [
-    {
-        href: "/admin/berita",
-        icon: "mdi:newspaper-variant-outline",
-        label: "Manajemen Berita",
-    },
-    {
-        href: "/admin/prestasi-siswa",
-        icon: "mdi:trophy-outline",
-        label: "Manajemen Prestasi Siswa",
-    },
-];
+const humasItems = contentItems.filter((item) =>
+    ["/admin/berita", "/admin/agen-perubahan", "/admin/survei"].includes(
+        item.href,
+    ),
+);
 
-const navItems = [
-    ...(isHumas
-        ? humasItems
-        : isSatker
-          ? satkerItems
-          : [
-                {
-                    href: "/admin",
-                    icon: "mdi:view-dashboard-outline",
-                    label: "Dashboard",
-                },
-                {
-                    href: "/admin/permohonan",
-                    icon: "mdi:clipboard-list-outline",
-                    label: "Permohonan",
-                },
-                {
-                    href: "/admin/layanan",
-                    icon: "mdi:file-document-outline",
-                    label: "Layanan",
-                },
-            ]),
-    ...(isAdminManager ? humasItems : []),
-    ...(isAdminManager
-        ? [
-              {
-                  href: "/admin/regulasi",
-                  icon: "mdi:file-document-multiple-outline",
-                  label: "Regulasi",
-              },
-              {
-                  href: "/admin/kategori",
-                  icon: "mdi:shape-outline",
-                  label: "Kategori Layanan",
-              },
-          ]
-        : []),
-    ...(userRole === "super_admin"
-        ? [
-              {
-                  href: "/admin/manajemenUser",
-                  icon: "mdi:accounts-outline",
-                  label: "Manajemen User",
-              },
-          ]
-        : []),
-];
+const satkerItems = contentItems.filter((item) =>
+    ["/admin/berita", "/admin/prestasi-siswa"].includes(item.href),
+);
+
+const navItems = isAdminManager
+    ? [
+          {
+              href: "/admin",
+              icon: "mdi:view-dashboard-outline",
+              label: "Dashboard",
+          },
+          {
+              href: "/admin/permohonan",
+              icon: "mdi:clipboard-list-outline",
+              label: "Permohonan",
+          },
+          {
+              href: "/admin/layanan",
+              icon: "mdi:file-document-outline",
+              label: "Layanan",
+          },
+          {
+              href: "/admin/pengaduan",
+              icon: "mdi:message-alert-outline",
+              label: "Pengaduan",
+          },
+          ...contentItems,
+          {
+              href: "/admin/regulasi",
+              icon: "mdi:file-document-multiple-outline",
+              label: "Regulasi",
+          },
+          {
+              href: "/admin/kategori",
+              icon: "mdi:shape-outline",
+              label: "Kategori Layanan",
+          },
+          ...(userRole === "super_admin"
+              ? [
+                    {
+                        href: "/admin/manajemenUser",
+                        icon: "mdi:accounts-outline",
+                        label: "Manajemen User",
+                    },
+                ]
+              : []),
+      ]
+    : [
+          ...(isHumas
+              ? humasItems
+              : isSatker
+                ? satkerItems
+                : [
+                      {
+                          href: "/admin",
+                          icon: "mdi:view-dashboard-outline",
+                          label: "Dashboard",
+                      },
+                      {
+                          href: "/admin/permohonan",
+                          icon: "mdi:clipboard-list-outline",
+                          label: "Permohonan",
+                      },
+                      {
+                          href: "/admin/layanan",
+                          icon: "mdi:file-document-outline",
+                          label: "Layanan",
+                      },
+                  ]),
+      ];
 
 function isActive(href: string) {
     if (href === "/admin")
