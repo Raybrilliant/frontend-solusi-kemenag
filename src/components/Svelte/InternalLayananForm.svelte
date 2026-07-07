@@ -2,7 +2,7 @@
     import Icon from "@iconify/svelte";
     let { apiUrl = "/api/internal/services", userRole = "" } = $props();
 
-    const adminRoles = ["super_admin", "admin", "operator", "humas"];
+    const adminRoles = ["super_admin", "admin", "operator", "humas", "satker"];
     const hasAdminAccess = $derived(adminRoles.includes(userRole));
 
     // ── State ────────────────────────────────────────────
