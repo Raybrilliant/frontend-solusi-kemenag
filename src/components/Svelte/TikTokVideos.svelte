@@ -435,12 +435,14 @@
                     >
                         <div
                             class="relative aspect-9/16 w-full rounded-none overflow-hidden bg-ink/5 border border-ink/10 shadow-sm"
+                            style="min-height: 380px; max-height: 70vh;"
                         >
                             {#if getTiktokEmbedUrl(video.url)}
                                 <iframe
                                     data-src={getTiktokEmbedUrl(video.url)}
                                     title={video.title ?? "Video TikTok"}
                                     class="w-full h-full"
+                                    style="min-width: 100%; min-height: 100%;"
                                     frameborder="0"
                                     allowfullscreen
                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
