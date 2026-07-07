@@ -11,20 +11,26 @@
      * @property {string} [thumbnail]
      */
 
-    /** @type {{ videos?: TikTokVideo[], apiUrl?: string }} */
-    let { videos: initialVideos = [], apiUrl = "/api/v1/testimoni/" } =
-        $props();
+    /** @type {{ videos: TikTokVideo[], apiUrl?: string }} */
+    let { videos = [], apiUrl = "" } = $props();
+
+    const resolvedApiUrl = $derived(
+        apiUrl ||
+            (import.meta.env?.BACKEND_URL
+                ? `${import.meta.env.BACKEND_URL.replace(/\/$/, "")}/api/v1/testimoni/`
+                : ""),
+    );
 
     let fetchedVideos = $state([]);
     let loading = $state(true);
 
-    const hasPropVideos = $derived(initialVideos.length > 0);
+    const hasPropVideos = $derived(videos.length > 0);
 
     const MAX_VIDEOS = 6;
 
     const sourceVideos = $derived(
-        initialVideos.length > 0
-            ? initialVideos.slice(0, MAX_VIDEOS)
+        videos.length > 0
+            ? videos.slice(0, MAX_VIDEOS)
             : fetchedVideos.slice(0, MAX_VIDEOS),
     );
 
@@ -45,7 +51,7 @@
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-        fetch(apiUrl, { signal: controller.signal })
+        fetch(resolvedApiUrl, { signal: controller.signal })
             .then((r) => {
                 clearTimeout(timeoutId);
                 if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -355,7 +361,9 @@
         if (!url) return "";
         const m = url.match(/\/video\/(\d+)/);
         if (!m) return "";
-        return `https://www.tiktok.com/embed/v2/${m[1]}`;
+        // TikTok embed v2 kadang tidak menampilkan video untuk beberapa akun/region.
+        // Coba gunakan canonical embed URL yang lebih kompatibel.
+        return `https://www.tiktok.com/embed/${m[1]}`;
     }
 
     /** @param {HTMLIFrameElement} node */
@@ -369,7 +377,7 @@
                     }
                 });
             },
-            { rootMargin: "200px" },
+            { rootMargin: "200px", threshold: 0.01 },
         );
         observer.observe(node);
         return {

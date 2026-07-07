@@ -5,6 +5,31 @@ import Layanan from "../components/Layanan.astro";
 import TikTokVideos from "../components/Svelte/TikTokVideos.svelte";
 
 const SITE_URL = "https://kemenagkotaprobolinggo.id";
+const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
+
+// Fetch testimoni aktif dari backend saat SSR
+let testimoniVideos = [];
+try {
+    const res = await fetch(`${BACKEND_URL}/api/v1/testimoni/`, {
+        signal: AbortSignal.timeout(8000),
+    });
+    if (res.ok) {
+        const json = await res.json();
+        if (json.success === true && Array.isArray(json.data)) {
+            testimoniVideos = json.data.map((item: any) => ({
+                id: String(item.id),
+                url: item.url,
+                title: item.title,
+                username: item.username,
+            }));
+        }
+    }
+} catch (e) {
+    console.warn(
+        "[index] Gagal memuat testimoni dari backend:",
+        (e as Error).message,
+    );
+}
 
 Astro.response.headers.set(
     "Cache-Control",
@@ -43,5 +68,5 @@ const structuredData = [
 >
     <Hero />
     <Layanan />
-    <TikTokVideos client:visible />
+    <TikTokVideos videos={testimoniVideos} client:visible />
 </BaseLayout>
