@@ -43,8 +43,14 @@
         }
 
         const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
         fetch(apiUrl, { signal: controller.signal })
-            .then((r) => r.json())
+            .then((r) => {
+                clearTimeout(timeoutId);
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                return r.json();
+            })
             .then((json) => {
                 const list = json?.data ?? [];
                 fetchedVideos = list.map((item) => ({
@@ -54,14 +60,17 @@
                     username: item.username,
                 }));
             })
-            .catch(() => {
-                // Biarkan array kosong; section tidak akan tampil.
+            .catch((err) => {
+                console.warn("[TikTokVideos] Gagal memuat testimoni:", err);
             })
             .finally(() => {
                 loading = false;
             });
 
-        return () => controller.abort();
+        return () => {
+            clearTimeout(timeoutId);
+            controller.abort();
+        };
     });
 
     let container = $state(null);
