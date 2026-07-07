@@ -20,54 +20,12 @@
 
     const hasPropVideos = $derived(initialVideos.length > 0);
 
-    // Fallback hardcoded jika backend tidak tersedia
-    const fallbackVideos = [
-        {
-            id: "1",
-            url: "https://www.tiktok.com/@kua.kademangan/video/7582177838367919368",
-            title: "Testimoni KUA Kademangan",
-            username: "kua.kademangan",
-        },
-        {
-            id: "2",
-            url: "https://www.tiktok.com/@kuakedopok20/video/7657479190714797332",
-            title: "Tiktok KUA Kedopok",
-            username: "kuakedopok20",
-        },
-        {
-            id: "3",
-            url: "https://www.tiktok.com/@jazaanilhusna_82/video/7589511228372929799",
-            title: "Testimoni KUA Kanigaran",
-            username: "jazaanilhusna_82",
-        },
-        {
-            id: "4",
-            url: "https://www.tiktok.com/@kemenagkoprob/video/1234567893",
-            title: "Testimoni KUA Mayangan",
-            username: "kemenagkoprob",
-        },
-        {
-            id: "5",
-            url: "https://www.tiktok.com/@kemenagkoprob/video/1234567894",
-            title: "Testimoni KUA Wonoasih",
-            username: "kemenagkoprob",
-        },
-        {
-            id: "6",
-            url: "https://www.tiktok.com/@kemenagkoprob/video/1234567895",
-            title: "Behind the Scene",
-            username: "kemenagkoprob",
-        },
-    ];
-
     const MAX_VIDEOS = 6;
 
     const sourceVideos = $derived(
         initialVideos.length > 0
             ? initialVideos.slice(0, MAX_VIDEOS)
-            : fetchedVideos.length > 0
-              ? fetchedVideos.slice(0, MAX_VIDEOS)
-              : fallbackVideos.slice(0, MAX_VIDEOS),
+            : fetchedVideos.slice(0, MAX_VIDEOS),
     );
 
     // Gandakan 3x untuk ilusi infinite scroll.
@@ -97,7 +55,7 @@
                 }));
             })
             .catch(() => {
-                // Biarkan fallbackVideos yang tampil.
+                // Biarkan array kosong; section tidak akan tampil.
             })
             .finally(() => {
                 loading = false;
