@@ -179,9 +179,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const allowedHumasPaths = [
       "/admin/berita",
       "/admin/agen-perubahan",
+      "/admin/testimoni",
       "/admin/survei",
       "/admin/profil",
       "/api/admin/auth/logout",
+      "/api/admin/testimoni",
     ];
 
     if (url.pathname === "/admin" || url.pathname === "/admin/") {

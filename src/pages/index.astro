@@ -2,6 +2,7 @@
 import Hero from "../components/Hero.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Layanan from "../components/Layanan.astro";
+import TikTokVideos from "../components/Svelte/TikTokVideos.svelte";
 
 const SITE_URL = "https://kemenagkotaprobolinggo.id";
 
@@ -42,4 +43,5 @@ const structuredData = [
 >
     <Hero />
     <Layanan />
+    <TikTokVideos client:visible />
 </BaseLayout>

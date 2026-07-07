@@ -39,12 +39,20 @@ const contentItems = [
         icon: "mdi:clipboard-check-outline",
         label: "Manajemen Survei",
     },
+    {
+        href: "/admin/testimoni",
+        icon: "mdi:video-outline",
+        label: "Manajemen Testimoni",
+    },
 ];
 
 const humasItems = contentItems.filter((item) =>
-    ["/admin/berita", "/admin/agen-perubahan", "/admin/survei"].includes(
-        item.href,
-    ),
+    [
+        "/admin/berita",
+        "/admin/agen-perubahan",
+        "/admin/survei",
+        "/admin/testimoni",
+    ].includes(item.href),
 );
 
 const satkerItems = contentItems.filter((item) =>

@@ -107,7 +107,7 @@
 
             const json = await res.json();
 
-            if (!res.ok) {
+            if (!res.ok || json.success === false) {
                 throw new Error(
                     json.message ?? json.error ?? "Gagal menyimpan.",
                 );
