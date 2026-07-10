@@ -32,21 +32,30 @@ function formatTanggal(iso: string | null | undefined): string {
   });
 }
 
-let _layananCache: any[] | null = null;
-let _layananCacheTime = 0;
+// Cache per-layanan by ID — TTL 5 menit (SLA settings jarang berubah)
+const _layananCache = new Map<number, any>();
+const _layananCacheTime = new Map<number, number>();
+const LAYANAN_CACHE_TTL = 300_000;
 
-async function getLayanan(): Promise<any[]> {
-  if (_layananCache && Date.now() - _layananCacheTime < 60_000) {
-    return _layananCache;
+async function getLayananById(id: number | null | undefined): Promise<any | null> {
+  if (!id) return null;
+  const cached = _layananCache.get(id);
+  const cachedTime = _layananCacheTime.get(id);
+  if (cached && cachedTime && Date.now() - cachedTime < LAYANAN_CACHE_TTL) {
+    return cached;
   }
   try {
-    const res = await fetch(`${BACKEND_URL}/api/v1/layanan/`);
+    const res = await fetch(`${BACKEND_URL}/api/v1/layanan/${id}`);
+    if (!res.ok) return cached ?? null;
     const json = await res.json();
-    _layananCache = json.data ?? [];
-    _layananCacheTime = Date.now();
-    return _layananCache!;
+    const svc = json.data ?? null;
+    if (svc) {
+      _layananCache.set(id, svc);
+      _layananCacheTime.set(id, Date.now());
+    }
+    return svc;
   } catch {
-    return _layananCache ?? [];
+    return cached ?? null;
   }
 }
 
@@ -87,11 +96,10 @@ export async function transformTrackResponse(raw: any): Promise<any> {
   let durasiMenit = 0;
   let durasiLabel = "-";
 
-  const layanan = await getLayanan();
-  const svc = layanan.find((l: any) => l.title === d.serviceTitle);
-  if (svc) {
-    durasiMenit = toMinutes(svc.slaDuration, svc.slaUnit);
-    durasiLabel = formatSlaLabel(svc.slaDuration, svc.slaUnit);
+  const layanan = await getLayananById(d.serviceId);
+  if (layanan) {
+    durasiMenit = toMinutes(layanan.slaDuration, layanan.slaUnit);
+    durasiLabel = formatSlaLabel(layanan.slaDuration, layanan.slaUnit);
   }
 
   return {
