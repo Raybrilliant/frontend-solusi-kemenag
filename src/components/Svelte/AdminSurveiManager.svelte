@@ -98,9 +98,11 @@
     });
     let ticketSearch = $state("");
     let ticketFilter = $state("");
-    let monthlyLoading = $state(true);
+    let monthlyLoading = $state(false);
     let monthlyError = $state("");
     let monthlyItems = $state([]);
+    let monthlyResponses = $state([]);
+    let exportingMonthly = $state(false);
     let monthlyUpdatedAt = $state("");
     let mode = $state("create");
     let selected = $state(null);
@@ -211,12 +213,49 @@
             );
     });
 
-    const questionByType = $derived(
+        const questionByType = $derived(
         surveyTypes.map((type) => ({
             ...type,
             rows: questionRows.filter((row) => row.surveyType === type.value),
         })),
     );
+
+    // Daftar respons unik per permohonan (demografi + kritik/saran + kepercayaan)
+    // untuk ditampilkan di menu Nilai Bulanan. Karena SPKP & SPAK menyimpan
+    // kritik/kepercayaan yang sama, cukup ambil satu per tiket.
+    const feedbackRows = $derived.by(() => {
+        const map = new Map();
+        for (const r of monthlyResponses) {
+            if (!map.has(r.permohonanId)) map.set(r.permohonanId, r);
+        }
+        return [...map.values()].sort(
+            (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+        );
+    });
+
+    const kepercayaanAvg = $derived.by(() => {
+        if (!feedbackRows.length) return { pusat: 0, daerah: 0 };
+        const sum = (key) =>
+            feedbackRows.reduce(
+                (s, r) => s + (Number(r[key]) || 0),
+                0,
+            ) / feedbackRows.length;
+        return { pusat: sum("kepercayaanPusat"), daerah: sum("kepercayaanDaerah") };
+    });
+
+    // Daftar kritik & saran anonim (hanya teks, tanpa identitas).
+    const kritikSaranRows = $derived(
+        feedbackRows
+            .map((r) => (r.kritikSaran ?? "").trim())
+            .filter((teks) => teks.length > 0),
+    );
+
+    function formatSkala(num) {
+        return Number(num).toLocaleString("id-ID", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
+    }
 
     function showToast(type, msg) {
         toast = { type, msg };
@@ -401,38 +440,67 @@
         monthlyLoading = true;
         monthlyError = "";
         try {
-            const results = await Promise.all(
-                surveyTypes.map(async (type) => {
-                    const items = [];
+            const [results, responsesRes] = await Promise.all([
+                Promise.all(
+                    surveyTypes.map(async (type) => {
+                        const items = [];
+                        let page = 1;
+                        let totalPages = 1;
+
+                        while (page <= totalPages && page <= 20) {
+                            const qs = new URLSearchParams({
+                                surveyType: type.value,
+                                period: "12",
+                                page: String(page),
+                                limit: "500",
+                            });
+                            const res = await fetch(`${answersUrl}?${qs}`, {
+                                credentials: "same-origin",
+                            });
+                            const json = await res.json();
+                            if (json.success === false) {
+                                throw new Error(
+                                    json.message ??
+                                        `Gagal memuat rekap ${type.value}.`,
+                                );
+                            }
+                            items.push(...(json.data ?? []));
+                            totalPages = Number(json.pagination?.totalPages) || 1;
+                            page += 1;
+                        }
+
+                        return items;
+                    }),
+                ),
+                (async () => {
+                    // Ambil semua respons (kedua tipe) untuk kritik/saran &
+                    // kepercayaan. /responses tidak memfilter periode.
+                    const all = [];
                     let page = 1;
                     let totalPages = 1;
-
-                    while (page <= totalPages && page <= 20) {
+                    while (page <= totalPages && page <= 50) {
                         const qs = new URLSearchParams({
-                            surveyType: type.value,
-                            period: "12",
                             page: String(page),
-                            limit: "500",
+                            limit: "100",
                         });
-                        const res = await fetch(`${answersUrl}?${qs}`, {
+                        const res = await fetch(`${responsesUrl}?${qs}`, {
                             credentials: "same-origin",
                         });
                         const json = await res.json();
                         if (json.success === false) {
                             throw new Error(
-                                json.message ??
-                                    `Gagal memuat rekap ${type.value}.`,
+                                json.message ?? "Gagal memuat respons.",
                             );
                         }
-                        items.push(...(json.data ?? []));
+                        all.push(...(json.data ?? []));
                         totalPages = Number(json.pagination?.totalPages) || 1;
                         page += 1;
                     }
-
-                    return items;
-                }),
-            );
+                    return all;
+                })(),
+            ]);
             monthlyItems = results.flat();
+            monthlyResponses = responsesRes;
             monthlyUpdatedAt = new Date().toLocaleTimeString("id-ID", {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -440,6 +508,7 @@
         } catch (e) {
             monthlyError = String(e);
             monthlyItems = [];
+            monthlyResponses = [];
         } finally {
             monthlyLoading = false;
         }
@@ -619,124 +688,170 @@
         }
     }
 
-    function exportMonthlyToExcel() {
+    async function exportMonthlyToExcel() {
         if (monthlyLoading) {
             showToast("error", "Nilai bulanan masih dimuat.");
             return;
         }
-        if (monthlyError) {
-            showToast("error", "Perbaiki error nilai bulanan terlebih dahulu.");
-            return;
+        exportingMonthly = true;
+        try {
+            // Ambil semua respons (demografi + kritik/kepercayaan).
+            const allResponses = [];
+            let rPage = 1;
+            let rTotal = 1;
+            while (rPage <= rTotal && rPage <= 50) {
+                const qs = new URLSearchParams({
+                    page: String(rPage),
+                    limit: "100",
+                });
+                const res = await fetch(`${responsesUrl}?${qs}`, {
+                    credentials: "same-origin",
+                });
+                const json = await res.json();
+                if (json.success === false) {
+                    throw new Error(
+                        json.message ?? "Gagal memuat respons.",
+                    );
+                }
+                allResponses.push(...(json.data ?? []));
+                rTotal = Number(json.pagination?.totalPages) || 1;
+                rPage += 1;
+            }
+
+            // Ambil semua jawaban per pertanyaan (period besar = semua data).
+            const allAnswers = [];
+            let aPage = 1;
+            let aTotal = 1;
+            while (aPage <= aTotal && aPage <= 50) {
+                const qs = new URLSearchParams({
+                    period: "9999",
+                    page: String(aPage),
+                    limit: "500",
+                });
+                const res = await fetch(`${answersUrl}?${qs}`, {
+                    credentials: "same-origin",
+                });
+                const json = await res.json();
+                if (json.success === false) {
+                    throw new Error(
+                        json.message ?? "Gagal memuat jawaban.",
+                    );
+                }
+                allAnswers.push(...(json.data ?? []));
+                aTotal = Number(json.pagination?.totalPages) || 1;
+                aPage += 1;
+            }
+
+            if (!allResponses.length) {
+                showToast("error", "Tidak ada respons untuk diekspor.");
+                return;
+            }
+
+            // Kelompokkan respons per tiket (SPKP + SPAK).
+            const respByPerm = new Map();
+            for (const r of allResponses) {
+                const entry = respByPerm.get(r.permohonanId) ?? {};
+                entry[r.surveyType] = r;
+                respByPerm.set(r.permohonanId, entry);
+            }
+
+            // Jawaban per responseId => questionId => nilai.
+            const ansByResp = new Map();
+            for (const a of allAnswers) {
+                const m = ansByResp.get(a.responseId) ?? new Map();
+                m.set(a.questionId, a.nilai);
+                ansByResp.set(a.responseId, m);
+            }
+
+            // Daftar pertanyaan unik per tipe (diambil dari jawaban),
+            // diurutkan berdasarkan questionId agar kolom konsisten.
+            const collectQs = (type) => {
+                const seen = new Set();
+                const list = [];
+                for (const a of allAnswers) {
+                    if (a.surveyType !== type) continue;
+                    if (seen.has(a.questionId)) continue;
+                    seen.add(a.questionId);
+                    list.push({
+                        questionId: a.questionId,
+                        question: a.question,
+                    });
+                }
+                return list.sort((x, y) => x.questionId - y.questionId);
+            };
+            const spkpQs = collectQs("SPKP");
+            const spakQs = collectQs("SPAK");
+
+            const spkpHeaders = spkpQs.map(
+                (q) => `SPKP - ${q.question}`,
+            );
+            const spakHeaders = spakQs.map(
+                (q) => `SPAK - ${q.question}`);
+            const header = [
+                "nama",
+                "no-telpon",
+                "tanggal layanan",
+                "pendidikan",
+                "usia",
+                "pekerjaan",
+                "disabilitas",
+                ...spkpHeaders,
+                ...spakHeaders,
+                "kritik saran",
+                "kepercayaan pusat",
+                "kepercayaan daerah",
+            ];
+
+            const rows = [...respByPerm.keys()]
+                .sort()
+                .map((pid) => {
+                    const grp = respByPerm.get(pid);
+                    const base = grp.SPKP ?? grp.SPAK ?? {};
+                    const spkpAns = grp.SPKP
+                        ? ansByResp.get(grp.SPKP.id)
+                        : undefined;
+                    const spakAns = grp.SPAK
+                        ? ansByResp.get(grp.SPAK.id)
+                        : undefined;
+
+                    const row = {
+                        nama: base.applicantName ?? "",
+                        "no-telpon": base.applicantPhone ?? "",
+                        "tanggal layanan": base.tanggalMenerimaLayanan ?? "",
+                        pendidikan: base.pendidikanTerakhir ?? "",
+                        usia: base.usia ?? "",
+                        pekerjaan: base.jenisPekerjaan ?? "",
+                        disabilitas: base.disabilitas ?? "",
+                    };
+                    for (const q of spkpQs) {
+                        row[`SPKP - ${q.question}`] =
+                            spkpAns?.get(q.questionId) ?? "";
+                    }
+                    for (const q of spakQs) {
+                        row[`SPAK - ${q.question}`] =
+                            spakAns?.get(q.questionId) ?? "";
+                    }
+                    row["kritik saran"] = base.kritikSaran ?? "";
+                    row["kepercayaan pusat"] =
+                        base.kepercayaanPusat ?? "";
+                    row["kepercayaan daerah"] =
+                        base.kepercayaanDaerah ?? "";
+                    return row;
+                });
+
+            const ws = XLSX.utils.json_to_sheet(rows, { header });
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Nilai Survei");
+            const fileName = `nilai-survei-${new Date()
+                .toISOString()
+                .slice(0, 10)}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+            showToast("success", "File Excel berhasil diunduh.");
+        } catch (e) {
+            showToast("error", String(e));
+        } finally {
+            exportingMonthly = false;
         }
-        if (!monthlyItems.length) {
-            showToast("error", "Tidak ada nilai bulanan untuk diekspor.");
-            return;
-        }
-
-        const exportedAt = new Intl.DateTimeFormat("id-ID", {
-            dateStyle: "full",
-            timeStyle: "short",
-        }).format(new Date());
-        const fileName = `nilai-bulanan-survei-${new Date()
-            .toISOString()
-            .slice(0, 10)}.xls`;
-
-        const monthlySections = monthlyByType
-            .map((type) => {
-                const monthlyRowsHtml = type.rows
-                    .map(
-                        (row) => `
-                            <tr>
-                                <td>${escapeHtml(row.month)}</td>
-                                <td style="text-align:right;">${escapeHtml(
-                                    formatScore(row),
-                                )}</td>
-                                <td style="text-align:right;">${escapeHtml(
-                                    row.responseCount,
-                                )}</td>
-                                <td style="text-align:right;">${escapeHtml(
-                                    row.answerCount,
-                                )}</td>
-                            </tr>`,
-                    )
-                    .join("");
-
-                return `
-                    <h2>Nilai Bulanan ${escapeHtml(type.label)}</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Bulan</th>
-                                <th>Nilai</th>
-                                <th>Respons</th>
-                                <th>Jawaban</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${monthlyRowsHtml || "<tr><td colspan='4'>Belum ada respons.</td></tr>"}
-                        </tbody>
-                    </table>`;
-            })
-            .join("");
-
-        const questionSections = questionByType
-            .map((type) => {
-                const questionRowsHtml = type.rows
-                    .map(
-                        (row) => `
-                            <tr>
-                                <td>${escapeHtml(row.question)}</td>
-                                <td style="text-align:right;">${escapeHtml(
-                                    formatScore(row),
-                                )}</td>
-                                <td style="text-align:right;">${escapeHtml(
-                                    row.answerCount,
-                                )}</td>
-                            </tr>`,
-                    )
-                    .join("");
-
-                return `
-                    <h2>Nilai Per Pertanyaan ${escapeHtml(type.label)}</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Pertanyaan</th>
-                                <th>Nilai</th>
-                                <th>Jawaban</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${questionRowsHtml || "<tr><td colspan='3'>Belum ada nilai jawaban.</td></tr>"}
-                        </tbody>
-                    </table>`;
-            })
-            .join("");
-
-        const html = `
-            <html>
-                <head>
-                    <meta charset="utf-8" />
-                    <style>
-                        body { font-family: Arial, sans-serif; font-size: 12px; color: #111; }
-                        h1 { font-size: 18px; margin: 0 0 8px; }
-                        h2 { font-size: 14px; margin: 18px 0 8px; }
-                        p { margin: 0 0 6px; }
-                        table { border-collapse: collapse; width: 100%; margin-top: 8px; }
-                        th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; vertical-align: top; }
-                        th { background: #f3f4f6; font-weight: bold; }
-                    </style>
-                </head>
-                <body>
-                    <h1>Nilai Bulanan Survei</h1>
-                    <p>Diekspor pada: ${escapeHtml(exportedAt)}</p>
-                    ${monthlySections}
-                    ${questionSections}
-                </body>
-            </html>`;
-
-        downloadExcelFile(html, fileName);
-        showToast("success", "Nilai bulanan berhasil diunduh.");
     }
 
     function switchType(type) {
@@ -1220,10 +1335,12 @@
                 <div class="flex flex-wrap items-center gap-2">
                     <button
                         onclick={exportMonthlyToExcel}
-                        disabled={monthlyLoading || !monthlyItems.length}
+                        disabled={
+                            monthlyLoading || exportingMonthly || !monthlyItems.length
+                        }
                         class="px-3 py-2 border border-black/10 text-xs font-bold uppercase disabled:opacity-50"
                     >
-                        Export Excel
+                        {exportingMonthly ? "Mengekspor..." : "Export Excel"}
                     </button>
                     <button
                         onclick={loadMonthly}
@@ -1439,6 +1556,67 @@
                         {/each}
                     </div>
                 </div>
+
+                <div class="mt-6">
+                    <h3 class="font-bold uppercase text-ink">
+                        Kritik, Saran & Tingkat Kepercayaan
+                    </h3>
+                    <p class="text-xs text-ink/45 mt-1">
+                        Kritik/saran dan skala kepercayaan (1-10) yang
+                        diisi responden sebelum tahap profil.
+                    </p>
+
+                    {#if feedbackRows.length === 0}
+                        <p class="py-8 text-sm text-ink/35">
+                            Belum ada data.
+                        </p>
+                    {:else}
+                        <div
+                            class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4"
+                        >
+                            <div class="border border-black/10 p-4">
+                                <p class="text-xs text-ink/45">
+                                    Rata-rata Kepercayaan Pemerintah Pusat
+                                </p>
+                                <p class="text-2xl font-bold text-green mt-1">
+                                    {formatSkala(kepercayaanAvg.pusat)}
+                                    <span class="text-sm text-ink/40">/10</span>
+                                </p>
+                            </div>
+                            <div class="border border-black/10 p-4">
+                                <p class="text-xs text-ink/45">
+                                    Rata-rata Kepercayaan Pemerintah Daerah
+                                </p>
+                                <p class="text-2xl font-bold text-green mt-1">
+                                    {formatSkala(kepercayaanAvg.daerah)}
+                                    <span class="text-sm text-ink/40">/10</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <p class="text-xs font-bold uppercase tracking-wide text-ink/40 mb-3">
+                                Daftar Kritik & Saran (anonim)
+                            </p>
+                            {#if kritikSaranRows.length === 0}
+                                <p class="text-sm text-ink/35">
+                                    Belum ada kritik & saran.
+                                </p>
+                            {:else}
+                                <ul class="space-y-2">
+                                    {#each kritikSaranRows as teks}
+                                        <li
+                                            class="border border-black/8 bg-black/[0.02] px-4 py-3 text-sm text-ink/75"
+                                        >
+                                            {teks}
+                                        </li>
+                                    {/each}
+                                </ul>
+                            {/if}
+                        </div>
+                    {/if}
+                </div>
+
                 {#if monthlyUpdatedAt}
                     <p class="text-xs text-ink/35 mt-4">
                         Terakhir diperbarui pukul {monthlyUpdatedAt}.
