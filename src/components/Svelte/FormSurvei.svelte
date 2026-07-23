@@ -1,5 +1,6 @@
 <script>
     import Icon from "@iconify/svelte";
+    import { SvelteSet } from "svelte/reactivity";
 
     let {
         formBaseUrl = "/api/survei/form",
@@ -23,25 +24,35 @@
     ];
 
     const pendidikanOptions = [
-        "SD/sederajat",
-        "SMP/sederajat",
-        "SMA/sederajat",
-        "D1/D2/D3",
-        "S1/D4",
-        "S2",
-        "S3",
-        "Lainnya",
+        { value: 1, label: "Tidak Sekolah" },
+        { value: 2, label: "SD/sederajat" },
+        { value: 3, label: "SMP/sederajat" },
+        { value: 4, label: "SMA/sederajat" },
+        { value: 5, label: "D1/D2/D3" },
+        { value: 6, label: "D4/S1" },
+        { value: 7, label: "S2" },
+        { value: 8, label: "S3" },
     ];
 
     const pekerjaanOptions = [
-        "Pelajar/Mahasiswa",
-        "PNS/TNI/Polri",
-        "Pegawai Swasta",
-        "Wiraswasta",
-        "Petani/Nelayan",
-        "Ibu Rumah Tangga",
-        "Tidak/Belum Bekerja",
-        "Lainnya",
+        { value: 1, label: "ASN (PNS/PPPK)" },
+        { value: 2, label: "TNI/POLRI" },
+        { value: 3, label: "Swasta" },
+        { value: 4, label: "Wiraswasta" },
+        { value: 5, label: "Ibu Rumah Tangga" },
+        { value: 6, label: "Pelajar/Mahasiswa" },
+        { value: 7, label: "Petani/Nelayan" },
+        { value: 8, label: "Pekerja Lepas/Freelance" },
+        { value: 9, label: "Pensiunan" },
+        { value: 10, label: "Tidak Bekerja" },
+        { value: 11, label: "Lain-lain" },
+    ];
+
+    const disabilitasOptions = [
+        { value: 1, label: "Disabilitas Fisik" },
+        { value: 2, label: "Disabilitas Intelektual" },
+        { value: 3, label: "Disabilitas Mental" },
+        { value: 4, label: "Disabilitas Sensory" },
     ];
 
     const nilaiOptions = [
@@ -59,10 +70,13 @@
     let submitting = $state(false);
     let error = $state("");
     let success = $state(false);
-    let pendidikan = $state("");
-    let pendidikanLainnya = $state("");
-    let pekerjaan = $state("");
-    let pekerjaanLainnya = $state("");
+    let pendidikan = $state(0);
+    let usia = $state("");
+    let pekerjaan = $state(0);
+    let disabilitas = $state(new SvelteSet());
+    let kritikSaran = $state("");
+    let kepercayaanPusat = $state(0);
+    let kepercayaanDaerah = $state(0);
 
     const currentType = $derived(surveyTypes[activeIndex]);
     const currentForm = $derived(forms[currentType.value] ?? null);
@@ -71,22 +85,25 @@
     const answeredCount = $derived(
         Object.values(currentAnswers).filter(Boolean).length,
     );
-    const isProfileStep = $derived(activeIndex >= surveyTypes.length);
+    const isProfileStep = $derived(activeIndex >= surveyTypes.length + 1);
+    // Step "Kritik & Kepercayaan" berada tepat sebelum profil.
+    const isFeedbackStep = $derived(activeIndex === surveyTypes.length);
+    const skalaKepercayaan = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    // Tanggal menerima layanan di-derive backend, ditampilkan read-only.
+    // Ambil dari form pertama yang dimuat (semua form untuk tiket yang sama punya nilai sama).
+    const tanggalMenerimaLayanan = $derived(
+        forms["SPKP"]?.tanggalMenerimaLayanan ?? forms["SPAK"]?.tanggalMenerimaLayanan ?? "",
+    );
 
     function normalizeTicket(value) {
         return value.trim().toUpperCase();
     }
 
-    function selectedEducation() {
-        return pendidikan === "Lainnya"
-            ? pendidikanLainnya.trim()
-            : pendidikan.trim();
-    }
-
-    function selectedJob() {
-        return pekerjaan === "Lainnya"
-            ? pekerjaanLainnya.trim()
-            : pekerjaan.trim();
+    function toggleDisabilitas(value) {
+        const next = new SvelteSet(disabilitas);
+        if (next.has(value)) next.delete(value);
+        else next.add(value);
+        disabilitas = next;
     }
 
     function answerQuestion(questionId, nilai) {
@@ -147,7 +164,19 @@
     }
 
     function nextStep() {
-        if (answeredCount < totalQuestions) {
+        if (isFeedbackStep) {
+            if (
+                !kepercayaanPusat ||
+                !kepercayaanDaerah ||
+                kepercayaanPusat < 1 ||
+                kepercayaanPusat > 10 ||
+                kepercayaanDaerah < 1 ||
+                kepercayaanDaerah > 10
+            ) {
+                error = "Skala kepercayaan pusat dan daerah wajib diisi (1-10).";
+                return;
+            }
+        } else if (answeredCount < totalQuestions) {
             error = `Lengkapi semua pertanyaan ${currentType.label} terlebih dahulu.`;
             return;
         }
@@ -163,13 +192,33 @@
     }
 
     async function submitAll() {
-        const edu = selectedEducation();
-        const job = selectedJob();
-
-        if (!edu || !job) {
-            error = "Pendidikan terakhir dan pekerjaan saat ini wajib diisi.";
+        const usiaNum = Number(usia);
+        if (!pendidikan) {
+            error = "Pendidikan terakhir wajib diisi.";
             return;
         }
+        if (!usia || !Number.isInteger(usiaNum) || usiaNum < 1 || usiaNum > 120) {
+            error = "Usia wajib diisi (angka 1-120).";
+            return;
+        }
+        if (!pekerjaan) {
+            error = "Pekerjaan saat ini wajib diisi.";
+            return;
+        }
+        if (
+            !kepercayaanPusat ||
+            !kepercayaanDaerah ||
+            kepercayaanPusat < 1 ||
+            kepercayaanPusat > 10 ||
+            kepercayaanDaerah < 1 ||
+            kepercayaanDaerah > 10
+        ) {
+            error = "Skala kepercayaan pusat dan daerah wajib diisi (1-10).";
+            return;
+        }
+
+        const disabilitasStr = [...disabilitas].sort((a, b) => a - b).join(",");
+        const kritikSaranTrim = kritikSaran.trim();
 
         submitting = true;
         error = "";
@@ -181,8 +230,13 @@
                 const payload = {
                     surveyType: type.value,
                     ticketId: ticket,
-                    pendidikanTerakhir: edu,
-                    jenisPekerjaan: job,
+                    pendidikanTerakhir: Number(pendidikan),
+                    usia: usiaNum,
+                    jenisPekerjaan: Number(pekerjaan),
+                    disabilitas: disabilitasStr,
+                    kritikSaran: kritikSaranTrim,
+                    kepercayaanPusat: Number(kepercayaanPusat),
+                    kepercayaanDaerah: Number(kepercayaanDaerah),
                     answers: (form?.questions ?? []).map((question) => ({
                         questionId: question.id,
                         nilai: Number(answerMap[question.id]),
@@ -302,18 +356,30 @@
                         {/each}
                         <div
                             class={`flex items-center gap-2 px-3 py-2 border text-xs font-bold uppercase ${
+                                isFeedbackStep
+                                    ? "bg-green/8 text-green border-green/30"
+                                    : activeIndex > surveyTypes.length
+                                      ? "bg-green text-white border-green"
+                                      : "bg-white text-ink/35 border-black/10"
+                            }`}
+                        >
+                            <span>{surveyTypes.length + 1}</span>
+                            <span>Penilaian</span>
+                        </div>
+                        <div
+                            class={`flex items-center gap-2 px-3 py-2 border text-xs font-bold uppercase ${
                                 isProfileStep
                                     ? "bg-green/8 text-green border-green/30"
                                     : "bg-white text-ink/35 border-black/10"
                             }`}
                         >
-                            <span>{surveyTypes.length + 1}</span>
+                            <span>{surveyTypes.length + 2}</span>
                             <span>Profil</span>
                         </div>
                     </div>
                 </div>
 
-                {#if !isProfileStep}
+                {#if !isProfileStep && !isFeedbackStep}
                     <div class="p-4 md:p-6">
                         <div
                             class="flex flex-wrap items-start justify-between gap-4 mb-6"
@@ -414,8 +480,120 @@
                                 class="px-5 py-3 bg-green text-white text-sm font-bold uppercase hover:bg-green/90 transition-colors"
                             >
                                 {activeIndex === surveyTypes.length - 1
-                                    ? "Lanjut Profil"
+                                    ? "Lanjut Penilaian"
                                     : "Lanjut Survei Berikutnya"}
+                            </button>
+                        </div>
+                    </div>
+                {:else if isFeedbackStep}
+                    <div class="p-4 md:p-6">
+                        <p
+                            class="text-xs font-bold uppercase tracking-widest text-green"
+                        >
+                            Penilaian Akhir
+                        </p>
+                        <h2 class="text-2xl font-bold uppercase text-ink mt-1">
+                            Kritik, Saran & Tingkat Kepercayaan
+                        </h2>
+                        <p class="text-sm text-ink/50 mt-1 max-w-2xl">
+                            Sampaikan kritik/saran serta tingkat kepercayaan
+                            Anda terhadap pemerintah sebelum melengkapi
+                            profil responden.
+                        </p>
+
+                        <div class="mt-6 space-y-5">
+                            <div>
+                                <label
+                                    for="kritik-saran"
+                                    class="text-sm font-bold text-ink/70"
+                                >
+                                    Kritik dan Saran
+                                    <span class="text-ink/35 font-normal"
+                                        >(opsional)</span
+                                    >
+                                </label>
+                                <textarea
+                                    id="kritik-saran"
+                                    bind:value={kritikSaran}
+                                    rows="4"
+                                    placeholder="Tulis kritik atau saran untuk layanan ini..."
+                                    class="mt-2 w-full border border-black/10 px-4 py-3 text-sm focus:outline-none focus:border-green"
+                                ></textarea>
+                            </div>
+
+                            <div>
+                                <p class="text-sm font-bold text-ink/70">
+                                    Pada skala 1 sampai 10, di mana 1
+                                    berarti tidak percaya sama sekali dan 10
+                                    berarti sangat percaya, seberapa besar
+                                    tingkat kepercayaan Anda terhadap
+                                    pemerintah pusat?
+                                </p>
+                                <div
+                                    class="mt-3 grid grid-cols-5 sm:grid-cols-10 gap-2"
+                                >
+                                    {#each skalaKepercayaan as nilai}
+                                        <button
+                                            type="button"
+                                            onclick={() =>
+                                                (kepercayaanPusat = nilai)}
+                                            class={`border py-3 text-sm font-bold transition-colors ${
+                                                kepercayaanPusat === nilai
+                                                    ? "border-green bg-green text-white"
+                                                    : "border-black/10 hover:border-green/40"
+                                            }`}
+                                        >
+                                            {nilai}
+                                        </button>
+                                    {/each}
+                                </div>
+                            </div>
+
+                            <div>
+                                <p class="text-sm font-bold text-ink/70">
+                                    Pada skala 1 sampai 10, di mana 1
+                                    berarti tidak percaya sama sekali dan 10
+                                    berarti sangat percaya, seberapa besar
+                                    tingkat kepercayaan Anda terhadap
+                                    pemerintah daerah?
+                                </p>
+                                <div
+                                    class="mt-3 grid grid-cols-5 sm:grid-cols-10 gap-2"
+                                >
+                                    {#each skalaKepercayaan as nilai}
+                                        <button
+                                            type="button"
+                                            onclick={() =>
+                                                (kepercayaanDaerah = nilai)}
+                                            class={`border py-3 text-sm font-bold transition-colors ${
+                                                kepercayaanDaerah === nilai
+                                                    ? "border-green bg-green text-white"
+                                                    : "border-black/10 hover:border-green/40"
+                                            }`}
+                                        >
+                                            {nilai}
+                                        </button>
+                                    {/each}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            class="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-black/8 pt-5"
+                        >
+                            <button
+                                type="button"
+                                onclick={prevStep}
+                                class="px-4 py-3 border border-black/10 text-sm font-bold uppercase"
+                            >
+                                Sebelumnya
+                            </button>
+                            <button
+                                type="button"
+                                onclick={nextStep}
+                                class="px-5 py-3 bg-green text-white text-sm font-bold uppercase hover:bg-green/90 transition-colors"
+                            >
+                                Lanjut Profil
                             </button>
                         </div>
                     </div>
@@ -430,9 +608,25 @@
                             Profil Responden
                         </h2>
                         <p class="text-sm text-ink/50 mt-1 max-w-2xl">
-                            Pilih pendidikan terakhir dan pekerjaan saat ini
-                            sebelum mengirim seluruh survei.
+                            Lengkapi data berikut sebelum mengirim seluruh
+                            survei. Tanggal menerima layanan diambil
+                            otomatis dari tanggal layanan selesai.
                         </p>
+
+                        {#if tanggalMenerimaLayanan}
+                            <div
+                                class="mt-4 border border-green/30 bg-green/5 px-4 py-3"
+                            >
+                                <p
+                                    class="text-[10px] font-bold uppercase tracking-wide text-ink/50"
+                                >
+                                    Tanggal Menerima Layanan
+                                </p>
+                                <p class="font-mono text-sm font-bold text-ink">
+                                    {tanggalMenerimaLayanan}
+                                </p>
+                            </div>
+                        {/if}
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-6">
                             <div>
@@ -447,19 +641,31 @@
                                     bind:value={pendidikan}
                                     class="mt-2 w-full border border-black/10 px-4 py-3 text-sm focus:outline-none focus:border-green"
                                 >
-                                    <option value="">Pilih pendidikan</option>
+                                    <option value={0}>Pilih pendidikan</option>
                                     {#each pendidikanOptions as option}
-                                        <option value={option}>{option}</option>
+                                        <option value={option.value}>
+                                            {option.value}. {option.label}
+                                        </option>
                                     {/each}
                                 </select>
-                                {#if pendidikan === "Lainnya"}
-                                    <input
-                                        bind:value={pendidikanLainnya}
-                                        type="text"
-                                        placeholder="Tulis pendidikan terakhir"
-                                        class="mt-3 w-full border border-black/10 px-4 py-3 text-sm focus:outline-none focus:border-green"
-                                    />
-                                {/if}
+                            </div>
+
+                            <div>
+                                <label
+                                    for="usia"
+                                    class="text-sm font-bold text-ink/70"
+                                >
+                                    Usia
+                                </label>
+                                <input
+                                    id="usia"
+                                    type="number"
+                                    min="1"
+                                    max="120"
+                                    bind:value={usia}
+                                    placeholder="Usia dalam tahun"
+                                    class="mt-2 w-full border border-black/10 px-4 py-3 text-sm focus:outline-none focus:border-green"
+                                />
                             </div>
 
                             <div>
@@ -474,19 +680,50 @@
                                     bind:value={pekerjaan}
                                     class="mt-2 w-full border border-black/10 px-4 py-3 text-sm focus:outline-none focus:border-green"
                                 >
-                                    <option value="">Pilih pekerjaan</option>
+                                    <option value={0}>Pilih pekerjaan</option>
                                     {#each pekerjaanOptions as option}
-                                        <option value={option}>{option}</option>
+                                        <option value={option.value}>
+                                            {option.value}. {option.label}
+                                        </option>
                                     {/each}
                                 </select>
-                                {#if pekerjaan === "Lainnya"}
-                                    <input
-                                        bind:value={pekerjaanLainnya}
-                                        type="text"
-                                        placeholder="Tulis pekerjaan saat ini"
-                                        class="mt-3 w-full border border-black/10 px-4 py-3 text-sm focus:outline-none focus:border-green"
-                                    />
-                                {/if}
+                            </div>
+                        </div>
+
+                        <div class="mt-6">
+                            <p class="text-sm font-bold text-ink/70">
+                                Apakah Anda merupakan penyandang disabilitas /
+                                pendamping penyandang disabilitas?
+                            </p>
+                            <p class="text-xs text-ink/45 mt-1">
+                                Centang jika ada. Boleh pilih lebih dari satu.
+                                Kosongkan jika tidak ada.
+                            </p>
+                            <div
+                                class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2"
+                            >
+                                {#each disabilitasOptions as option}
+                                    <label
+                                        class={`flex items-center gap-3 border px-4 py-3 cursor-pointer transition-colors ${
+                                            disabilitas.has(option.value)
+                                                ? "border-green bg-green/8"
+                                                : "border-black/10 hover:border-green/40"
+                                        }`}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            class="accent-green"
+                                            checked={disabilitas.has(
+                                                option.value,
+                                            )}
+                                            onchange={() =>
+                                                toggleDisabilitas(option.value)}
+                                        />
+                                        <span class="text-sm text-ink">
+                                            {option.value}. {option.label}
+                                        </span>
+                                    </label>
+                                {/each}
                             </div>
                         </div>
 

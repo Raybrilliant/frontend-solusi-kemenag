@@ -1,5 +1,6 @@
 <script>
     import Icon from "@iconify/svelte";
+    import * as XLSX from "xlsx";
     let {
         questionsUrl = "/api/admin/survei/questions",
         responsesUrl = "/api/admin/survei/responses",
@@ -26,6 +27,59 @@
         { id: "responses", label: "Hasil Respons" },
         { id: "monthly", label: "Nilai Bulanan" },
     ];
+
+    // Mapping kode demografi (integer) -> label, dipakai di tabel respons & export.
+    const pendidikanLabels = {
+        1: "Tidak Sekolah",
+        2: "SD/sederajat",
+        3: "SMP/sederajat",
+        4: "SMA/sederajat",
+        5: "D1/D2/D3",
+        6: "D4/S1",
+        7: "S2",
+        8: "S3",
+    };
+    const pekerjaanLabels = {
+        1: "ASN (PNS/PPPK)",
+        2: "TNI/POLRI",
+        3: "Swasta",
+        4: "Wiraswasta",
+        5: "Ibu Rumah Tangga",
+        6: "Pelajar/Mahasiswa",
+        7: "Petani/Nelayan",
+        8: "Pekerja Lepas/Freelance",
+        9: "Pensiunan",
+        10: "Tidak Bekerja",
+        11: "Lain-lain",
+    };
+    const disabilitasLabels = {
+        1: "Fisik",
+        2: "Intelektual",
+        3: "Mental",
+        4: "Sensory",
+    };
+
+    function labelPendidikan(code) {
+        if (code === null || code === undefined || code === "") return "-";
+        return pendidikanLabels[Number(code)] ?? String(code);
+    }
+    function labelPekerjaan(code) {
+        if (code === null || code === undefined || code === "") return "-";
+        return pekerjaanLabels[Number(code)] ?? String(code);
+    }
+    function labelUsia(usia) {
+        if (usia === null || usia === undefined || usia === "") return "-";
+        return `${usia} thn`;
+    }
+    function labelDisabilitas(value) {
+        if (!value) return "Tidak";
+        const parts = String(value)
+            .split(",")
+            .map((p) => p.trim())
+            .filter(Boolean)
+            .map((p) => disabilitasLabels[Number(p)] ?? `Kode ${p}`);
+        return parts.length ? parts.join(", ") : "Tidak";
+    }
 
     let activeType = $state("SPKP");
     let activeTab = $state("questions");
@@ -522,10 +576,6 @@
                 return;
             }
 
-            const exportedAt = new Intl.DateTimeFormat("id-ID", {
-                dateStyle: "full",
-                timeStyle: "short",
-            }).format(new Date());
             const fileNameParts = [
                 "hasil-respons",
                 activeType,
@@ -534,63 +584,33 @@
                     : "semua",
                 new Date().toISOString().slice(0, 10),
             ].filter(Boolean);
-            const fileName = `${fileNameParts.join("-")}.xls`;
+            const fileName = `${fileNameParts.join("-")}.xlsx`;
 
-            const rowsHtml = allResponses
-                .map(
-                    (item) => `
-                        <tr>
-                            <td>${escapeHtml(item.permohonanId)}</td>
-                            <td>
-                                <strong>${escapeHtml(item.applicantName)}</strong><br />
-                                <span>${escapeHtml(item.applicantPhone)}</span>
-                            </td>
-                            <td>${escapeHtml(item.serviceTitle)}</td>
-                            <td>
-                                <div>${escapeHtml(item.pendidikanTerakhir)}</div>
-                                <div>${escapeHtml(item.jenisPekerjaan)}</div>
-                            </td>
-                            <td>${escapeHtml(formatDate(item.createdAt))}</td>
-                        </tr>`,
-                )
-                .join("");
-
-            const html = `
-                <html>
-                    <head>
-                        <meta charset="utf-8" />
-                        <style>
-                            body { font-family: Arial, sans-serif; font-size: 12px; color: #111; }
-                            h1 { font-size: 18px; margin: 0 0 8px; }
-                            p { margin: 0 0 6px; }
-                            table { border-collapse: collapse; width: 100%; margin-top: 12px; }
-                            th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; vertical-align: top; }
-                            th { background: #f3f4f6; font-weight: bold; }
-                        </style>
-                    </head>
-                    <body>
-                        <h1>Hasil Respons ${escapeHtml(currentType.label)}</h1>
-                        <p>Tipe survei: ${escapeHtml(currentType.title)}</p>
-                        <p>Filter tiket: ${escapeHtml(ticketFilter || "Semua tiket")}</p>
-                        <p>Diekspor pada: ${escapeHtml(exportedAt)}</p>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Tiket</th>
-                                    <th>Pemohon</th>
-                                    <th>Layanan</th>
-                                    <th>Profil</th>
-                                    <th>Tanggal</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${rowsHtml}
-                            </tbody>
-                        </table>
-                    </body>
-                </html>`;
-
-            downloadExcelFile(html, fileName);
+            // Format export: nama, no-telpon, tanggal layanan, pendidikan,
+            // usia, pekerjaan, disabilitas. Tanpa mapping (nilai raw).
+            const rows = allResponses.map((item) => ({
+                nama: item.applicantName ?? "",
+                "no-telpon": item.applicantPhone ?? "",
+                "tanggal layanan": item.tanggalMenerimaLayanan ?? "",
+                pendidikan: item.pendidikanTerakhir ?? "",
+                usia: item.usia ?? "",
+                pekerjaan: item.jenisPekerjaan ?? "",
+                disabilitas: item.disabilitas ?? "",
+            }));
+            const ws = XLSX.utils.json_to_sheet(rows, {
+                header: [
+                    "nama",
+                    "no-telpon",
+                    "tanggal layanan",
+                    "pendidikan",
+                    "usia",
+                    "pekerjaan",
+                    "disabilitas",
+                ],
+            });
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Hasil Respons");
+            XLSX.writeFile(wb, fileName);
             showToast("success", "File Excel berhasil diunduh.");
         } catch (e) {
             showToast("error", String(e));
@@ -1076,7 +1096,7 @@
                                 >
                                 <th
                                     class="px-4 py-3 text-left text-[11px] uppercase tracking-wide text-ink/40"
-                                    >Profil</th
+                                    >Profil Responden</th
                                 >
                                 <th
                                     class="px-4 py-3 text-left text-[11px] uppercase tracking-wide text-ink/40"
@@ -1104,13 +1124,54 @@
                                         {item.serviceTitle}
                                     </td>
                                     <td class="px-4 py-3 text-xs text-ink/55">
-                                        <p>{item.pendidikanTerakhir}</p>
-                                        <p>{item.jenisPekerjaan}</p>
+                                        <p>
+                                            <span class="text-ink/35"
+                                                >Pendidikan:</span
+                                            >
+                                            {labelPendidikan(
+                                                item.pendidikanTerakhir,
+                                            )}
+                                        </p>
+                                        <p>
+                                            <span class="text-ink/35"
+                                                >Usia:</span
+                                            >
+                                            {labelUsia(item.usia)}
+                                        </p>
+                                        <p>
+                                            <span class="text-ink/35"
+                                                >Pekerjaan:</span
+                                            >
+                                            {labelPekerjaan(
+                                                item.jenisPekerjaan,
+                                            )}
+                                        </p>
+                                        <p>
+                                            <span class="text-ink/35"
+                                                >Disabilitas:</span
+                                            >
+                                            {labelDisabilitas(
+                                                item.disabilitas,
+                                            )}
+                                        </p>
                                     </td>
                                     <td
                                         class="px-4 py-3 text-xs text-ink/45 whitespace-nowrap"
                                     >
-                                        {formatDate(item.createdAt)}
+                                        {#if item.tanggalMenerimaLayanan}
+                                            <p>
+                                                <span class="text-ink/35"
+                                                    >Menerima:</span
+                                                >
+                                                {item.tanggalMenerimaLayanan}
+                                            </p>
+                                        {/if}
+                                        <p>
+                                            <span class="text-ink/35"
+                                                >Submit:</span
+                                            >
+                                            {formatDate(item.createdAt)}
+                                        </p>
                                     </td>
                                 </tr>
                             {/each}
