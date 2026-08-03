@@ -2,6 +2,11 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import FormCheckProgress from "../../components/Svelte/FormCheckProgress.svelte";
 import { Icon } from "astro-icon/components";
+
+const initialKode =
+    Astro.url.searchParams.get("kode")?.trim() ??
+    Astro.url.searchParams.get("ticket")?.trim() ??
+    "";
 ---
 
 <style>
@@ -69,7 +74,7 @@ import { Icon } from "astro-icon/components";
         </div>
 
         <div data-anim="form">
-            <FormCheckProgress client:load />
+            <FormCheckProgress initialKode={initialKode} client:load />
         </div>
 
         <!-- Zona Integritas -->

@@ -4,6 +4,7 @@
     let {
         apiUrl = "/api/cek-progress",
         streamUrl = "/api/cek-progress-stream",
+        initialKode = "",
     } = $props();
 
     let query = $state("");
@@ -195,17 +196,23 @@
         if (hasAutoLoaded || typeof window === "undefined") return;
 
         hasAutoLoaded = true;
+
+        const source = initialKode.trim() || getKodeFromUrl();
+        if (!source) return;
+
+        const kode = source.toUpperCase();
+        query = kode;
+        void runSearch(kode);
+    });
+
+    function getKodeFromUrl() {
         const url = new URL(window.location.href);
-        const initialKode =
+        return (
             url.searchParams.get("kode")?.trim() ??
             url.searchParams.get("ticket")?.trim() ??
-            "";
-
-        if (!initialKode) return;
-
-        query = initialKode.toUpperCase();
-        void runSearch(initialKode);
-    });
+            ""
+        );
+    }
 </script>
 
 <!-- ── Search form ── -->
