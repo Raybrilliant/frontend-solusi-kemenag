@@ -118,6 +118,7 @@ export async function transformTrackResponse(raw: any): Promise<any> {
       iconBody: ICON_BODY,
       message: responseMessage ?? d.rejectionReason ?? d.message ?? null,
       fileUrl: toUploadProxyUrl(d.outputFile?.url),
+      surveysFilled: Boolean(d.surveysFilled),
     },
   };
 }

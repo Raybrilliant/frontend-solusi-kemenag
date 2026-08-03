@@ -19,6 +19,12 @@
         typeof data?.kode === "string" && data.kode.startsWith("ADUAN-"),
     );
 
+    const isSurveyLocked = $derived(
+        !isPengaduan &&
+            data?.status === "Selesai" &&
+            !data?.surveysFilled,
+    );
+
     const elapsed = $derived(
         data?.startTime
             ? Math.floor((now - new Date(data.startTime).getTime()) / 1000)
@@ -661,6 +667,41 @@
                 </div>
             </div>
 
+            {#if isSurveyLocked}
+                <div
+                    class="px-4 md:px-6 py-8 md:py-10 flex flex-col items-center text-center bg-gray-50/60 border-t border-gray-100"
+                >
+                    <div
+                        class="w-14 h-14 rounded-full bg-yellow/20 flex items-center justify-center mb-4"
+                    >
+                        <Icon
+                            icon="mdi:lock"
+                            width="28"
+                            height="28"
+                            class="text-yellow-700"
+                        />
+                    </div>
+                    <h4 class="text-base md:text-lg font-bold text-ink mb-1">
+                        Layanan Selesai
+                    </h4>
+                    <p class="text-sm text-gray-500 max-w-sm mb-5">
+                        Isi survei dulu untuk membuka kunci dan melihat progress
+                        layanan.
+                    </p>
+                    <a
+                        href={`/survei?ticket=${encodeURIComponent(data.kode)}`}
+                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-yellow text-ink text-sm font-bold hover:bg-yellow/90 active:scale-95 transition-all"
+                    >
+                        <Icon
+                            icon="mdi:clipboard-text-outline"
+                            width="16"
+                            height="16"
+                        />
+                        Isi Survei
+                    </a>
+                </div>
+            {:else}
+
             <!-- Step tracker (semua status kecuali Ditolak) -->
             {#if data.status !== "Ditolak"}
                 {@const steps = [
@@ -966,17 +1007,19 @@
 
                 {#if data.status === "Selesai"}
                     <div class="flex flex-wrap items-center gap-2">
-                        <a
-                            href={`/survei?ticket=${encodeURIComponent(data.kode)}`}
-                            class="inline-flex items-center gap-2 px-5 py-2.5 bg-yellow text-ink text-sm font-bold hover:bg-yellow/90 active:scale-95 transition-all"
-                        >
-                            <Icon
-                                icon="mdi:clipboard-text-outline"
-                                width="16"
-                                height="16"
-                            />
-                            Isi Survei
-                        </a>
+                        {#if !isPengaduan}
+                            <a
+                                href={`/survei?ticket=${encodeURIComponent(data.kode)}`}
+                                class="inline-flex items-center gap-2 px-5 py-2.5 bg-yellow text-ink text-sm font-bold hover:bg-yellow/90 active:scale-95 transition-all"
+                            >
+                                <Icon
+                                    icon="mdi:clipboard-text-outline"
+                                    width="16"
+                                    height="16"
+                                />
+                                {data.surveysFilled ? "Survei Sudah Diisi" : "Isi Survei"}
+                            </a>
+                        {/if}
                         {#if data.fileUrl}
                             <a
                                 href={data.fileUrl}
@@ -998,6 +1041,8 @@
                     </p>
                 {/if}
             </div>
+
+            {/if}
         </div>
     {/if}
 {/if}
