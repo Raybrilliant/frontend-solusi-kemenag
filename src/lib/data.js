@@ -268,40 +268,46 @@ export function getAgenPerubahanInovasiByAgenId(id) {
 
 /** @type {Record<string, string[]>} */
 export const kelurahanMap = {
-  Mayangan: ["Mayangan", "Mangunharjo", "Jati", "Sukabumi", "Wiroborang"],
-  Kanigaran: [
-    "Kanigaran",
-    "Tisnonegaran",
-    "Kebonsari Kulon",
-    "Kebonsari Wetan",
-    "Sukoharjo",
-    "Curahgrinting",
-  ],
-  Wonoasih: [
-    "Wonoasih",
-    "Jrebeng Kidul",
-    "Pakistaji",
-    "Kedunggaleng",
-    "Kedungasem",
-    "Sumbertaman",
-  ],
-  Kedopok: [
-    "Sumber Wetan",
-    "Kareng Lor",
-    "Jrebeng Kulon",
-    "Jrebeng Wetan",
-    "Jrebeng Lor",
-    "Kedopok",
-  ],
-  Kademangan: [
-    "Kademangan",
-    "Ketapang",
-    "Triwung Kidul",
-    "Pilang",
-    "Pohsangit Kidul",
-    "Pohsangit Lor",
-  ],
-};
+  "Mayangan": [
+      "Mayangan",
+      "Mangunharjo",
+      "Jati",
+      "Sukabumi",
+      "Wiroborang"
+    ],
+    "Kanigaran": [
+      "Kanigaran",
+      "Tisnonegaran",
+      "Kebonsari Kulon",
+      "Kebonsari Wetan",
+      "Sukoharjo",
+      "Curahgrinting"
+    ],
+    "Wonoasih": [
+      "Wonoasih",
+      "Jrebeng Kidul",
+      "Pakistaji",
+      "Kedunggaleng",
+      "Kedungasem",
+      "Sumbertaman"
+    ],
+    "Kedopok": [
+      "Sumber Wetan",
+      "Kareng Lor",
+      "Jrebeng Kulon",
+      "Jrebeng Wetan",
+      "Jrebeng Lor",
+      "Kedopok"
+    ],
+    "Kademangan": [
+      "Kademangan",
+      "Ketapang",
+      "Triwung Kidul",
+      "Triwung Lor",
+      "Pilang",
+      "Pohsangit Kidul",
+    ]
+}
 
 // DATA ZONA INTEGRITAS
 
