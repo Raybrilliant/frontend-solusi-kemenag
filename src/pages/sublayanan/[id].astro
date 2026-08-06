@@ -12,6 +12,27 @@ let kategoriTitle = "Layanan";
 let notFound = false;
 let serverError = false;
 
+async function validateUserFromCookie() {
+    const token = Astro.cookies.get("auth_token")?.value ?? "";
+    const cookieHeader = Astro.request.headers.get("cookie") ?? "";
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    if (cookieHeader) headers.Cookie = cookieHeader;
+
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/v1/auth/me`, {
+            headers,
+            signal: AbortSignal.timeout(5000),
+        });
+        const data = await res.json();
+        if (data.success === true && data.user) return data.user;
+        if (data.found?.user) return data.found.user;
+    } catch {
+        // ignore
+    }
+    return null;
+}
+
 try {
     const layRes = await fetch(`${BACKEND_URL}/api/v1/layanan/${id}`);
 
@@ -23,6 +44,14 @@ try {
         const layJson = await layRes.json();
         layanan = layJson.data ?? null;
         if (!layanan) notFound = true;
+    }
+
+    if (layanan?.audience === "internal") {
+        const user = await validateUserFromCookie();
+        if (!user) {
+            return Astro.redirect("/internal/login");
+        }
+        Astro.locals.user = user;
     }
 
     try {
@@ -44,6 +73,9 @@ try {
 
 if (notFound) Astro.response.status = 404;
 if (serverError) Astro.response.status = 503;
+if (layanan?.audience === "internal") {
+    Astro.response.headers.set("Cache-Control", "no-store");
+}
 
 const subService = layanan;
 const serviceTitle = subService?.title ?? "Detail Layanan";
@@ -239,11 +271,18 @@ function isUrl(str: string): boolean {
                 </ol>
             </nav>
 
-            <div
-                data-anim="badge"
-                class="font-semibold mb-2 bg-yellow w-fit px-3 md:px-4 py-1.5 md:py-2 uppercase text-xs md:text-sm"
-            >
-                {kategoriTitle}
+            <div class="flex flex-wrap items-center gap-2 mb-2">
+                <div
+                    data-anim="badge"
+                    class="font-semibold bg-yellow w-fit px-3 md:px-4 py-1.5 md:py-2 uppercase text-xs md:text-sm"
+                >
+                    {kategoriTitle}
+                </div>
+                {subService?.audience === "internal" && (
+                    <div class="font-semibold bg-green text-cream w-fit px-3 md:px-4 py-1.5 md:py-2 uppercase text-xs md:text-sm">
+                        Internal ASN
+                    </div>
+                )}
             </div>
             <h1
                 data-anim="heading"
@@ -637,7 +676,7 @@ function isUrl(str: string): boolean {
                         </div>
                     </div>
 
-                    <FormPermohonan serviceId={id} client:load />
+                    <FormPermohonan serviceId={id} isInternal={subService?.audience === "internal"} client:load />
                 </div>
             )
         }

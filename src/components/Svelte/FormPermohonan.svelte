@@ -2,7 +2,7 @@
     import Icon from "@iconify/svelte";
     import { kelurahanMap } from "../../lib/data.js";
 
-    let { serviceId } = $props();
+    let { serviceId, isInternal = false } = $props();
 
     // ── Form state ────────────────────────────────────────
     let nama = $state("");
@@ -363,7 +363,10 @@
             uploadProgress = null;
 
             // 2. Submit permohonan dengan URL dokumen hasil upload
-            const res = await fetch("/api/permohonan", {
+            const submitUrl = isInternal
+                ? `/api/internal/services/${serviceId}/submit`
+                : "/api/permohonan";
+            const res = await fetch(submitUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

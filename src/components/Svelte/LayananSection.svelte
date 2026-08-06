@@ -24,7 +24,7 @@
         loadingCategoryId = id;
         loadError = "";
         try {
-            const res = await fetch(`${apiUrl}?categoryId=${id}&limit=30`);
+            const res = await fetch(`${apiUrl}?categoryId=${id}&audience=umum&limit=30`);
             const json = await res.json();
             subServicesByCategory = {
                 ...subServicesByCategory,

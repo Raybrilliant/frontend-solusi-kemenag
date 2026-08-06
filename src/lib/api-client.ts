@@ -267,21 +267,6 @@ export async function getPermohonanTerbaru(limit: number = 5) {
   );
 }
 
-// ── Internal Services ────────────────────────────────────
-export async function getInternalServices() {
-  return request<{ success: boolean; data?: Array<Record<string, unknown>> }>(
-    "/api/v1/internal/services",
-  );
-}
-
-export async function getInternalServiceById(id: string) {
-  return request<{
-    success: boolean;
-    data?: Record<string, unknown>;
-    message?: string;
-  }>(`/api/v1/internal/services/${id}`);
-}
-
 // ── External Services ────────────────────────────────────
 export async function getExternalServices() {
   return request<{

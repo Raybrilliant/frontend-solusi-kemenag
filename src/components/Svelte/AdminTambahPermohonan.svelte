@@ -41,7 +41,9 @@
 
     const filteredLayanan = $derived.by(() => {
         const q = search.trim().toLowerCase();
-        const offline = layananList.filter((l) => l.type === "Offline");
+        const offline = layananList.filter(
+            (l) => l.type === "Offline" && l.audience !== "internal",
+        );
         if (!q) return offline;
         return offline.filter(
             (l) =>

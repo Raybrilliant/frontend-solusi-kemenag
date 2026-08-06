@@ -19,6 +19,7 @@
     let slaUnit = $state("menit");
     let cost = $state("Gratis");
     let type = $state("Online");
+    let audience = $state("umum");
     let externalLink = $state("");
     let loading = $state(true);
     let saving = $state(false);
@@ -61,6 +62,7 @@
                     slaUnit = item.slaUnit ?? "menit";
                     cost = item.cost ?? "Gratis";
                     type = item.type ?? "Online";
+                    audience = item.audience ?? "umum";
                     externalLink = item.externalLink ?? "";
                     loading = false;
                 })
@@ -123,6 +125,7 @@
                 slaUnit,
                 cost: cost.trim() || "Gratis",
                 type,
+                audience,
                 ...(type === "External" && {
                     externalLink: externalLink.trim(),
                 }),
@@ -158,6 +161,7 @@
                 slaUnit = "menit";
                 cost = "Gratis";
                 type = "Online";
+                audience = "umum";
                 externalLink = "";
             }
         } catch (err) {
@@ -440,6 +444,22 @@
                             <option value="External">External</option>
                             <option value="Offline">Offline</option>
                         </select>
+                    </div>
+                    <div>
+                        <label
+                            class="block text-xs font-bold text-ink/50 uppercase tracking-wider mb-2"
+                            >Akses</label
+                        >
+                        <select
+                            bind:value={audience}
+                            class="w-full border bg-white/50 border-black/10 rounded-lg py-2.5 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors"
+                        >
+                            <option value="umum">Umum (Publik)</option>
+                            <option value="internal">Internal ASN</option>
+                        </select>
+                        <p class="text-[10px] text-ink/30 mt-1">
+                            Internal ASN hanya muncul di portal internal.
+                        </p>
                     </div>
                 </div>
 

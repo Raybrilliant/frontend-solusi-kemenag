@@ -117,6 +117,11 @@
             size: 90,
         }),
         col.accessor("type", { header: "Tipe", enableSorting: true, size: 70 }),
+        col.accessor("audience", {
+            header: "Akses",
+            enableSorting: true,
+            size: 70,
+        }),
         col.accessor("cost", {
             header: "Biaya",
             enableSorting: true,
@@ -161,6 +166,7 @@
             "SLA",
             "Biaya",
             "Tipe",
+            "Akses",
         ];
         const body = rows.map((r) => [
             r.id,
@@ -171,6 +177,7 @@
             slaLabel(r),
             r.cost,
             r.type,
+            r.audience,
         ]);
         const csv = [headers, ...body].map((row) => row.join(",")).join("\n");
         const a = document.createElement("a");
@@ -262,6 +269,13 @@
                     : cell.getValue() === 'Offline'
                       ? 'bg-ink/5 text-ink/50'
                       : 'bg-green/5 text-green/50'}">{cell.getValue()}</span
+            >
+        {:else if cell.column.id === "audience"}
+            <span
+                class="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold {cell.getValue() ===
+                'internal'
+                    ? 'bg-green/10 text-green'
+                    : 'bg-ink/5 text-ink/50'}">{cell.getValue() === "internal" ? "Internal" : "Umum"}</span
             >
         {:else if cell.column.id === "cost"}
             <span class="text-xs font-medium text-ink/60"

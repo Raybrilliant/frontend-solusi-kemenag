@@ -42,7 +42,7 @@ export const GET: APIRoute = async ({ url }) => {
     const [categoriesRes, layananRes] = await Promise.all([
       fetch(`${BACKEND_URL}/api/v1/categories/?limit=100`),
       fetch(
-        `${BACKEND_URL}/api/v1/layanan/?q=${encodeURIComponent(q)}&limit=${limit}`,
+        `${BACKEND_URL}/api/v1/layanan/?q=${encodeURIComponent(q)}&audience=umum&limit=${limit}`,
       ),
     ]);
 

@@ -32,8 +32,11 @@ export const GET: APIRoute = async ({ url }) => {
     const categoryId = url.searchParams.get("categoryId") ?? "";
     const limit = url.searchParams.get("limit") ?? "30";
 
+    const audience = url.searchParams.get("audience") ?? "";
+
     const params = new URLSearchParams();
     if (categoryId) params.set("categoryId", categoryId);
+    if (audience) params.set("audience", audience);
     params.set("limit", limit);
 
     const res = await fetch(
