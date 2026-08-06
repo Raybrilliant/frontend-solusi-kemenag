@@ -119,6 +119,12 @@ export async function transformTrackResponse(raw: any): Promise<any> {
       message: responseMessage ?? d.rejectionReason ?? d.message ?? null,
       fileUrl: toUploadProxyUrl(d.outputFile?.url),
       surveysFilled: Boolean(d.surveysFilled),
+      dokumen: Array.isArray(d.dokumen)
+        ? d.dokumen.map((doc: { url: string }) => ({
+            ...doc,
+            url: toUploadProxyUrl(doc.url),
+          }))
+        : [],
     },
   };
 }

@@ -1,5 +1,6 @@
 <script>
     import Icon from "@iconify/svelte";
+    import FormRevisiPermohonan from "./FormRevisiPermohonan.svelte";
 
     let {
         apiUrl = "/api/cek-progress",
@@ -18,6 +19,7 @@
     let connected = $state(false);
     let hasAutoLoaded = $state(false);
     let fromList = $state(false);
+    let showRevisi = $state(false);
 
     function isPhoneQuery(q) {
         if (!q) return false;
@@ -90,6 +92,16 @@
             return `${h} jam ${m % 60} menit`;
         }
         return `${m} menit ${pad(s)} detik`;
+    }
+
+    function formatTanggal(iso) {
+        if (!iso) return "-";
+        const d = new Date(iso);
+        return d.toLocaleDateString("id-ID", {
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+        });
     }
 
     function formatDatetime(iso) {
@@ -173,6 +185,7 @@
         error = "";
         data = null;
         activeKode = "";
+        showRevisi = false;
         if (!opts.keepList) {
             list = null;
             fromList = false;
@@ -183,7 +196,13 @@
 
             if (!isTicket && isPhoneQuery(q)) {
                 const res = await fetch(`${listUrl}?phone=${encodeURIComponent(q)}`);
-                const json = await res.json();
+                let json;
+                try {
+                    json = await res.json();
+                } catch {
+                    error = `Gagal membaca respons server (${res.status}).`;
+                    return;
+                }
                 if (!json.success) {
                     error = json.message ?? "Terjadi kesalahan";
                     return;
@@ -200,7 +219,13 @@
             }
 
             const res = await fetch(`${apiUrl}?kode=${encodeURIComponent(q.toUpperCase())}`);
-            const json = await res.json();
+            let json;
+            try {
+                json = await res.json();
+            } catch {
+                error = `Gagal membaca respons server (${res.status}).`;
+                return;
+            }
             if (!json.success) {
                 error = json.message ?? "Terjadi kesalahan";
                 return;
@@ -213,6 +238,9 @@
             query = activeKode;
             fromList = opts.keepList && list && list.length > 0;
             updateUrl(activeKode);
+        } catch (err) {
+            console.error("runSearch error", err);
+            error = err instanceof Error ? err.message : "Gagal terhubung ke server.";
         } finally {
             loading = false;
         }
@@ -235,6 +263,7 @@
         query = "";
         activeKode = "";
         fromList = false;
+        showRevisi = false;
         updateUrl();
     }
 
@@ -242,7 +271,15 @@
         data = null;
         activeKode = "";
         error = "";
+        showRevisi = false;
         updateUrl();
+    }
+
+    function onRevisiSuccess() {
+        showRevisi = false;
+        if (data?.kode || data?.id) {
+            runSearch(data.kode ?? data.id);
+        }
     }
 
     $effect(() => {
@@ -974,6 +1011,14 @@
                                 Hubungi petugas atau ajukan kembali permohonan
                                 dengan melengkapi persyaratan yang diminta.
                             </p>
+                            <button
+                                type="button"
+                                onclick={() => (showRevisi = !showRevisi)}
+                                class="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-xs font-bold uppercase hover:bg-red-700 active:scale-95 transition-all"
+                            >
+                                <Icon icon="mdi:file-edit-outline" width="16" height="16" />
+                                {showRevisi ? "Tutup Form Revisi" : "Ajukan Revisi"}
+                            </button>
                         </div>
                     </div>
                 {:else if data.status === "Selesai"}
@@ -1067,6 +1112,16 @@
                             >{data.durasiLabel}</span
                         > sejak pendaftaran
                     </p>
+                {/if}
+
+                <!-- Revision form -->
+                {#if showRevisi && data.status === "Ditolak"}
+                    <div class="px-4 md:px-6 pb-5">
+                        <FormRevisiPermohonan
+                            id={data.kode ?? data.id}
+                            onSuccess={onRevisiSuccess}
+                        />
+                    </div>
                 {/if}
             </div>
 

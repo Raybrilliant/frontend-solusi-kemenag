@@ -33,14 +33,89 @@
         message: string;
     };
     let activePermohonanInfo = $state<ActivePermohonanInfo | null>(null);
+    let lastDataMsg = $state("");
+    let loadingLastData = $state(false);
+    let lastAutoPhone = $state("");
 
     const kelurahanOptions = $derived(
         kecamatan ? (kelurahanMap[kecamatan] ?? []) : [],
     );
 
+    function canonicalPhoneLocal(value: string): string {
+        const digits = value.replace(/\D/g, "");
+        if (digits.startsWith("62") && digits.length > 2) {
+            return "0" + digits.slice(2);
+        }
+        return digits;
+    }
+
     $effect(() => {
-        if (kecamatan) kelurahan = "";
+        const phone = whatsapp.trim();
+        const canonical = canonicalPhoneLocal(phone);
+        if (canonical.length < 10 || canonical === lastAutoPhone) return;
+
+        const timer = setTimeout(() => {
+            loadLastData(true);
+        }, 600);
+        return () => clearTimeout(timer);
     });
+
+    async function loadLastData(auto = false) {
+        const phone = whatsapp.trim();
+        const canonical = canonicalPhoneLocal(phone);
+        if (!phone) {
+            if (!auto) lastDataMsg = "Masukkan nomor WhatsApp terlebih dahulu.";
+            return;
+        }
+
+        if (!auto) lastDataMsg = "";
+        loadingLastData = true;
+        try {
+            const res = await fetch(
+                `/api/permohonan-last?phone=${encodeURIComponent(phone)}`,
+            );
+            const text = await res.text();
+            let json;
+            try {
+                json = text ? JSON.parse(text) : {};
+            } catch {
+                throw new Error(
+                    text.trim()
+                        ? `Respons tidak valid: ${text.slice(0, 200)}`
+                        : `Server mengembalikan HTTP ${res.status}`,
+                );
+            }
+
+            if (!json.success) {
+                throw new Error(json.message ?? "Gagal memuat data.");
+            }
+
+            const data = json.data;
+            if (!data) {
+                if (!auto) {
+                    lastDataMsg = "Belum ada data pengajuan untuk nomor ini.";
+                }
+                return;
+            }
+
+            lastAutoPhone = canonical;
+            nama = data.applicantName ?? "";
+            whatsapp = data.applicantPhone ?? phone;
+            kecamatan = data.kecamatan ?? "";
+            kelurahan = data.kelurahan ?? "";
+            alamat = data.alamat ?? "";
+            lastDataMsg = "Data terakhir berhasil diisi.";
+        } catch (err) {
+            if (!auto) {
+                lastDataMsg =
+                    err instanceof Error
+                        ? err.message
+                        : "Gagal memuat data terakhir.";
+            }
+        } finally {
+            loadingLastData = false;
+        }
+    }
 
     // ── File handling ─────────────────────────────────────
     const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -527,21 +602,6 @@
             onsubmit={handleSubmit}
             class="px-4 md:px-6 pb-4 md:pb-6 flex flex-col gap-4 md:gap-5"
         >
-            <!-- Nama -->
-            <div class="flex flex-col gap-1.5">
-                <label for="nama" class="label"
-                    >Nama Lengkap <span class="text-red-500">*</span></label
-                >
-                <input
-                    id="nama"
-                    bind:value={nama}
-                    type="text"
-                    required
-                    placeholder="Sesuai KTP"
-                    class="field"
-                />
-            </div>
-
             <!-- WhatsApp -->
             <div class="flex flex-col gap-1.5">
                 <label for="whatsapp" class="label"
@@ -559,8 +619,42 @@
                     />
                 </div>
                 <p class="text-xs opacity-50">
-                    Nomor tiket &amp; notifikasi dikirim ke nomor ini
+                    Nomor tiket &amp; notifikasi dikirim ke nomor ini. Data
+                    pengajuan terakhir akan diisi otomatis.
                 </p>
+                <button
+                    type="button"
+                    onclick={() => loadLastData(false)}
+                    disabled={loadingLastData}
+                    class="mt-2 self-start inline-flex items-center gap-1.5 text-xs font-semibold text-green hover:text-green/80 disabled:opacity-50"
+                >
+                    {#if loadingLastData}
+                        <span class="spinner"></span>
+                    {:else}
+                        <Icon icon="mdi:history" width="14" height="14" />
+                    {/if}
+                    Isi data terakhir
+                </button>
+                {#if lastDataMsg}
+                    <p class="text-xs {lastDataMsg.includes('berhasil') ? 'text-green' : 'text-red-600'} mt-1">
+                        {lastDataMsg}
+                    </p>
+                {/if}
+            </div>
+
+            <!-- Nama -->
+            <div class="flex flex-col gap-1.5">
+                <label for="nama" class="label"
+                    >Nama Lengkap <span class="text-red-500">*</span></label
+                >
+                <input
+                    id="nama"
+                    bind:value={nama}
+                    type="text"
+                    required
+                    placeholder="Sesuai KTP"
+                    class="field"
+                />
             </div>
 
             <!-- Kecamatan + Kelurahan + Alamat -->
@@ -573,6 +667,7 @@
                         <select
                             id="kecamatan"
                             bind:value={kecamatan}
+                            onchange={() => (kelurahan = "")}
                             required
                             class="field appearance-none pr-8 cursor-pointer"
                         >
