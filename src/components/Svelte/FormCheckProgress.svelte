@@ -4,17 +4,31 @@
     let {
         apiUrl = "/api/cek-progress",
         streamUrl = "/api/cek-progress-stream",
+        listUrl = "/api/cek-progress-list",
         initialKode = "",
     } = $props();
 
     let query = $state("");
     let loading = $state(false);
     let data = $state(null);
+    let list = $state(null);
     let error = $state("");
     let now = $state(Date.now());
     let activeKode = $state("");
     let connected = $state(false);
     let hasAutoLoaded = $state(false);
+    let fromList = $state(false);
+
+    function isPhoneQuery(q) {
+        if (!q) return false;
+        const v = q.replace(/\s+/g, "");
+        if (v.startsWith("+62") || v.startsWith("62") || v.startsWith("08") || v.startsWith("0")) {
+            return true;
+        }
+        // Pure digits (with optional leading +) treated as phone
+        if (/^[\d+]+$/.test(v)) return true;
+        return false;
+    }
 
     const isPengaduan = $derived(
         typeof data?.kode === "string" && data.kode.startsWith("ADUAN-"),
@@ -151,17 +165,41 @@
         );
     }
 
-    async function runSearch(rawQuery) {
-        const q = rawQuery.trim().toUpperCase();
+    async function runSearch(rawQuery, opts = { keepList: false }) {
+        const q = rawQuery.trim();
         if (!q) return;
 
         loading = true;
         error = "";
         data = null;
         activeKode = "";
+        if (!opts.keepList) {
+            list = null;
+            fromList = false;
+        }
 
         try {
-            const res = await fetch(`${apiUrl}?kode=${encodeURIComponent(q)}`);
+            const isTicket = q.toUpperCase().startsWith("PMH-") || q.toUpperCase().startsWith("ADUAN-");
+
+            if (!isTicket && isPhoneQuery(q)) {
+                const res = await fetch(`${listUrl}?phone=${encodeURIComponent(q)}`);
+                const json = await res.json();
+                if (!json.success) {
+                    error = json.message ?? "Terjadi kesalahan";
+                    return;
+                }
+                const items = json.data ?? [];
+                if (items.length === 0) {
+                    error = "Tidak ada permohonan yang terdaftar pada nomor HP tersebut.";
+                    return;
+                }
+                list = items;
+                fromList = true;
+                updateUrl();
+                return;
+            }
+
+            const res = await fetch(`${apiUrl}?kode=${encodeURIComponent(q.toUpperCase())}`);
             const json = await res.json();
             if (!json.success) {
                 error = json.message ?? "Terjadi kesalahan";
@@ -171,12 +209,18 @@
             const payload = json.data ?? json;
             data = payload;
             now = Date.now();
-            activeKode = payload.id ?? payload.kode ?? q;
+            activeKode = payload.id ?? payload.kode ?? q.toUpperCase();
             query = activeKode;
+            fromList = opts.keepList && list && list.length > 0;
             updateUrl(activeKode);
         } finally {
             loading = false;
         }
+    }
+
+    async function showDetail(kode) {
+        if (!kode) return;
+        await runSearch(kode, { keepList: true });
     }
 
     async function search(e) {
@@ -186,9 +230,18 @@
 
     function reset() {
         data = null;
+        list = null;
         error = "";
         query = "";
         activeKode = "";
+        fromList = false;
+        updateUrl();
+    }
+
+    function backToList() {
+        data = null;
+        activeKode = "";
+        error = "";
         updateUrl();
     }
 
@@ -230,7 +283,7 @@
         <input
             bind:value={query}
             type="text"
-            placeholder="Masukkan nomor tiket, contoh: HJ-2405-00125"
+            placeholder="Nomor tiket (PMH-...) atau nomor HP yang terdaftar"
             class="w-full pl-11 pr-4 py-3 sm:py-3.5 border border-gray-200 bg-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green transition-all"
         />
     </div>
@@ -264,7 +317,9 @@
         />
         <div>
             <p class="text-sm font-semibold text-red-700">
-                Tiket Tidak Ditemukan
+                {error?.includes("phone") || error?.includes("HP") || error?.includes("nomor")
+                    ? "Data Tidak Ditemukan"
+                    : "Tiket Tidak Ditemukan"}
             </p>
             <p class="text-sm text-red-600 mt-0.5">{error}</p>
         </div>
@@ -290,6 +345,61 @@
             <div class="h-4 bg-gray-200 rounded-full w-full"></div>
             <div class="h-3 bg-gray-100 rounded w-1/3"></div>
         </div>
+    </div>
+{/if}
+
+<!-- ── Phone list ── -->
+{#if list && !data}
+    <div class="mt-6 w-full max-w-2xl result-enter">
+        <h3 class="text-sm font-bold uppercase tracking-wide text-gray-600 mb-3">
+            Daftar Permohonan ({list.length})
+        </h3>
+        <div class="space-y-3">
+            {#each list as item (item.id)}
+                <button
+                    onclick={() => showDetail(item.id)}
+                    class="w-full flex items-start gap-3 md:gap-4 p-3 md:p-4 border border-gray-200 bg-white text-left hover:border-green hover:shadow-sm transition-all"
+                >
+                    <div
+                        class="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center shrink-0 bg-ink/5"
+                    >
+                        <Icon icon="mdi:file-document-outline" width="20" height="20" />
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                            {item.id}
+                        </p>
+                        <h4 class="text-sm md:text-base font-bold leading-snug">
+                            {item.serviceTitle}
+                        </h4>
+                        <p class="text-xs text-gray-500 mt-0.5">
+                            {item.applicantName} • {formatTanggal(item.submittedAt)}
+                        </p>
+                    </div>
+                    <span
+                        class={`text-[10px] md:text-xs font-bold px-2.5 py-1 shrink-0 ${
+                            item.status === "Selesai"
+                                ? "bg-green/10 text-green"
+                                : item.status === "Diproses"
+                                  ? "bg-yellow/60 text-yellow-900"
+                                  : item.status === "Ditolak"
+                                    ? "bg-red-100 text-red-700"
+                                    : "bg-blue-100 text-blue-700"
+                        }`}
+                    >
+                        {item.status}
+                    </span>
+                </button>
+            {/each}
+        </div>
+
+        <button
+            onclick={reset}
+            class="mt-4 text-sm text-gray-400 hover:text-gray-700 font-medium flex items-center gap-1.5 transition-colors"
+        >
+            <Icon icon="mdi:arrow-left" width="14" height="14" />
+            Cari lagi
+        </button>
     </div>
 {/if}
 
@@ -576,11 +686,11 @@
                 class="px-4 md:px-6 py-3 md:py-4 border-t border-gray-100 flex items-center justify-between gap-3"
             >
                 <button
-                    onclick={reset}
+                    onclick={fromList ? backToList : reset}
                     class="text-sm text-gray-400 hover:text-gray-700 font-medium flex items-center gap-1.5 transition-colors"
                 >
                     <Icon icon="mdi:arrow-left" width="14" height="14" />
-                    Cari tiket lain
+                    {fromList ? "Kembali ke daftar" : "Cari lagi"}
                 </button>
                 {#if data.status === "Selesai" && data.fileUrl}
                     <a
@@ -1005,11 +1115,11 @@
                 class="px-4 md:px-6 py-3 md:py-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3"
             >
                 <button
-                    onclick={reset}
+                    onclick={fromList ? backToList : reset}
                     class="text-sm text-gray-400 hover:text-gray-700 font-medium flex items-center gap-1.5 transition-colors"
                 >
                     <Icon icon="mdi:arrow-left" width="14" height="14" />
-                    Cari tiket lain
+                    {fromList ? "Kembali ke daftar" : "Cari lagi"}
                 </button>
 
                 {#if data.status === "Selesai"}
