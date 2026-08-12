@@ -139,6 +139,40 @@ const structuredData = [
             },
         ],
     },
+    {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        name: "Alur Bisnis Standar Layanan SOLUSI",
+        description:
+            "Alur pemrosesan permohonan: Pemohon → JAPEL → Kasi → Kepala Kantor (TTE), dengan opsi Validasi Pusat untuk layanan tertentu.",
+        step: [
+            {
+                "@type": "HowToStep",
+                name: "Pemohon mengajukan permohonan",
+                text: "Pemohon mengajukan permohonan secara online melalui SOLUSI dan mengunggah dokumen persyaratan.",
+            },
+            {
+                "@type": "HowToStep",
+                name: "JAPEL memproses dokumen awal",
+                text: "Jabatan Pelaksana (JAPEL) memverifikasi kelengkapan dokumen administrasi (≈ 5 menit).",
+            },
+            {
+                "@type": "HowToStep",
+                name: "Kasi memvalidasi substantif",
+                text: "Kepala Seksi (Kasi) melakukan validasi substantif terhadap isi permohonan (≈ 10 menit).",
+            },
+            {
+                "@type": "HowToStep",
+                name: "Kepala Kantor memberikan persetujuan & TTE",
+                text: "Kepala Kantor memberikan persetujuan akhir dan menandatangani dokumen menggunakan Tanda Tangan Elektronik (TTE) (≈ 15 menit).",
+            },
+            {
+                "@type": "HowToStep",
+                name: "Validasi Pusat (opsional)",
+                text: "Beberapa layanan tertentu memerlukan verifikasi dari Kementerian Agama Pusat, yang dapat memerlukan waktu harian hingga verifikasi selesai.",
+            },
+        ],
+    },
 ];
 ---
 

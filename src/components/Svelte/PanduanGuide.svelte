@@ -149,6 +149,7 @@
     let requirementsCache = $state<Record<number, Persyaratan[]>>({});
     let loadingRequirements = $state<Record<number, boolean>>({});
     let slaFilter = $state<"all" | "Sangat Cepat" | "Cepat" | "Standar" | "Proses Panjang">("all");
+    let openFaq = $state<number | null>(null);
 
     // ── Daftar isi ──────────────────────────────────────────────
     const tocItems = [
@@ -156,6 +157,7 @@
         { id: "apa-itu-solusi", label: "Apa itu SOLUSI?" },
         { id: "syarat-layanan", label: "Syarat Layanan" },
         { id: "cara-penggunaan", label: "Cara Penggunaan" },
+        { id: "sop", label: "Alur Bisnis & SOP" },
         { id: "sla", label: "Standar Waktu Layanan (SLA)" },
         { id: "kompensasi", label: "Kompensasi Keterlambatan" },
         { id: "faq", label: "Pertanyaan Umum" },
@@ -205,6 +207,10 @@
             a: "Setiap layanan memiliki Standar Waktu Layanan (SLA) yang bisa Anda lihat pada tabel SLA di halaman ini.",
         },
         {
+            q: "Siapa yang memproses permohonan saya?",
+            a: "Permohonan diproses berurutan: JAPEL (Jabatan Pelaksana) memproses dokumen awal (≈ 5 menit), Kasi (Kepala Seksi) memvalidasi (≈ 10 menit), lalu Kepala Kantor memberikan persetujuan akhir dan TTE (≈ 15 menit). Beberapa layanan tertentu memerlukan Validasi Pusat yang memakan waktu harian.",
+        },
+        {
             q: "Bagaimana proses kompensasi keterlambatan?",
             a: "Jika layanan melebihi batas SLA, petugas Kemenag Kota Probolinggo akan secara otomatis menghubungi Anda. Tidak perlu mengajukan kompensasi secara manual.",
         },
@@ -228,6 +234,89 @@
         if (totalMinutes <= 1440) return "Cepat";
         if (totalMinutes <= 4320) return "Standar";
         return "Proses Panjang";
+    }
+
+    // ── Alur Bisnis / SOP ──────────────────────────────────────
+    // Tahap standar yang berlaku untuk semua layanan:
+    //   1. Pemohon        → mengajukan permohonan secara online
+    //   2. JAPEL          → Jabatan Pelaksana memproses & verifikasi dokumen
+    //   3. Kasi           → Kepala Sekisi melakukan validasi substantif
+    //   4. Kepala Kantor  → persetujuan akhir & TTE (Tanda Tangan Elektronik)
+    // Layanan tertentu dapat memerlukan Validasi Pusat (harian) jika dipilih.
+    const sopSteps = [
+        {
+            role: "Pemohon",
+            icon: "mdi:account",
+            short: "Pengajuan",
+            desc: "Pemohon mengajukan permohonan secara online melalui SOLUSI dan mengunggah dokumen persyaratan.",
+            duration: "Instan",
+        },
+        {
+            role: "Jabatan Pelaksana",
+            icon: "mdi:account-cog",
+            short: "Pemrosesan",
+            desc: "Jabatan Pelaksana (JAPEL) memverifikasi kelengkapan dokumen administrasi dan memproses permohonan awal.",
+            duration: "30 menit",
+        },
+        {
+            role: "Kepala Seksi / Kasi",
+            icon: "mdi:account-tie",
+            short: "Validasi",
+            desc: "Kepala Seksi (Kasi) melakukan validasi substantif terhadap isi permohonan sebelum diteruskan ke Kepala Kantor.",
+            duration: "5 menit",
+        },
+        {
+            role: "Kepala Kantor / TTE",
+            icon: "mdi:signature-freehand",
+            short: "Persetujuan",
+            desc: "Kepala Kantor memberikan persetujuan akhir dan menandatangani dokumen menggunakan Tanda Tangan Elektronik (TTE).",
+            duration: "15 menit",
+        },
+    ];
+
+    const sopPusat = {
+        role: "Validasi Pusat",
+        icon: "mdi:domain",
+        short: "Validasi Pusat",
+        desc: "Beberapa layanan tertentu memerlukan verifikasi dari Kementerian Agama Pusat. Proses ini dapat memerlukan waktu harian hingga verifikasi selesai.",
+        duration: "Variabel",
+    };
+
+    // Estimasi waktu per tahap per-layanan, di-derive dari SLA layanan tersebut.
+    // - Layanan "menit": JAPEL 5 menit, Kasi 10 menit, TTE 15 menit, sisa SLA dibagi flex.
+    // - Layanan "jam": JAPEL 15 menit, Kasi 30 menit, TTE 45 menit, sisa untuk tahap berikutnya.
+    // - Layanan "hari": alokasi seperti standar + (opsional) Validasi Pusat = slaDuration hari.
+    function layananSopSteps(layanan: Layanan) {
+        const u = (layanan.slaUnit ?? "menit").toLowerCase();
+        // Layanan dengan SLA "hari" umumnya memerlukan validasi pusat karena
+        // harus menunggu verifikasi lintas instansi / Kemenag Pusat.
+        const needsPusat = u === "hari";
+        if (u === "menit") {
+            return [
+                { role: "Pemohon", icon: "mdi:account", duration: "Instan" },
+                { role: "JAPEL", icon: "mdi:account-cog", duration: "5 menit" },
+                { role: "Kasi", icon: "mdi:account-tie", duration: "10 menit" },
+                { role: "TTE", icon: "mdi:signature", duration: "15 menit" },
+                ...(needsPusat ? [{ role: "Validasi Pusat", icon: "mdi:domain", duration: `${layanan.slaDuration ?? 1} hari` }] : []),
+            ];
+        }
+        if (u === "jam") {
+            return [
+                { role: "Pemohon", icon: "mdi:account", duration: "Instan" },
+                { role: "JAPEL", icon: "mdi:account-cog", duration: "15 menit" },
+                { role: "Kasi", icon: "mdi:account-tie", duration: "30 menit" },
+                { role: "TTE", icon: "mdi:signature", duration: "45 menit" },
+                ...(needsPusat ? [{ role: "Validasi Pusat", icon: "mdi:domain", duration: `${layanan.slaDuration ?? 1} jam` }] : []),
+            ];
+        }
+        // hari
+        return [
+            { role: "Pemohon", icon: "mdi:account", duration: "Instan" },
+            { role: "JAPEL", icon: "mdi:account-cog", duration: "30 menit" },
+            { role: "Kasi", icon: "mdi:account-tie", duration: "1 jam" },
+            { role: "TTE", icon: "mdi:signature", duration: "1 jam" },
+            ...(needsPusat ? [{ role: "Validasi Pusat", icon: "mdi:domain", duration: `${layanan.slaDuration ?? 1} hari` }] : []),
+        ];
     }
 
     function requirementsFor(layanan: Layanan): Persyaratan[] {
@@ -344,6 +433,10 @@
             openServices[id] = true;
             await loadRequirements(id);
         }
+    }
+
+    function toggleFaq(i: number) {
+        openFaq = openFaq === i ? null : i;
     }
 
     function backToTop() {
@@ -881,6 +974,41 @@
                                                                 </p>
                                                             {/if}
 
+                                                            <!-- ── Mini SOP / Alur Bisnis per layanan ────────── -->
+                                                            <div class="mt-4 p-3 bg-cream/60 border border-ink/8">
+                                                                <div class="flex items-center gap-2 mb-2">
+                                                                    <Icon icon="mdi:source-branch" width="14" height="14" class="text-green" />
+                                                                    <span class="text-xs font-bold uppercase tracking-wider text-ink/70">Alur Bisnis Layanan</span>
+                                                                </div>
+                                                                <ol class="grid gap-2">
+                                                                    {#each layananSopSteps(layanan) as sopStep, sopI}
+                                                                        <li class="flex items-center gap-3">
+                                                                            <span
+                                                                                class="shrink-0 w-7 h-7 text-green bg-green/10 flex items-center justify-center text-[10px] font-bold"
+                                                                            >
+                                                                                {sopI + 1}
+                                                                            </span>
+                                                                            <Icon
+                                                                                icon={sopStep.icon}
+                                                                                width="16"
+                                                                                height="16"
+                                                                                class="text-green shrink-0"
+                                                                            />
+                                                                            <div class="flex-1 min-w-0 flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
+                                                                                <span class="text-xs font-bold text-ink leading-tight">{sopStep.role}</span>
+                                                                                <span class="text-[10px] font-bold uppercase tracking-wider text-green bg-green/8 px-1.5 py-0.5 whitespace-nowrap">
+                                                                                    {sopStep.duration}
+                                                                                </span>
+                                                                            </div>
+                                                                        </li>
+                                                                    {/each}
+                                                                </ol>
+                                                                <p class="text-[11px] text-ink/50 mt-2 flex items-center gap-1">
+                                                                    <Icon icon="mdi:information-outline" width="12" height="12" />
+                                                                    Waktu internal diperkirakan dari SLA ({formatSla(layanan.slaDuration, layanan.slaUnit)}). Validasi Pusat hanya berlaku untuk layanan tertentu.
+                                                                </p>
+                                                            </div>
+
                                                             <div
                                                                 class="flex flex-wrap gap-2 mt-4 pt-3 border-t border-ink/6"
                                                             >
@@ -1010,6 +1138,131 @@
                         </div>
                     </div>
                 {/each}
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Alur Bisnis & SOP ────────────────────────────────────── -->
+    <section id="sop" class="scroll-mt-28" use:reveal>
+        <div class="text-center max-w-2xl mx-auto mb-12">
+            <div
+                class="inline-flex items-center gap-2 text-green font-bold text-sm uppercase tracking-wider mb-3"
+            >
+                <span class="w-8 h-[2px] bg-green"></span>
+                Standard Operating Procedure
+            </div>
+            <h2 class="text-3xl md:text-4xl font-bold mb-3">Alur Bisnis Layanan</h2>
+            <p class="text-ink/65">
+                Setiap permohonan melalui SOLUSI mengikuti alur standar berikut. Estimasi waktu
+                tiap tahap dari mulai pengajuan hingga dokumen siap diambil.
+            </p>
+        </div>
+
+        <!-- Diagram alur utama -->
+        <div class="relative max-w-5xl mx-auto">
+            <!-- Connector line (desktop) -->
+            <div
+                class="hidden md:block absolute top-8 left-0 right-0 h-0.5 bg-green/15"
+            ></div>
+
+            <div class="grid md:grid-cols-4 gap-4 md:gap-0 md:items-stretch">
+                {#each sopSteps as step, i}
+                    <div
+                        class="relative"
+                        use:reveal={{ delay: i * 120 }}
+                    >
+                        <!-- Dot on the line -->
+                        <div
+                            class="hidden md:flex absolute left-1/2 -translate-x-1/2 top-4 w-9 h-9 bg-yellow text-ink items-center justify-center shadow-lg z-10 border-2 border-cream"
+                        >
+                            {i + 1}
+                        </div>
+
+                        <div
+                            class="md:h-full md:pt-20 md:text-center md:px-4 md:mt-2 p-4 bg-white border border-ink/8 flex flex-col"
+                        >
+                            <div class="flex md:justify-center items-center gap-3 md:mb-2">
+                                <span
+                                    class="md:hidden w-10 h-10 text-green bg-green/10 flex items-center justify-center shrink-0"
+                                >
+                                    <Icon icon={step.icon} width="20" height="20" />
+                                </span>
+                                <Icon
+                                    icon={step.icon}
+                                    width="28"
+                                    height="28"
+                                    class="hidden md:block mx-auto mb-2 text-green"
+                                />
+                            </div>
+                            <h3 class="text-base md:text-lg font-bold mb-1 {i === 0 ? 'md:mt-0' : ''}">{step.role}</h3>
+                            <p class="text-xs font-bold uppercase tracking-wider text-green bg-green/5 inline-block px-2 py-0.5 mb-2 md:mb-0 self-start md:self-center">
+                                {step.duration}
+                            </p>
+                            <p class="text-xs md:text-sm text-ink/65 leading-relaxed md:mt-2 flex-1">
+                                {step.desc}
+                            </p>
+                        </div>
+                    </div>
+                {/each}
+            </div>
+        </div>
+
+        <!-- Tahap opsional validasi pusat -->
+        <div
+            class="mt-6 max-w-5xl mx-auto p-5 bg-yellow/10 border border-yellow/20"
+            use:reveal
+        >
+            <div class="flex items-start gap-4">
+                <div
+                    class="w-12 h-12 bg-yellow text-ink flex items-center justify-center shrink-0"
+                >
+                    <Icon icon={sopPusat.icon} width="26" height="26" />
+                </div>
+                <div class="flex-1">
+                    <div class="flex flex-wrap items-center gap-2 mb-1">
+                        <h3 class="text-lg font-bold">{sopPusat.role}</h3>
+                        <span
+                            class="text-xs font-bold uppercase tracking-wider text-amber-700 bg-yellow/20 px-2 py-0.5"
+                        >
+                            Opsional · Variabel
+                        </span>
+                    </div>
+                    <p class="text-sm text-ink/70 leading-relaxed">
+                        {sopPusat.desc}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ringkasan estimasi total (desktop) / per layanan di atas card -->
+        <div
+            class="mt-6 max-w-5xl mx-auto p-5 bg-green/5 border border-green/10"
+            use:reveal
+        >
+            <div class="flex items-center gap-3 mb-2">
+                <Icon icon="mdi:timer-sand" width="22" height="22" class="text-green" />
+                <span class="font-bold text-sm">Estimasi Waktu Per Layanan</span>
+            </div>
+            <p class="text-xs text-ink/70 leading-relaxed">
+                Estimasi ini adalah pembagian tahap berdasarkan SLA layanan. Layanan dengan SLA
+                <span class="font-bold">“menit”</span> diproses internal.
+                Layanan dengan SLA <span class="font-bold">“jam”</span> memperpanjang tahap
+                validasi. Layanan dengan SLA <span class="font-bold">“hari”</span> biasanya
+                memerlukan <span class="font-bold">Validasi Pusat</span> hingga beberapa hari.
+            </p>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4 text-xs">
+                <div class="p-3 bg-white border border-ink/8">
+                    <p class="font-bold text-green mb-0.5">SLA Menit</p>
+                    <p class="text-ink/70">Jabatan Pelaksana 30m → Kepala Seksi 5m → TTE 15m</p>
+                </div>
+                <div class="p-3 bg-white border border-ink/8">
+                    <p class="font-bold text-green mb-0.5">SLA Jam</p>
+                    <p class="text-ink/70">Jabatan Pelaksana 60m → Kepala Seksi 5m → TTE 15m</p>
+                </div>
+                <div class="p-3 bg-white border border-ink/8">
+                    <p class="font-bold text-green mb-0.5">SLA Hari</p>
+                    <p class="text-ink/70">Jabatan Pelaksana 2j → Kepala Seksi 30m → Validasi Pusat (hari) → TTE 10m </p>
+                </div>
             </div>
         </div>
     </section>
@@ -1244,21 +1497,28 @@
                     class="bg-white border border-ink/8 overflow-hidden"
                     use:reveal={{ delay: i * 100 }}
                 >
-                    <details class="group">
-                        <summary
-                            class="flex items-center justify-between p-5 cursor-pointer list-none hover:bg-black/[0.02] transition-colors"
+                    <button
+                        type="button"
+                        onclick={() => toggleFaq(i)}
+                        class="w-full flex items-center justify-between p-5 cursor-pointer text-left hover:bg-black/[0.02] transition-colors"
+                        aria-expanded={openFaq === i}
+                    >
+                        <span class="font-bold text-ink pr-4">{faq.q}</span>
+                        <span
+                            class="w-8 h-8 bg-green/10 text-green flex items-center justify-center shrink-0 transition-transform {openFaq === i ? 'rotate-180' : ''}"
                         >
-                            <span class="font-bold text-ink pr-4">{faq.q}</span>
-                            <span
-                                class="w-8 h-8 bg-green/10 text-green flex items-center justify-center shrink-0 group-open:rotate-180 transition-transform"
-                            >
-                                <Icon icon="mdi:chevron-down" width="20" height="20" />
-                            </span>
-                        </summary>
-                        <div class="px-5 pb-5 text-sm text-ink/70 leading-relaxed">
-                            {faq.a}
+                            <Icon icon="mdi:chevron-down" width="20" height="20" />
+                        </span>
+                    </button>
+                    <div
+                        class="grid transition-all duration-300 {openFaq === i ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}"
+                    >
+                        <div class="overflow-hidden">
+                            <div class="px-5 pb-5 text-sm text-ink/70 leading-relaxed">
+                                {faq.a}
+                            </div>
                         </div>
-                    </details>
+                    </div>
                 </div>
             {/each}
         </div>
