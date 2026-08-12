@@ -1,0 +1,200 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PanduanGuide from "../components/Svelte/PanduanGuide.svelte";
+
+const SITE_URL = "https://kemenagkotaprobolinggo.id";
+const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
+
+// Konfigurasi video YouTube tutorial (ganti dengan ID video resmi)
+const YOUTUBE_VIDEO_ID = "rRgZmgmSgjY";
+
+async function safeJson(res: Response): Promise<any> {
+    try {
+        const text = await res.text();
+        if (!text) return {};
+        try {
+            return JSON.parse(text);
+        } catch {
+            return { success: false, message: "Invalid JSON response" };
+        }
+    } catch {
+        return { success: false, message: "Failed to read response body" };
+    }
+}
+
+type Persyaratan = {
+    id: number;
+    layananId: number;
+    label: string;
+    description?: string;
+    required?: boolean;
+    wajib?: boolean;
+};
+
+type Layanan = {
+    id: number;
+    categoryId?: number;
+    title: string;
+    description?: string;
+    icon?: string;
+    slaDuration?: number;
+    slaUnit?: string;
+    cost?: string;
+    type?: string;
+    externalLink?: string;
+    persyaratan: Persyaratan[];
+};
+
+type Kategori = {
+    id: number;
+    title: string;
+    description?: string;
+    icon?: string;
+    layanan: Layanan[];
+};
+
+let groupedServices: Kategori[] = [];
+let fetchError: string | null = null;
+
+try {
+    // 1. Ambil kategori yang memiliki layanan publik
+    const catRes = await fetch(
+        `${BACKEND_URL}/api/v1/categories/?limit=50&hasPublicLayanan=true`,
+    );
+    const catJson = await safeJson(catRes);
+    const categories: Kategori[] = Array.isArray(catJson)
+        ? catJson
+        : (catJson.data ?? []);
+
+    if (categories.length === 0) {
+        fetchError = "Belum ada kategori layanan yang tersedia.";
+    } else {
+        // 2. Ambil semua layanan publik (audience = umum)
+        const layananRes = await fetch(
+            `${BACKEND_URL}/api/v1/layanan/?audience=umum&limit=200`,
+        );
+        const layananJson = await safeJson(layananRes);
+        const allLayanan: Layanan[] = Array.isArray(layananJson)
+            ? layananJson
+            : (layananJson.data ?? []);
+
+        // 3. Kelompokkan layanan berdasarkan kategori
+        // Persyaratan tidak di-fetch di sini untuk menghemat load awal;
+        // di-load on-demand di browser saat accordion layanan dibuka.
+        groupedServices = categories
+            .map((cat) => ({
+                ...cat,
+                layanan: allLayanan
+                    .filter((l) => l.categoryId === cat.id)
+                    .map((l) => ({
+                        ...l,
+                        persyaratan: [],
+                    })),
+            }))
+            .filter((cat) => cat.layanan.length > 0);
+    }
+} catch (e) {
+    fetchError =
+        (e as Error)?.message ?? "Gagal memuat data panduan dari server.";
+    console.error("[panduan] Gagal memuat data:", fetchError);
+}
+
+Astro.response.headers.set(
+    "Cache-Control",
+    "public, max-age=180, stale-while-revalidate=300",
+);
+
+const structuredData = [
+    {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        name: "Panduan Penggunaan Aplikasi SOLUSI Kemenag Kota Probolinggo",
+        description:
+            "Panduan lengkap penggunaan SOLUSI, mulai dari syarat layanan, tutorial penggunaan, SLA, hingga kompensasi keterlambatan.",
+        step: [
+            {
+                "@type": "HowToStep",
+                name: "Cari Layanan",
+                text: "Gunakan kotak pencarian atau telusuri kategori layanan.",
+            },
+            {
+                "@type": "HowToStep",
+                name: "Isi Formulir",
+                text: "Lengkapi formulir permohonan sesuai layanan yang dipilih.",
+            },
+            {
+                "@type": "HowToStep",
+                name: "Unggah Dokumen",
+                text: "Upload dokumen persyaratan yang diminta.",
+            },
+            {
+                "@type": "HowToStep",
+                name: "Kirim Permohonan",
+                text: "Kirim permohonan dan simpan nomor tiket.",
+            },
+            {
+                "@type": "HowToStep",
+                name: "Pantau Status",
+                text: "Pantau perkembangan permohonan secara real-time.",
+            },
+        ],
+    },
+];
+---
+
+<BaseLayout
+    title="Panduan Penggunaan SOLUSI"
+    description="Panduan lengkap penggunaan aplikasi SOLUSI Kemenag Kota Probolinggo: syarat layanan, tutorial video, SLA, dan kompensasi keterlambatan."
+    ogTitle="Panduan Penggunaan SOLUSI"
+    ogDescription="Pelajari cara mengajukan layanan, syarat dokumen, standar waktu layanan (SLA), dan hak kompensasi keterlambatan di SOLUSI."
+    canonicalUrl={`${SITE_URL}/panduan`}
+    structuredData={structuredData}
+>
+    <div class="min-h-screen">
+        {
+            fetchError && (
+                <div class="max-w-6xl mx-auto px-4 pt-10">
+                    <div
+                        class="flex items-start gap-3 p-4 bg-red-50 border border-red-100 rounded-xl text-red-700 text-sm"
+                        role="alert"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            class="shrink-0 mt-0.5"
+                        >
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                        </svg>
+                        <div>
+                            <p class="font-semibold">Gagal memuat data</p>
+                            <p class="opacity-90">{fetchError}</p>
+                            <p class="opacity-75 mt-1">
+                                Silakan refresh halaman atau hubungi admin jika
+                                masalah berlanjut.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )
+        }
+
+        <PanduanGuide
+            services={groupedServices}
+            youtubeVideoId={YOUTUBE_VIDEO_ID}
+            client:load
+        />
+    </div>
+</BaseLayout>
+
+<style is:global>
+    /* Hero di halaman panduan menarik background ke atas sampai navbar,
+       pastikan navbar tetap di atasnya agar teks tetap terbaca */
+    #site-header {
+        position: relative;
+        z-index: 50;
+        background-color: transparent;
+    }
+</style>

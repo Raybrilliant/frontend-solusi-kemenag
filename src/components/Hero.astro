@@ -192,32 +192,6 @@ import solusiLogo from "../assets/images/logo-solusi.png";
         transform: translateX(5px);
     }
 
-    /* ── Tutorial Modal ─────────────────────────────────── */
-    @keyframes modalBackdropIn {
-        from {
-            opacity: 0;
-        }
-        to {
-            opacity: 1;
-        }
-    }
-    @keyframes modalSlideIn {
-        from {
-            opacity: 0;
-            transform: translateY(24px) scale(0.96);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
-    }
-    #tutorial-modal {
-        animation: modalBackdropIn 0.2s ease both;
-    }
-    #tutorial-modal .modal-box {
-        animation: modalSlideIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
-    }
-
     /* ── Keyframes ───────────────────────────────────────── */
     @keyframes spin-slow {
         from {
@@ -319,8 +293,9 @@ import solusiLogo from "../assets/images/logo-solusi.png";
             data-anim="h2"
             class="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-semibold uppercase leading-tight"
         >
-            Sistem Online Layanan <span class="text-green">Unggul</span>
-            <span class="text-green">Terintegrasi</span>
+            Sistem Online Layanan
+            <br />
+            <span class="text-green">Unggul Terintegrasi</span>
         </h2>
         <p data-anim="desc" class="text-sm md:text-lg mt-3 md:mt-4 italic">
             Cari layanan yang Anda butuhkan dengan cepat, mudah, dan transparan.
@@ -331,19 +306,19 @@ import solusiLogo from "../assets/images/logo-solusi.png";
             data-anim="btns"
             class="flex flex-wrap gap-3 mt-5 md:mt-6 relative z-30"
         >
-            <button
-                id="tutorial-btn"
-                type="button"
+            <a
+                href="/panduan"
+                data-astro-prefetch
                 class="btn-hero bg-green text-cream text-xs md:text-sm py-3 md:py-4 px-5 md:px-6 font-bold uppercase tracking-wider inline-flex items-center cursor-pointer border-0 shadow-sm"
             >
-                <span class="btn-label">Tonton Tutorial</span>
+                <span class="btn-label">Lihat Panduan</span>
                 <span class="btn-icon ml-2"
                     ><Icon
                         name="mdi:play-circle"
                         class="w-4 h-4 md:w-5 md:h-5"
                     /></span
                 >
-            </button>
+            </a>
             <a
                 href="/check-progress"
                 class="btn-hero bg-green text-cream text-xs md:text-sm py-3 md:py-4 px-5 md:px-6 font-bold uppercase tracking-wider inline-flex items-center cursor-pointer border-0 shadow-sm"
@@ -514,96 +489,3 @@ import solusiLogo from "../assets/images/logo-solusi.png";
         </a>
     </div>
 </section>
-
-<!-- Tutorial Modal -->
-<div
-    id="tutorial-modal"
-    role="dialog"
-    aria-modal="true"
-    aria-label="Tutorial Penggunaan SOLUSI"
-    aria-hidden="true"
-    style="display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.78); backdrop-filter:blur(5px); align-items:center; justify-content:center; padding:1rem;"
->
-    <div
-        class="modal-box"
-        style="position:relative; width:min(820px,94vw); background:#000; box-shadow:0 32px 80px rgba(0,0,0,0.6);"
-    >
-        <!-- Close button -->
-        <button
-            id="tutorial-close"
-            aria-label="Tutup modal"
-            style="position:absolute; top:-14px; right:-14px; z-index:1; width:36px; height:36px; border-radius:50%; background:#fff; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(0,0,0,0.3); color:#111;"
-        >
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"
-                ><path
-                    d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-                ></path></svg
-            >
-        </button>
-        <!-- 16:9 iframe wrapper -->
-        <div style="aspect-ratio:16/9; width:100%; overflow:hidden;">
-            <iframe
-                id="tutorial-iframe"
-                src=""
-                title="Tutorial Penggunaan SOLUSI"
-                width="100%"
-                height="100%"
-                frameborder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowfullscreen
-                style="display:block;"></iframe>
-        </div>
-    </div>
-</div>
-
-<script>
-    {
-        // Ganti dengan YouTube Video ID tutorial Anda
-        const YT_VIDEO_ID = "GANTI_VIDEO_ID_DISINI";
-
-        const modal = document.getElementById("tutorial-modal");
-        const iframe = document.getElementById(
-            "tutorial-iframe",
-        ) as HTMLIFrameElement | null;
-        const btnOpen = document.getElementById(
-            "tutorial-btn",
-        ) as HTMLButtonElement | null;
-        const btnClose = document.getElementById(
-            "tutorial-close",
-        ) as HTMLButtonElement | null;
-
-        function openTutorial() {
-            if (!modal || !iframe || !btnClose) return;
-            iframe.src = `https://www.youtube.com/embed/${YT_VIDEO_ID}?autoplay=1&rel=0`;
-            modal.style.display = "flex";
-            modal.setAttribute("aria-hidden", "false");
-            document.body.style.overflow = "hidden";
-            btnClose.focus();
-        }
-
-        function closeTutorial() {
-            if (!modal || !iframe) return;
-            modal.style.display = "none";
-            modal.setAttribute("aria-hidden", "true");
-            iframe.src = "";
-            document.body.style.overflow = "";
-            btnOpen?.focus();
-        }
-
-        function initTutorialModal() {
-            btnOpen?.addEventListener("click", openTutorial);
-            btnClose?.addEventListener("click", closeTutorial);
-            modal?.addEventListener("click", (e) => {
-                if (e.target === modal) closeTutorial();
-            });
-        }
-
-        document.addEventListener("keydown", (e) => {
-            if (e.key === "Escape" && modal?.style.display !== "none")
-                closeTutorial();
-        });
-
-        initTutorialModal();
-        document.addEventListener("astro:page-load", initTutorialModal);
-    }
-</script>
