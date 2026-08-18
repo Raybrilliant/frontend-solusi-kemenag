@@ -1,15 +1,8 @@
 ---
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import AdminPermohonanTable from "../../../components/Svelte/AdminPermohonanTable.svelte";
-import AdminTambahPermohonan from "../../../components/Svelte/AdminTambahPermohonan.svelte";
 
-const userRole = Astro.locals.user?.role ?? "";
-const userCategoryId = Astro.locals.user?.categoryId ?? null;
 const userKecamatan = Astro.locals.user?.kecamatan ?? "";
-const canAdd =
-    userRole === "super_admin" ||
-    userRole === "admin" ||
-    (userRole === "operator" && userCategoryId === null);
 ---
 
 <style>
@@ -57,9 +50,10 @@ const canAdd =
                 </h1>
                 <p class="text-sm text-ink/50 mt-1">
                     Kelola semua permohonan yang dikirim oleh pengguna.
+                    Pencatatan tamu kunjungan telah dipindah ke menu Dashboard
+                    (Buku Tamu).
                 </p>
             </div>
-            {canAdd && <AdminTambahPermohonan client:load />}
         </div>
 
         <!-- ── Table ──────────────────────────────────── -->

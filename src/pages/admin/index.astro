@@ -1,28 +1,69 @@
 ---
 import AdminLayout from "../../layouts/AdminLayout.astro";
+import AdminTamuManager from "../../components/Svelte/AdminTamuManager.svelte";
+import {
+    getAdminUser,
+    getAdminAuthHeaders,
+    readBackendJson,
+} from "../../lib/admin-api-proxy";
 
+const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
+// Ambil user dari session
+const user = await getAdminUser(Astro.cookies, Astro.request);
+const userRole = user?.role ?? "";
+const userCategoryId = user?.categoryId ?? null;
+
+// Permission view stats: admin/super_admin, operator (kategori apa pun), humas, satker
+const canViewTamuStats = [
+    "super_admin",
+    "admin",
+    "operator",
+    "humas",
+    "satker",
+].includes(userRole);
+
+// Permission manage (tambah/lookup WA): admin/super_admin atau operator tanpa kategori
+const canManageTamu =
+    ["super_admin", "admin"].includes(userRole) ||
+    (userRole === "operator" && userCategoryId === null);
+
+// Fetch initial stats di SSR (jika boleh lihat statistik)
+let initialStats = null;
+if (canViewTamuStats) {
+    try {
+        const headers = getAdminAuthHeaders(Astro.cookies, Astro.request);
+        const res = await fetch(`${BACKEND_URL}/api/v1/tamu/stats`, {
+            headers,
+        });
+        if (res.ok) {
+            const json = await readBackendJson(res);
+            if (json.success) initialStats = json.data;
+        }
+    } catch (e) {
+        console.error("[admin/index] Gagal memuat stats tamu:", e);
+    }
+}
 ---
 
 <AdminLayout title="Dashboard">
-    <div class="min-h-full px-8">
+    <div class="min-h-full">
         <!-- ── Hero ──────────────────────────────────── -->
-        <div class="py-6">
+        <div class="px-8 py-6">
             <h1 class="text-4xl font-bold uppercase tracking-tight text-ink">
                 Dashboard
             </h1>
             <p class="text-sm text-ink/50 mt-1">
-                Selamat datang di dashboard admin.
+                Statistik kunjungan & buku tamu Kantor Kemenag Kota Probolinggo.
             </p>
         </div>
 
-        <div class="bg-green/5 border border-green p-5 rounded">
-            <p class="text-sm text-ink/50 mt-1">
-                Development.
-            </p>
-            <p class="text-ink mt-2">
-                Mohon maaf, kami masih dalam proses pengembangan.
-            </p>
-        </div>
+        <!-- ── Tamu Manager ─────────────────────────── -->
+        <AdminTamuManager
+            canManage={canManageTamu}
+            canViewStats={canViewTamuStats}
+            initialStats={initialStats}
+            client:load
+        />
     </div>
 </AdminLayout>
