@@ -25,6 +25,8 @@
         layananId: number | null;
         layananTitle: string | null;
         keperluanLainnya: string | null;
+        fotoUrl: string | null;
+        asalInstansi: string | null;
         createdAt: string;
     };
 
@@ -58,6 +60,19 @@
     let page = $state(1);
     let totalPages = $state(1);
     let searchQ = $state("");
+    let filterMonth = $state(new Date().getMonth() + 1); // 1-12, default bulan ini
+    let filterYear = $state(new Date().getFullYear());
+    let exportingPdf = $state(false);
+    const BULAN_OPTIONS = [
+        "Semua","Januari","Februari","Maret","April","Mei","Juni",
+        "Juli","Agustus","September","Oktober","November","Desember",
+    ];
+    const YEAR_OPTIONS = (() => {
+        const cy = new Date().getFullYear();
+        const arr: number[] = [];
+        for (let y = 2024; y <= cy; y++) arr.push(y);
+        return arr;
+    })();
 
     // ── State: modal tambah tamu ────────────────────────────────
     let open = $state(false);
@@ -78,6 +93,16 @@
     let copiedPmh = $state(false);
     let waLooking = $state(false);
     let waFound = $state(false);
+
+    // ── State: asal instansi & foto bukti ───────────────────────
+    let asalInstansi = $state("");
+    let resultId = $state<number | null>(null);
+    let resultFotoUrl = $state<string | null>(null);
+    let fotoUploading = $state(false);
+    let fotoError = $state("");
+    let rowFotoInput = $state<HTMLInputElement | null>(null);
+    let successFotoInput = $state<HTMLInputElement | null>(null);
+    let fotoTargetId = $state<number | null>(null);
 
     // ── State: layanan dropdown ─────────────────────────────────
     let layananList = $state<any[]>([]);
@@ -194,6 +219,8 @@
             if (searchQ.trim()) params.set("q", searchQ.trim());
             params.set("page", String(page));
             params.set("limit", "10");
+            const dateParams = buildDateParams();
+            dateParams.forEach((v, k) => params.set(k, v));
             const res = await fetch(`/api/admin/tamu?${params.toString()}`);
             const json = await res.json();
             if (json.success) {
@@ -274,6 +301,10 @@
         resultTicket = "";
         resultPermohonanTicket = null;
         waFound = false;
+        asalInstansi = "";
+        resultId = null;
+        resultFotoUrl = null;
+        fotoError = "";
     }
 
     function openModal() {
@@ -340,6 +371,7 @@
                     kecamatan,
                     kelurahan,
                     alamat: alamat.trim(),
+                    asalInstansi: asalInstansi.trim() || undefined,
                     keperluanType,
                     layananId: keperluanType === "layanan" ? selectedLayananId : undefined,
                     keperluanLainnya:
@@ -350,6 +382,8 @@
             if (json.success) {
                 resultTicket = json.data?.ticketId ?? "";
                 resultPermohonanTicket = json.data?.permohonanId ?? null;
+                resultId = json.data?.id ?? null;
+                resultFotoUrl = json.data?.fotoUrl ?? null;
                 step = "success";
                 // Refresh stats & list
                 fetchStats();
@@ -381,6 +415,77 @@
         } catch {}
     }
 
+    // ── Foto bukti kehadiran ────────────────────────────────────
+    // ponytail: reuse /api/upload-dokumen (sudah ada, handle image) lalu
+    // PATCH /api/admin/tamu/:id dengan fotoUrl — tidak buat upload baru.
+    async function uploadFotoFor(id: number, file: File): Promise<string> {
+        const fd = new FormData();
+        fd.append("file", file);
+        const upRes = await fetch("/api/upload-dokumen", { method: "POST", body: fd });
+        const upJson = await upRes.json();
+        if (!upRes.ok || upJson.success === false) {
+            throw new Error(upJson.message ?? "Gagal mengunggah foto.");
+        }
+        const fotoUrl = upJson.data?.url ?? null;
+        if (!fotoUrl) throw new Error("URL foto tidak diterima dari server.");
+
+        const res = await fetch(`/api/admin/tamu/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ fotoUrl }),
+        });
+        const json = await res.json();
+        if (!res.ok || json.success === false) {
+            throw new Error(json.message ?? "Gagal menyimpan foto ke data tamu.");
+        }
+        return json.data?.fotoUrl ?? fotoUrl;
+    }
+
+    async function onSuccessFotoPick(e: Event) {
+        const input = e.target as HTMLInputElement;
+        const file = input.files?.[0];
+        if (!file || resultId === null) return;
+        fotoUploading = true;
+        fotoError = "";
+        try {
+            resultFotoUrl = await uploadFotoFor(resultId, file);
+        } catch (err) {
+            fotoError = err instanceof Error ? err.message : String(err);
+        } finally {
+            fotoUploading = false;
+            input.value = "";
+        }
+    }
+
+    async function onRowFotoPick(e: Event) {
+        const input = e.target as HTMLInputElement;
+        const file = input.files?.[0];
+        if (!file || fotoTargetId === null) return;
+        fotoUploading = true;
+        fotoError = "";
+        try {
+            const url = await uploadFotoFor(fotoTargetId, file);
+            list = list.map((r) =>
+                r.id === fotoTargetId ? { ...r, fotoUrl: url } : r,
+            );
+        } catch (err) {
+            fotoError = err instanceof Error ? err.message : String(err);
+        } finally {
+            fotoUploading = false;
+            fotoTargetId = null;
+            input.value = "";
+        }
+    }
+
+    function openRowFotoPicker(row: TamuRow) {
+        fotoTargetId = row.id;
+        rowFotoInput?.click();
+    }
+
+    function openSuccessFotoPicker() {
+        successFotoInput?.click();
+    }
+
     function onBackdropClick(e: MouseEvent) {
         if (e.target === e.currentTarget) closeModal();
     }
@@ -392,6 +497,58 @@
     function onSearchInput() {
         page = 1;
         fetchList();
+    }
+
+    // ── Filter bulan/tahun & export PDF ────────────────────────
+    function buildDateParams(): URLSearchParams {
+        const params = new URLSearchParams();
+        if (filterMonth > 0) {
+            const mm = String(filterMonth).padStart(2, "0");
+            const from = `${filterYear}-${mm}-01`;
+            const lastDay = new Date(filterYear, filterMonth, 0).getDate();
+            const to = `${filterYear}-${mm}-${String(lastDay).padStart(2, "0")}`;
+            params.set("from", from);
+            params.set("to", to);
+        } else {
+            params.set("from", `${filterYear}-01-01`);
+            params.set("to", `${filterYear}-12-31`);
+        }
+        return params;
+    }
+
+    function onFilterChange() {
+        page = 1;
+        fetchList();
+    }
+
+    async function exportPdf() {
+        exportingPdf = true;
+        listError = "";
+        try {
+            const params = new URLSearchParams();
+            params.set("month", String(filterMonth));
+            params.set("year", String(filterYear));
+            const res = await fetch(`/api/admin/tamu/export-pdf?${params}`);
+            if (!res.ok) {
+                const json = await res.json().catch(() => null);
+                throw new Error(json?.message ?? "Gagal export PDF.");
+            }
+            const blob = await res.blob();
+            const objUrl = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = objUrl;
+            const cd = res.headers.get("content-disposition") ?? "";
+            const m = cd.match(/filename="?([^"]+)"?/);
+            a.download = m?.[1] ?? `buku-tamu-${filterMonth}-${filterYear}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(objUrl);
+        } catch (e) {
+            listError = e instanceof Error ? e.message : String(e);
+        } finally {
+            exportingPdf = false;
+        }
     }
 
     let searchDebounce: ReturnType<typeof setTimeout> | null = null;
@@ -407,6 +564,8 @@
 </script>
 
 <svelte:window onkeydown={onKeydown} />
+<input type="file" accept="image/*" bind:this={successFotoInput} onchange={onSuccessFotoPick} class="hidden" />
+<input type="file" accept="image/*" bind:this={rowFotoInput} onchange={onRowFotoPick} class="hidden" />
 
 <div class="px-8 py-6 space-y-6">
     <!-- ── Stat Cards ────────────────────────────────────────── -->
@@ -529,10 +688,10 @@
             {/if}
         </div>
 
-        <!-- Search -->
+        <!-- Search + Filter bulan/tahun + Export PDF -->
         {#if canViewStats}
-            <div class="px-6 py-3 border-b border-black/5">
-                <div class="relative max-w-sm">
+            <div class="px-6 py-3 border-b border-black/5 flex flex-wrap items-center gap-3">
+                <div class="relative max-w-sm flex-1 min-w-[180px]">
                     <Icon
                         icon="mdi:magnify"
                         class="absolute left-3 top-1/2 -translate-y-1/2 text-ink/30"
@@ -546,6 +705,35 @@
                         placeholder="Cari nama / WA / tiket..."
                         class="w-full border border-black/10 pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green/40 focus:border-green transition"
                     />
+                </div>
+                <div class="flex items-center gap-2 ml-auto">
+                    <select
+                        bind:value={filterMonth}
+                        onchange={onFilterChange}
+                        class="border border-black/10 px-2 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green/40"
+                    >
+                        {#each BULAN_OPTIONS as nama, idx}
+                            <option value={idx}>{nama}</option>
+                        {/each}
+                    </select>
+                    <select
+                        bind:value={filterYear}
+                        onchange={onFilterChange}
+                        class="border border-black/10 px-2 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green/40"
+                    >
+                        {#each YEAR_OPTIONS as y}
+                            <option value={y}>{y}</option>
+                        {/each}
+                    </select>
+                    <button
+                        type="button"
+                        onclick={exportPdf}
+                        disabled={exportingPdf}
+                        class="flex items-center gap-1.5 border border-red-500 text-red-600 text-xs font-semibold px-3 py-2 hover:bg-red-50 transition disabled:opacity-50"
+                    >
+                        <Icon icon="mdi:file-pdf-box" width="15" height="15" />
+                        {exportingPdf ? "Memproses..." : "Export PDF"}
+                    </button>
                 </div>
             </div>
         {/if}
@@ -575,6 +763,7 @@
                             <th class="px-6 py-3 font-bold text-[10px] uppercase tracking-wider">WA</th>
                             <th class="px-6 py-3 font-bold text-[10px] uppercase tracking-wider">Keperluan</th>
                             <th class="px-6 py-3 font-bold text-[10px] uppercase tracking-wider">Waktu</th>
+                            <th class="px-6 py-3 font-bold text-[10px] uppercase tracking-wider">Foto</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-black/5">
@@ -604,6 +793,26 @@
                                 </td>
                                 <td class="px-6 py-3 text-ink/50 text-xs whitespace-nowrap">
                                     {formatDateTime(row.createdAt)}
+                                </td>
+                                <td class="px-6 py-3 whitespace-nowrap">
+                                    {#if row.fotoUrl}
+                                        <a href={row.fotoUrl} target="_blank" class="inline-block">
+                                            <img
+                                                src={row.fotoUrl}
+                                                alt="Foto tamu"
+                                                class="w-10 h-10 object-cover border border-black/10 hover:opacity-80 transition"
+                                            />
+                                        </a>
+                                    {:else}
+                                        <button
+                                            onclick={() => openRowFotoPicker(row)}
+                                            disabled={fotoUploading}
+                                            class="inline-flex items-center gap-1 text-[11px] font-semibold text-green hover:underline disabled:opacity-50"
+                                        >
+                                            <Icon icon="mdi:camera-plus" width="14" height="14" />
+                                            Tambah Foto
+                                        </button>
+                                    {/if}
                                 </td>
                             </tr>
                         {/each}
@@ -712,6 +921,17 @@
                                 bind:value={nama}
                                 class="inp"
                                 placeholder="Nama lengkap tamu"
+                            />
+                        </div>
+
+                        <!-- Asal Instansi -->
+                        <div>
+                            <label class="label">Asal Instansi</label>
+                            <input
+                                type="text"
+                                bind:value={asalInstansi}
+                                class="inp"
+                                placeholder="Instansi asal tamu (opsional)"
                             />
                         </div>
 
@@ -916,6 +1136,41 @@
                                 </p>
                             </div>
                         {/if}
+
+                        <!-- Foto Bukti Kehadiran -->
+                        <div class="w-full">
+                            <p class="text-[10px] font-bold uppercase tracking-widest text-ink/40 mb-2">
+                                Foto Bukti Kehadiran
+                            </p>
+                            {#if resultFotoUrl}
+                                <div class="relative w-full max-w-[200px]">
+                                    <img
+                                        src={resultFotoUrl}
+                                        alt="Foto tamu"
+                                        class="w-full h-40 object-cover border border-black/10"
+                                    />
+                                    <button
+                                        onclick={openSuccessFotoPicker}
+                                        disabled={fotoUploading}
+                                        class="absolute bottom-1 right-1 bg-ink/70 text-white text-[10px] font-semibold px-2 py-1 hover:bg-ink/90 disabled:opacity-50"
+                                    >
+                                        Ganti
+                                    </button>
+                                </div>
+                            {:else}
+                                <button
+                                    onclick={openSuccessFotoPicker}
+                                    disabled={fotoUploading}
+                                    class="w-full border-2 border-dashed border-black/15 py-6 text-xs text-ink/45 hover:border-green hover:text-green transition flex flex-col items-center gap-1 disabled:opacity-50"
+                                >
+                                    <Icon icon="mdi:camera-plus" width="22" height="22" />
+                                    {fotoUploading ? "Mengunggah..." : "Tambah Foto Bukti"}
+                                </button>
+                            {/if}
+                            {#if fotoError}
+                                <p class="text-xs text-red-500 mt-1">{fotoError}</p>
+                            {/if}
+                        </div>
 
                         <!-- Action buttons -->
                         <div class="grid grid-cols-2 gap-3 w-full">

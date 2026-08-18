@@ -24,9 +24,10 @@
 
     const tabs = [
         { id: "questions", label: "Pertanyaan" },
-        { id: "responses", label: "Hasil Respons" },
-        { id: "monthly", label: "Nilai Bulanan" },
+        { id: "responses", label: "Daftar Survei" },
+        { id: "monthly", label: "Rekap Bulanan" },
     ];
+    const KRITIK_PER_PAGE = 5;
 
     // Mapping kode demografi (integer) -> label, dipakai di tabel respons & export.
     const pendidikanLabels = {
@@ -104,6 +105,7 @@
     let monthlyResponses = $state([]);
     let exportingMonthly = $state(false);
     let monthlyUpdatedAt = $state("");
+    let kritikPage = $state(1);
     let mode = $state("create");
     let selected = $state(null);
     let formQuestion = $state("");
@@ -249,6 +251,20 @@
             .map((r) => (r.kritikSaran ?? "").trim())
             .filter((teks) => teks.length > 0),
     );
+    // ponytail: pagination sisi klien — data sudah di memori via
+    // monthlyResponses, beratnya di DOM <li>, slice 5/halaman cukup.
+    const kritikTotalPages = $derived(
+        Math.max(1, Math.ceil(kritikSaranRows.length / KRITIK_PER_PAGE)),
+    );
+    const kritikSaranPageRows = $derived.by(() => {
+        const totalPages = Math.max(
+            1,
+            Math.ceil(kritikSaranRows.length / KRITIK_PER_PAGE),
+        );
+        const page = Math.min(Math.max(1, kritikPage), totalPages);
+        const start = (page - 1) * KRITIK_PER_PAGE;
+        return kritikSaranRows.slice(start, start + KRITIK_PER_PAGE);
+    });
 
     function formatSkala(num) {
         return Number(num).toLocaleString("id-ID", {
@@ -501,6 +517,7 @@
             ]);
             monthlyItems = results.flat();
             monthlyResponses = responsesRes;
+            kritikPage = 1;
             monthlyUpdatedAt = new Date().toLocaleTimeString("id-ID", {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -1604,7 +1621,7 @@
                                 </p>
                             {:else}
                                 <ul class="space-y-2">
-                                    {#each kritikSaranRows as teks}
+                                    {#each kritikSaranPageRows as teks, i (teks + "-" + i)}
                                         <li
                                             class="border border-black/8 bg-black/[0.02] px-4 py-3 text-sm text-ink/75"
                                         >
@@ -1612,6 +1629,37 @@
                                         </li>
                                     {/each}
                                 </ul>
+                                {#if kritikTotalPages > 1}
+                                    <div
+                                        class="mt-3 flex items-center justify-between gap-3"
+                                    >
+                                        <button
+                                            onclick={() =>
+                                                (kritikPage = Math.max(
+                                                    1,
+                                                    kritikPage - 1,
+                                                ))}
+                                            disabled={kritikPage <= 1}
+                                            class="px-3 py-2 border border-black/10 text-xs font-bold uppercase disabled:opacity-40"
+                                        >
+                                            Sebelumnya
+                                        </button>
+                                        <span class="text-xs text-ink/45">
+                                            Halaman {Math.min(kritikPage, kritikTotalPages)} dari {kritikTotalPages}
+                                        </span>
+                                        <button
+                                            onclick={() =>
+                                                (kritikPage = Math.min(
+                                                    kritikTotalPages,
+                                                    kritikPage + 1,
+                                                ))}
+                                            disabled={kritikPage >= kritikTotalPages}
+                                            class="px-3 py-2 border border-black/10 text-xs font-bold uppercase disabled:opacity-40"
+                                        >
+                                            Berikutnya
+                                        </button>
+                                    </div>
+                                {/if}
                             {/if}
                         </div>
                     {/if}
