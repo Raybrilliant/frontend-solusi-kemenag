@@ -1,6 +1,7 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
     import { kelurahanMap } from "../../lib/data.js";
+    import { toUploadProxyUrl } from "../../lib/upload-url.js";
 
     // Portal action: moves node to <body>
     function portal(node: HTMLElement) {
@@ -103,6 +104,7 @@
     let rowFotoInput = $state<HTMLInputElement | null>(null);
     let successFotoInput = $state<HTMLInputElement | null>(null);
     let fotoTargetId = $state<number | null>(null);
+    let deletingId = $state<number | null>(null);
 
     // ── State: layanan dropdown ─────────────────────────────────
     let layananList = $state<any[]>([]);
@@ -486,6 +488,32 @@
         successFotoInput?.click();
     }
 
+    // ── Hapus tamu (record + file foto di backend) ──────────────
+    async function deleteRow(row: TamuRow) {
+        if (deletingId !== null) return;
+        const ok = confirm(
+            `Hapus tamu ${row.nama} (${row.ticketId})?\nFoto bukti juga akan dihapus dari server.`,
+        );
+        if (!ok) return;
+        deletingId = row.id;
+        listError = "";
+        try {
+            const res = await fetch(`/api/admin/tamu/${row.id}`, {
+                method: "DELETE",
+            });
+            const json = await res.json();
+            if (!res.ok || json.success === false) {
+                throw new Error(json.message ?? "Gagal menghapus tamu.");
+            }
+            list = list.filter((r) => r.id !== row.id);
+            fetchStats();
+        } catch (e) {
+            listError = e instanceof Error ? e.message : String(e);
+        } finally {
+            deletingId = null;
+        }
+    }
+
     function onBackdropClick(e: MouseEvent) {
         if (e.target === e.currentTarget) closeModal();
     }
@@ -764,6 +792,9 @@
                             <th class="px-6 py-3 font-bold text-[10px] uppercase tracking-wider">Keperluan</th>
                             <th class="px-6 py-3 font-bold text-[10px] uppercase tracking-wider">Waktu</th>
                             <th class="px-6 py-3 font-bold text-[10px] uppercase tracking-wider">Foto</th>
+                            {#if canManage}
+                                <th class="px-6 py-3 font-bold text-[10px] uppercase tracking-wider">Aksi</th>
+                            {/if}
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-black/5">
@@ -796,13 +827,25 @@
                                 </td>
                                 <td class="px-6 py-3 whitespace-nowrap">
                                     {#if row.fotoUrl}
-                                        <a href={row.fotoUrl} target="_blank" class="inline-block">
-                                            <img
-                                                src={row.fotoUrl}
-                                                alt="Foto tamu"
-                                                class="w-10 h-10 object-cover border border-black/10 hover:opacity-80 transition"
-                                            />
-                                        </a>
+                                        <div class="flex items-center gap-2">
+                                            <a href={toUploadProxyUrl(row.fotoUrl)} target="_blank" class="inline-block shrink-0">
+                                                <img
+                                                    src={toUploadProxyUrl(row.fotoUrl)}
+                                                    alt="Foto tamu"
+                                                    class="w-10 h-10 object-cover border border-black/10 hover:opacity-80 transition"
+                                                />
+                                            </a>
+                                            {#if canManage}
+                                                <button
+                                                    onclick={() => openRowFotoPicker(row)}
+                                                    disabled={fotoUploading}
+                                                    class="inline-flex items-center gap-1 text-[11px] font-semibold text-green hover:underline disabled:opacity-50"
+                                                >
+                                                    <Icon icon="mdi:image-edit-outline" width="14" height="14" />
+                                                    Ganti
+                                                </button>
+                                            {/if}
+                                        </div>
                                     {:else}
                                         <button
                                             onclick={() => openRowFotoPicker(row)}
@@ -814,6 +857,18 @@
                                         </button>
                                     {/if}
                                 </td>
+                                {#if canManage}
+                                    <td class="px-6 py-3 whitespace-nowrap">
+                                        <button
+                                            onclick={() => deleteRow(row)}
+                                            disabled={deletingId !== null}
+                                            class="inline-flex items-center gap-1 text-[11px] font-semibold text-red-600 hover:underline disabled:opacity-50"
+                                        >
+                                            <Icon icon="mdi:trash-can-outline" width="14" height="14" />
+                                            {deletingId === row.id ? "Menghapus..." : "Hapus"}
+                                        </button>
+                                    </td>
+                                {/if}
                             </tr>
                         {/each}
                     </tbody>
@@ -1145,7 +1200,7 @@
                             {#if resultFotoUrl}
                                 <div class="relative w-full max-w-[200px]">
                                     <img
-                                        src={resultFotoUrl}
+                                        src={toUploadProxyUrl(resultFotoUrl)}
                                         alt="Foto tamu"
                                         class="w-full h-40 object-cover border border-black/10"
                                     />
