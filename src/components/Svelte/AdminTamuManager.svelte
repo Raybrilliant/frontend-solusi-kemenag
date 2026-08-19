@@ -631,10 +631,10 @@
                 <Icon icon="mdi:chart-bar" width="22" height="22" class="text-green" />
             </div>
             {#if stats && stats.daily.length > 0}
-                <div class="flex items-end justify-between gap-2 h-40">
+                <div class="flex items-stretch justify-between gap-2 h-40">
                     {#each stats.daily as d}
                         <div class="flex-1 flex flex-col items-center gap-2 group">
-                            <div class="relative w-full flex flex-col justify-end h-full">
+                            <div class="relative w-full flex flex-col justify-end flex-1 min-h-0">
                                 <!-- Tooltip -->
                                 <div class="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-ink text-white text-[10px] font-bold px-2 py-1 whitespace-nowrap z-10">
                                     {d.count} tamu
@@ -645,7 +645,7 @@
                                     style="height: {(d.count / maxDaily) * 100}%; min-height: {d.count > 0 ? '4px' : '0'};"
                                 ></div>
                             </div>
-                            <span class="text-[10px] text-ink/50 font-medium whitespace-nowrap">
+                            <span class="text-[10px] text-ink/50 font-medium whitespace-nowrap shrink-0">
                                 {formatDate(d.date)}
                             </span>
                         </div>
