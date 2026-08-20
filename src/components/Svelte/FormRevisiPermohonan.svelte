@@ -1,14 +1,13 @@
 <script>
     import Icon from "@iconify/svelte";
-    import { kelurahanMap } from "../../lib/data.js";
+    import { onMount } from "svelte";
     import { toUploadProxyUrl } from "../../lib/upload-url";
+    import { createWilayah } from "../../lib/wilayah.svelte.js";
 
     let { id = "", onSuccess } = $props();
 
     let nama = $state("");
     let whatsapp = $state("");
-    let kec = $state("");
-    let kel = $state("");
     let almt = $state("");
     let ket = $state("");
     let serviceTitle = $state("");
@@ -21,7 +20,10 @@
     let error = $state("");
     let success = $state(false);
 
-    const kelurahanOptions = $derived(kec ? (kelurahanMap[kec] ?? []) : []);
+    // ── Wilayah cascade (idn-area-data via /api/wilayah) ────
+    const wilayah = createWilayah();
+    const { w } = wilayah;
+    onMount(() => wilayah.init());
 
     $effect(() => {
         if (!id) return;
@@ -38,11 +40,15 @@
                 const d = json.data;
                 nama = d.applicantName ?? "";
                 whatsapp = d.applicantPhone ?? "";
-                kec = d.kecamatan ?? "";
-                kel = d.kelurahan ?? "";
                 almt = d.alamat ?? "";
                 ket = "";
                 serviceTitle = d.serviceTitle ?? "";
+                wilayah.setFromData({
+                    provinsi: d.provinsi,
+                    kota: d.kota,
+                    kecamatan: d.kecamatan,
+                    kelurahan: d.kelurahan,
+                });
                 existingDokumen = (d.dokumen ?? []).map((doc) => ({
                     ...doc,
                     url: toUploadProxyUrl(doc.url),
@@ -149,8 +155,8 @@
         fileError = "";
         success = false;
 
-        if (!nama.trim() || !whatsapp.trim() || !kec.trim() || !kel.trim() || !almt.trim()) {
-            error = "Nama, nomor HP, kecamatan, kelurahan, dan alamat wajib diisi.";
+        if (!nama.trim() || !whatsapp.trim()) {
+            error = "Nama dan nomor HP wajib diisi.";
             return;
         }
 
@@ -179,8 +185,10 @@
                     id,
                     applicantName: nama,
                     applicantPhone: whatsapp,
-                    kecamatan: kec,
-                    kelurahan: kel,
+                    provinsi: wilayah.provinsiName(),
+                    kota: wilayah.kotaName(),
+                    kecamatan: w.kecamatan,
+                    kelurahan: w.kelurahan,
                     alamat: almt,
                     keterangan: ket,
                     dokumen: finalDokumen,
@@ -242,26 +250,44 @@
                     <input id="rev-wa" bind:value={whatsapp} required class="w-full border border-black/10 bg-white px-3 py-2.5 text-sm focus:outline-none focus:border-green" />
                 </div>
                 <div>
+                    <label for="rev-prov" class="block text-[10px] font-bold uppercase tracking-wider text-ink/50 mb-1">Provinsi</label>
+                    <select id="rev-prov" bind:value={w.provinsi} onchange={wilayah.onProvinsiChange} required class="w-full border border-black/10 bg-white px-3 py-2.5 text-sm focus:outline-none focus:border-green">
+                        <option value="" disabled selected>Pilih provinsi</option>
+                        {#each w.provincesList as p}
+                            <option value={p.code}>{p.name}</option>
+                        {/each}
+                    </select>
+                </div>
+                <div>
+                    <label for="rev-kota" class="block text-[10px] font-bold uppercase tracking-wider text-ink/50 mb-1">Kota/Kabupaten</label>
+                    <select id="rev-kota" bind:value={w.kota} onchange={wilayah.onKotaChange} required disabled={!w.provinsi} class="w-full border border-black/10 bg-white px-3 py-2.5 text-sm focus:outline-none focus:border-green disabled:opacity-50">
+                        <option value="" disabled selected>Pilih kota/kabupaten</option>
+                        {#each w.regenciesList as r}
+                            <option value={r.code}>{r.name}</option>
+                        {/each}
+                    </select>
+                </div>
+                <div>
                     <label for="rev-kec" class="block text-[10px] font-bold uppercase tracking-wider text-ink/50 mb-1">Kecamatan</label>
-                    <select id="rev-kec" bind:value={kec} onchange={() => (kel = "")} required class="w-full border border-black/10 bg-white px-3 py-2.5 text-sm focus:outline-none focus:border-green">
+                    <select id="rev-kec" bind:value={w.kecamatan} onchange={wilayah.onKecamatanChange} disabled={!w.kota} class="w-full border border-black/10 bg-white px-3 py-2.5 text-sm focus:outline-none focus:border-green disabled:opacity-50">
                         <option value="">Pilih kecamatan</option>
-                        {#each Object.keys(kelurahanMap) as k}
-                            <option value={k}>{k}</option>
+                        {#each w.districtsList as d}
+                            <option value={d.name}>{d.name}</option>
                         {/each}
                     </select>
                 </div>
                 <div>
                     <label for="rev-kel" class="block text-[10px] font-bold uppercase tracking-wider text-ink/50 mb-1">Kelurahan</label>
-                    <select id="rev-kel" bind:value={kel} required disabled={!kec} class="w-full border border-black/10 bg-white px-3 py-2.5 text-sm focus:outline-none focus:border-green disabled:opacity-50">
+                    <select id="rev-kel" bind:value={w.kelurahan} disabled={!w.kecamatan} class="w-full border border-black/10 bg-white px-3 py-2.5 text-sm focus:outline-none focus:border-green disabled:opacity-50">
                         <option value="">Pilih kelurahan</option>
-                        {#each kelurahanOptions as v}
+                        {#each w.villagesList as v}
                             <option value={v}>{v}</option>
                         {/each}
                     </select>
                 </div>
                 <div class="md:col-span-2">
                     <label for="rev-almt" class="block text-[10px] font-bold uppercase tracking-wider text-ink/50 mb-1">Alamat</label>
-                    <textarea id="rev-almt" bind:value={almt} required rows="2" class="w-full border border-black/10 bg-white px-3 py-2.5 text-sm focus:outline-none focus:border-green"></textarea>
+                    <textarea id="rev-almt" bind:value={almt} rows="2" class="w-full border border-black/10 bg-white px-3 py-2.5 text-sm focus:outline-none focus:border-green"></textarea>
                 </div>
                 <div class="md:col-span-2">
                     <label for="rev-ket" class="block text-[10px] font-bold uppercase tracking-wider text-ink/50 mb-1">Keterangan</label>

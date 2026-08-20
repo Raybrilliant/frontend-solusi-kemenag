@@ -1,7 +1,8 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
-    import { kelurahanMap } from "../../lib/data.js";
+    import { onMount } from "svelte";
     import { toUploadProxyUrl } from "../../lib/upload-url.js";
+    import { createWilayah } from "../../lib/wilayah.svelte.js";
 
     // Portal action: moves node to <body>
     function portal(node: HTMLElement) {
@@ -80,8 +81,6 @@
     let step = $state<"form" | "success">("form");
     let waNumber = $state("");
     let nama = $state("");
-    let kecamatan = $state("");
-    let kelurahan = $state("");
     let alamat = $state("");
     let keperluanType = $state<"layanan" | "lainnya">("layanan");
     let selectedLayananId = $state<number | null>(null);
@@ -112,9 +111,10 @@
     let layananSearch = $state("");
     let layananDropdownOpen = $state(false);
 
-    const kelurahanOptions = $derived(
-        kecamatan ? (kelurahanMap[kecamatan] ?? []) : [],
-    );
+    // ── Wilayah cascade (idn-area-data via /api/wilayah) ────
+    const wilayah = createWilayah();
+    const { w } = wilayah;
+    onMount(() => wilayah.init());
 
     const filteredLayanan = $derived.by(() => {
         const q = layananSearch.trim().toLowerCase();
@@ -266,9 +266,13 @@
             const json = await res.json();
             if (json.success && json.data) {
                 nama = json.data.nama ?? "";
-                kecamatan = json.data.kecamatan ?? "";
-                kelurahan = json.data.kelurahan ?? "";
                 alamat = json.data.alamat ?? "";
+                wilayah.setFromData({
+                    provinsi: json.data.provinsi,
+                    kota: json.data.kota,
+                    kecamatan: json.data.kecamatan,
+                    kelurahan: json.data.kelurahan,
+                });
                 waFound = true;
             } else {
                 waFound = false;
@@ -291,9 +295,8 @@
         step = "form";
         waNumber = "";
         nama = "";
-        kecamatan = "";
-        kelurahan = "";
         alamat = "";
+        wilayah.reset();
         keperluanType = "layanan";
         selectedLayananId = null;
         keperluanLainnya = "";
@@ -341,18 +344,6 @@
             error = "Nama wajib diisi.";
             return;
         }
-        if (!kecamatan) {
-            error = "Kecamatan wajib dipilih.";
-            return;
-        }
-        if (!kelurahan) {
-            error = "Kelurahan wajib dipilih.";
-            return;
-        }
-        if (!alamat.trim()) {
-            error = "Alamat wajib diisi.";
-            return;
-        }
         if (keperluanType === "layanan" && !selectedLayananId) {
             error = "Layanan wajib dipilih.";
             return;
@@ -370,8 +361,10 @@
                 body: JSON.stringify({
                     waNumber: waNumber.trim(),
                     nama: nama.trim(),
-                    kecamatan,
-                    kelurahan,
+                    provinsi: wilayah.provinsiName(),
+                    kota: wilayah.kotaName(),
+                    kecamatan: w.kecamatan,
+                    kelurahan: w.kelurahan,
                     alamat: alamat.trim(),
                     asalInstansi: asalInstansi.trim() || undefined,
                     keperluanType,
@@ -990,30 +983,58 @@
                             />
                         </div>
 
-                        <!-- Kecamatan / Kelurahan -->
+                        <!-- Provinsi / Kota / Kecamatan / Kelurahan -->
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="label">Kecamatan *</label>
+                                <label class="label">Provinsi *</label>
                                 <select
-                                    bind:value={kecamatan}
-                                    onchange={() => (kelurahan = "")}
+                                    bind:value={w.provinsi}
+                                    onchange={wilayah.onProvinsiChange}
                                     class="inp bg-white"
                                 >
-                                    <option value="">Pilih kecamatan</option>
-                                    {#each Object.keys(kelurahanMap) as kec}
-                                        <option value={kec}>{kec}</option>
+                                    <option value="" disabled selected>Pilih provinsi</option>
+                                    {#each w.provincesList as p}
+                                        <option value={p.code}>{p.name}</option>
                                     {/each}
                                 </select>
                             </div>
                             <div>
-                                <label class="label">Kelurahan *</label>
+                                <label class="label">Kota/Kabupaten *</label>
                                 <select
-                                    bind:value={kelurahan}
-                                    disabled={!kecamatan}
+                                    bind:value={w.kota}
+                                    onchange={wilayah.onKotaChange}
+                                    disabled={!w.provinsi}
+                                    class="inp bg-white disabled:opacity-50"
+                                >
+                                    <option value="" disabled selected>Pilih kota/kabupaten</option>
+                                    {#each w.regenciesList as r}
+                                        <option value={r.code}>{r.name}</option>
+                                    {/each}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="label">Kecamatan</label>
+                                <select
+                                    bind:value={w.kecamatan}
+                                    onchange={wilayah.onKecamatanChange}
+                                    disabled={!w.kota}
+                                    class="inp bg-white disabled:opacity-50"
+                                >
+                                    <option value="">Pilih kecamatan</option>
+                                    {#each w.districtsList as d}
+                                        <option value={d.name}>{d.name}</option>
+                                    {/each}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="label">Kelurahan</label>
+                                <select
+                                    bind:value={w.kelurahan}
+                                    disabled={!w.kecamatan}
                                     class="inp bg-white disabled:opacity-50"
                                 >
                                     <option value="">Pilih kelurahan</option>
-                                    {#each kelurahanOptions as kel}
+                                    {#each w.villagesList as kel}
                                         <option value={kel}>{kel}</option>
                                     {/each}
                                 </select>
@@ -1022,7 +1043,7 @@
 
                         <!-- Alamat -->
                         <div>
-                            <label class="label">Alamat *</label>
+                            <label class="label">Alamat</label>
                             <textarea
                                 bind:value={alamat}
                                 rows="2"

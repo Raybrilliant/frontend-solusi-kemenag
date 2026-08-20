@@ -1,6 +1,7 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
-    import { kelurahanMap } from "../../lib/data.js";
+    import { onMount } from "svelte";
+    import { createWilayah } from "../../lib/wilayah.svelte.js";
 
     let { serviceId, isInternal = false } = $props();
 
@@ -37,9 +38,10 @@
     let loadingLastData = $state(false);
     let lastAutoPhone = $state("");
 
-    const kelurahanOptions = $derived(
-        kecamatan ? (kelurahanMap[kecamatan] ?? []) : [],
-    );
+    // ── Wilayah cascade (idn-area-data via /api/wilayah) ────
+    const wilayah = createWilayah();
+    const { w } = wilayah;
+    onMount(() => wilayah.init());
 
     function canonicalPhoneLocal(value: string): string {
         const digits = value.replace(/\D/g, "");
@@ -101,9 +103,13 @@
             lastAutoPhone = canonical;
             nama = data.applicantName ?? "";
             whatsapp = data.applicantPhone ?? phone;
-            kecamatan = data.kecamatan ?? "";
-            kelurahan = data.kelurahan ?? "";
             alamat = data.alamat ?? "";
+            wilayah.setFromData({
+                provinsi: data.provinsi,
+                kota: data.kota,
+                kecamatan: data.kecamatan,
+                kelurahan: data.kelurahan,
+            });
             lastDataMsg = "Data terakhir berhasil diisi.";
         } catch (err) {
             if (!auto) {
@@ -288,8 +294,9 @@
         fileError = "";
         rejectedFiles = [];
         activePermohonanInfo = null;
-        nama = whatsapp = kecamatan = kelurahan = alamat = keterangan = "";
+        nama = whatsapp = alamat = keterangan = "";
         files = [];
+        wilayah.reset();
     }
 
     function showActivePermohonanState(info: ActivePermohonanInfo) {
@@ -373,8 +380,10 @@
                     serviceId: Number(serviceId),
                     applicantName: nama,
                     applicantPhone: whatsapp,
-                    kecamatan,
-                    kelurahan,
+                    kecamatan: w.kecamatan,
+                    kelurahan: w.kelurahan,
+                    provinsi: wilayah.provinsiName(),
+                    kota: wilayah.kotaName(),
                     alamat,
                     keterangan,
                     dokumen,
@@ -660,25 +669,25 @@
                 />
             </div>
 
-            <!-- Kecamatan + Kelurahan + Alamat -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+            <!-- Provinsi + Kota/Kabupaten -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                 <div class="flex flex-col gap-1.5">
-                    <label for="kecamatan" class="label"
-                        >Kecamatan <span class="text-red-500">*</span></label
+                    <label for="provinsi" class="label"
+                        >Provinsi <span class="text-red-500">*</span></label
                     >
                     <div class="relative">
                         <select
-                            id="kecamatan"
-                            bind:value={kecamatan}
-                            onchange={() => (kelurahan = "")}
+                            id="provinsi"
+                            bind:value={w.provinsi}
+                            onchange={wilayah.onProvinsiChange}
                             required
                             class="field appearance-none pr-8 cursor-pointer"
                         >
                             <option value="" disabled selected
-                                >Pilih Kecamatan</option
+                                >Pilih Provinsi</option
                             >
-                            {#each Object.keys(kelurahanMap) as kec}
-                                <option>{kec}</option>
+                            {#each w.provincesList as p}
+                                <option value={p.code}>{p.name}</option>
                             {/each}
                         </select>
                         <span
@@ -693,21 +702,79 @@
                     </div>
                 </div>
                 <div class="flex flex-col gap-1.5">
-                    <label for="kelurahan" class="label"
-                        >Kelurahan <span class="text-red-500">*</span></label
+                    <label for="kota" class="label"
+                        >Kota/Kabupaten <span class="text-red-500">*</span></label
                     >
                     <div class="relative">
                         <select
-                            id="kelurahan"
-                            bind:value={kelurahan}
+                            id="kota"
+                            bind:value={w.kota}
+                            onchange={wilayah.onKotaChange}
                             required
-                            disabled={!kecamatan}
+                            disabled={!w.provinsi}
+                            class="field appearance-none pr-8 cursor-pointer disabled:opacity-40"
+                        >
+                            <option value="" disabled selected
+                                >Pilih Kota/Kabupaten</option
+                            >
+                            {#each w.regenciesList as r}
+                                <option value={r.code}>{r.name}</option>
+                            {/each}
+                        </select>
+                        <span
+                            class="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-50"
+                        >
+                            <Icon
+                                icon="mdi:chevron-down"
+                                width="16"
+                                height="16"
+                            />
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kecamatan + Kelurahan + Alamat -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+                <div class="flex flex-col gap-1.5">
+                    <label for="kecamatan" class="label">Kecamatan</label>
+                    <div class="relative">
+                        <select
+                            id="kecamatan"
+                            bind:value={w.kecamatan}
+                            onchange={wilayah.onKecamatanChange}
+                            class="field appearance-none pr-8 cursor-pointer disabled:opacity-40"
+                        >
+                            <option value="" disabled selected
+                                >Pilih Kecamatan</option
+                            >
+                            {#each w.districtsList as d}
+                                <option>{d.name}</option>
+                            {/each}
+                        </select>
+                        <span
+                            class="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-50"
+                        >
+                            <Icon
+                                icon="mdi:chevron-down"
+                                width="16"
+                                height="16"
+                            />
+                        </span>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <label for="kelurahan" class="label">Kelurahan</label>
+                    <div class="relative">
+                        <select
+                            id="kelurahan"
+                            bind:value={w.kelurahan}
                             class="field appearance-none pr-8 cursor-pointer disabled:opacity-40"
                         >
                             <option value="" disabled selected
                                 >Pilih Kelurahan</option
                             >
-                            {#each kelurahanOptions as kel}
+                            {#each w.villagesList as kel}
                                 <option>{kel}</option>
                             {/each}
                         </select>
@@ -723,15 +790,11 @@
                     </div>
                 </div>
                 <div class="flex flex-col gap-1.5">
-                    <label for="alamat" class="label"
-                        >Alamat Lengkap <span class="text-red-500">*</span
-                        ></label
-                    >
+                    <label for="alamat" class="label">Alamat Lengkap</label>
                     <input
                         id="alamat"
                         bind:value={alamat}
                         type="text"
-                        required
                         placeholder="Jl. ... RT/RW ..."
                         class="field"
                     />

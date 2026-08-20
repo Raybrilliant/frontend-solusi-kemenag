@@ -36,6 +36,7 @@
     "astro-icon": "^1.1.5",
     "chart.js": "^4.5.1",
     "editorjs-undo": "^2.0.28",
+    "idn-area-data": "^4.0.1",
     "svelte": "^5.55.9",
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3",
