@@ -20,6 +20,8 @@
         permohonanId: string | null;
         waNumber: string;
         nama: string;
+        provinsi: string | null;
+        kota: string | null;
         kecamatan: string;
         kelurahan: string;
         alamat: string;
@@ -107,6 +109,7 @@
 
     // ── State: layanan dropdown ─────────────────────────────────
     let layananList = $state<any[]>([]);
+    let detailRow = $state<TamuRow | null>(null);
     let layananLoaded = $state(false);
     let layananSearch = $state("");
     let layananDropdownOpen = $state(false);
@@ -512,7 +515,10 @@
     }
 
     function onKeydown(e: KeyboardEvent) {
-        if (e.key === "Escape") closeModal();
+        if (e.key === "Escape") {
+            if (detailRow) detailRow = null;
+            else closeModal();
+        }
     }
 
     function onSearchInput() {
@@ -785,6 +791,7 @@
                             <th class="px-6 py-3 font-bold text-[10px] uppercase tracking-wider">Keperluan</th>
                             <th class="px-6 py-3 font-bold text-[10px] uppercase tracking-wider">Waktu</th>
                             <th class="px-6 py-3 font-bold text-[10px] uppercase tracking-wider">Foto</th>
+                            <th class="px-6 py-3 font-bold text-[10px] uppercase tracking-wider">Detail</th>
                             {#if canManage}
                                 <th class="px-6 py-3 font-bold text-[10px] uppercase tracking-wider">Aksi</th>
                             {/if}
@@ -849,6 +856,15 @@
                                             Tambah Foto
                                         </button>
                                     {/if}
+                                </td>
+                                <td class="px-6 py-3 whitespace-nowrap">
+                                    <button
+                                        onclick={() => (detailRow = row)}
+                                        class="inline-flex items-center gap-1 text-[11px] font-semibold text-green hover:underline"
+                                    >
+                                        <Icon icon="mdi:eye-outline" width="14" height="14" />
+                                        Detail
+                                    </button>
                                 </td>
                                 {#if canManage}
                                     <td class="px-6 py-3 whitespace-nowrap">
@@ -1322,6 +1338,110 @@
                     </button>
                 </div>
             {/if}
+        </div>
+    </div>
+{/if}
+
+<!-- ── Modal Detail Tamu (readonly) ────────────────────────── -->
+{#if detailRow}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+        use:portal
+        class="modal-backdrop"
+        onclick={() => (detailRow = null)}
+        role="dialog"
+        aria-modal="true"
+    >
+        <div class="modal-box">
+            <!-- Header -->
+            <div class="flex items-center justify-between px-6 py-4 border-b shrink-0">
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-ink/40">
+                        Buku Tamu
+                    </p>
+                    <h2 class="text-base font-bold uppercase tracking-tight">Detail Tamu</h2>
+                </div>
+                <button
+                    onclick={() => (detailRow = null)}
+                    class="text-ink/40 hover:text-ink transition p-1"
+                >
+                    <Icon icon="mdi:close" width="20" height="20" />
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="flex-1 overflow-y-auto min-h-0 p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-ink/40">Tiket Tamu</p>
+                        <p class="text-sm font-mono font-bold text-green break-all">{detailRow.ticketId}</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-ink/40">No. Permohonan</p>
+                        <p class="text-sm font-mono font-semibold text-amber-700 break-all">{detailRow.permohonanId ?? "—"}</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-ink/40">Nama</p>
+                        <p class="text-sm font-semibold break-words">{detailRow.nama}</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-ink/40">No. WhatsApp</p>
+                        <p class="text-sm text-ink/60 break-words">{detailRow.waNumber}</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-ink/40">Asal Instansi</p>
+                        <p class="text-sm text-ink/60 break-words">{detailRow.asalInstansi || "—"}</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-ink/40">Waktu Kunjungan</p>
+                        <p class="text-sm text-ink/60">{formatDateTime(detailRow.createdAt)}</p>
+                    </div>
+                </div>
+
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-ink/40 mb-1">Alamat</p>
+                    <p class="text-sm text-ink/70 leading-relaxed break-words">
+                        {[detailRow.alamat, detailRow.kelurahan, detailRow.kecamatan, detailRow.kota, detailRow.provinsi]
+                            .filter(Boolean)
+                            .join(", ") || "—"}
+                    </p>
+                </div>
+
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-ink/40 mb-1">Keperluan</p>
+                    <p class="text-sm text-ink/70 break-words">
+                        <span class="inline-flex items-center gap-1.5">
+                            <span class="w-2 h-2 {detailRow.keperluanType === 'layanan' ? 'bg-green' : 'bg-yellow'}"></span>
+                            {keperluanLabel(detailRow)}
+                        </span>
+                    </p>
+                </div>
+
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-ink/40 mb-2">Foto Tamu</p>
+                    {#if detailRow.fotoUrl}
+                        <a href={toUploadProxyUrl(detailRow.fotoUrl)} target="_blank" class="inline-block">
+                            <img
+                                src={toUploadProxyUrl(detailRow.fotoUrl)}
+                                alt="Foto tamu"
+                                class="max-w-[220px] border border-black/10 hover:opacity-80 transition"
+                            />
+                        </a>
+                    {:else}
+                        <p class="text-sm text-ink/30">Tidak ada foto.</p>
+                    {/if}
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="border-t px-6 py-4 shrink-0">
+                <button
+                    onclick={() => (detailRow = null)}
+                    class="w-full border text-sm font-semibold py-2.5 hover:bg-black/5 transition"
+                >
+                    Tutup
+                </button>
+            </div>
         </div>
     </div>
 {/if}
