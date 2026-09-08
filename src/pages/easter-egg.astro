@@ -5,10 +5,22 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
 const team = [
     {
+        name: "Mun'im Baihaki",
+        role: "Pranata Komputer Ahli Pertama",
+        photo: "/easter-egg/munim.webp",
+        photoPos: "object-[50%_20%]", // fokus lebih ke atas agar subjek turun & kepala tidak terpotong
+        bio: "Bagian dari tim pengembang portal digital Kemenag Kota Probolinggo.",
+        funFacts: [
+            "Dangdutan Ajeng Monica",
+            "Terbiasa PP lintas kabupaten",
+            "Tiap hari ngopi item",
+        ],
+    },
+    {
         name: "Raihan Fikri Brilliansyach",
-        role: "Pranata Komputer",
+        role: "Pranata Komputer Ahli Pertama",
         photo: "/easter-egg/rey.webp", // ganti dengan path foto: "/pejabat-struktural/nama.jpg"
-        bio: "Bertanggung jawab atas pengembangan sistem dan infrastruktur digital Kemenag Kota Probolinggo.",
+        bio: "Bertanggung jawab atas mayoritas pengembangan sistem dan infrastruktur digital Kemenag Kota Probolinggo.",
         funFacts: [
             "Ngoding lebih dari 1000 jam buat portal ini",
             "Full DJ Angkot biar tetep strong",
@@ -19,7 +31,18 @@ const team = [
         github: "https://github.com/Raybrilliant",    // "https://github.com/username"
         portfolio: "https://raybrilliant.my.id", // "https://website-portfolio-anda.com"
     },
-    // tambah anggota tim lain di sini dengan format yang sama
+    {
+        name: "M. Ulil Albab Kholilulloh",
+        role: "Pranata Komputer Ahli Pertama",
+        photo: "/easter-egg/ulil.webp",
+        photoPos: "object-[50%_20%]", // fokus lebih ke atas agar subjek turun & kepala tidak terpotong
+        bio: "Bagian dari tim pengembang portal digital Kemenag Kota Probolinggo.",
+        funFacts: [
+            "Pengusaha kelas kakap",
+            "Wajib tidur siang",
+            "Kerja terus sampe lupa waktu",
+        ],
+    },
 ];
 ---
 
@@ -230,7 +253,7 @@ const team = [
                             {m.photo ? (
                                 <div class="photo-ring w-28 h-28 rounded-full overflow-hidden border-4 border-green/25">
                                     <img src={m.photo} alt={m.name}
-                                         class="w-full h-full object-cover object-center" />
+                                         class={`w-full h-full object-cover ${m.photoPos ?? "object-center"}`} />
                                 </div>
                             ) : (
                                 <div class="photo-ring w-28 h-28 rounded-full border-4 border-dashed border-green/20 bg-green/5 flex flex-col items-center justify-center gap-1">
