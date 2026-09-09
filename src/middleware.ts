@@ -6,6 +6,10 @@
  */
 import { defineMiddleware } from "astro:middleware";
 import {
+  applySetCookiesToAstro,
+  refreshSsoSession,
+} from "./lib/sso-server";
+import {
   buildAuditEntry,
   getAuditActor,
   isAdminApiMutation,
@@ -146,8 +150,23 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return redirect(`${loginPath}${redirectParam}`);
   }
 
-  // Validate token or SSO session against backend
-  const { valid, user } = await validateToken(token, cookieHeader);
+  // Validasi token atau SSO session terhadap backend
+  let { valid, user } = await validateToken(token, cookieHeader);
+
+  // Access token kedaluwarsa → perpanjang sesi via refresh cookie SSO,
+  // lalu validasi ulang dengan cookie hasil rotasi. Jika berhasil, sesi
+  // berlanjut tanpa login ulang (cookie baru diteruskan ke browser).
+  if (!valid && cookieHeader) {
+    const refreshed = await refreshSsoSession(cookieHeader);
+    if (refreshed) {
+      const retry = await validateToken(undefined, refreshed.cookieJar);
+      if (retry.valid) {
+        valid = true;
+        user = retry.user;
+        applySetCookiesToAstro(cookies, refreshed.setCookies);
+      }
+    }
+  }
 
   if (!valid) {
     console.warn(

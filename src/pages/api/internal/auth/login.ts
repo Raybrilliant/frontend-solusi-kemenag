@@ -18,12 +18,13 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const data = await res.json();
 
     if (data.success && data.token) {
+      // Access token berlaku singkat — ikuti TTL asli dari backend.
       cookies.set("auth_token", data.token, {
         path: "/",
         httpOnly: true,
         secure: import.meta.env.PROD,
         sameSite: "lax",
-        maxAge: 60 * 60 * 24,
+        maxAge: Number(data.expiresIn) > 0 ? Number(data.expiresIn) : 900,
       });
     }
 

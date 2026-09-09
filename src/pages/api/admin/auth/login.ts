@@ -19,12 +19,14 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const data = await res.json();
 
     if (data.success && data.token) {
+      // Access token berlaku singkat — jangan pakai maxAge 24 jam agar
+      // cookie tidak menyimpan Bearer usang yang selalu 401 di backend.
       cookies.set("auth_token", data.token, {
         path: "/",
         httpOnly: true,
         secure: import.meta.env.PROD,
         sameSite: "lax",
-        maxAge: 60 * 60 * 24,
+        maxAge: Number(data.expiresIn) > 0 ? Number(data.expiresIn) : 900,
       });
 
       const headers = new Headers({ "Content-Type": "application/json" });

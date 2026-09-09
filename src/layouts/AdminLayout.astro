@@ -17,15 +17,9 @@ let { title } = Astro.props;
 
     <body class="h-screen overflow-hidden bg-cream">
         <!-- ── Mobile blocker ─────────────────────────── -->
-        <div
-            class="md:hidden min-h-screen flex items-center justify-center px-6 bg-cream"
-        >
-            <div
-                class="max-w-sm w-full text-center bg-white border border-black/8 p-8 shadow-sm"
-            >
-                <div
-                    class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-green/10 border border-green/20 flex items-center justify-center text-green"
-                >
+        <div class="md:hidden min-h-screen flex items-center justify-center px-6 bg-cream">
+            <div class="max-w-sm w-full text-center bg-white border border-black/8 p-8 shadow-sm">
+                <div class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-green/10 border border-green/20 flex items-center justify-center text-green">
                     <svg viewBox="0 0 24 24" class="w-8 h-8">
                         <path
                             fill="currentColor"
@@ -33,9 +27,7 @@ let { title } = Astro.props;
                         ></path>
                     </svg>
                 </div>
-                <p
-                    class="text-[11px] font-extrabold uppercase tracking-[0.18em] text-green mb-3"
-                >
+                <p class="text-[11px] font-extrabold uppercase tracking-[0.18em] text-green mb-3">
                     Akses Terbatas
                 </p>
                 <h1 class="text-2xl font-extrabold text-ink leading-tight mb-3">
@@ -55,9 +47,7 @@ let { title } = Astro.props;
             <!-- ── Right column ──────────────────────────── -->
             <div class="flex-1 flex flex-col overflow-hidden min-w-0">
                 <!-- Topbar -->
-                <header
-                    class="shrink-0 h-16 bg-cream/90 backdrop-blur-sm border-b border-black/7 flex items-center gap-4 px-6"
-                >
+                <header class="shrink-0 h-16 bg-cream/90 backdrop-blur-sm border-b border-black/7 flex items-center gap-4 px-6">
                     <!-- Sidebar toggle -->
                     <button
                         data-sidebar-toggle
@@ -67,7 +57,8 @@ let { title } = Astro.props;
                         <svg viewBox="0 0 24 24" class="w-5 h-5">
                             <path
                                 fill="currentColor"
-                                d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path>
+                                d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"
+                            ></path>
                         </svg>
                     </button>
                 </header>
@@ -78,5 +69,56 @@ let { title } = Astro.props;
                 </main>
             </div>
         </div>
+
+        <script>
+            // Pemulihan sesi otomatis: saat XHR ke /api/admin/* kena 401
+            // (access token kedaluwarsa), refresh sesi SSO dulu, lalu ulangi
+            // request sekali — user tetap di halaman tanpa login ulang.
+            const originalFetch = window.fetch.bind(window);
+            let refreshPromise: Promise<boolean> | null = null;
+
+            function refreshSession(): Promise<boolean> {
+                refreshPromise ??= fetch("/api/admin/auth/refresh", {
+                    method: "POST",
+                })
+                    .then((res) => res.ok)
+                    .catch(() => false)
+                    .finally(() => {
+                        refreshPromise = null;
+                    });
+                return refreshPromise;
+            }
+
+            window.fetch = async (
+                input: RequestInfo | URL,
+                init?: RequestInit,
+            ) => {
+                const res = await originalFetch(input, init);
+                const url =
+                    typeof input === "string"
+                        ? input
+                        : input instanceof URL
+                          ? input.href
+                          : input.url;
+
+                const headers = new Headers(
+                    init?.headers ??
+                        (input instanceof Request ? input.headers : undefined),
+                );
+
+                if (
+                    res.status === 401 &&
+                    url.includes("/api/admin/") &&
+                    !url.includes("/api/admin/auth/refresh") &&
+                    !headers.has("x-retry-after-refresh")
+                ) {
+                    if (await refreshSession()) {
+                        headers.set("x-retry-after-refresh", "1");
+                        return originalFetch(input, { ...init, headers });
+                    }
+                }
+                return res;
+            };
+        </script>
     </body>
 </html>
