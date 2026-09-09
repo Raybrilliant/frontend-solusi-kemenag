@@ -17,11 +17,13 @@ async function clearSsoSession(cookieHeader: string): Promise<string> {
 
 /**
  * GET /api/internal/auth/logout
+ * Logout sesungguhnya: hapus cookie auth_token + sesi SSO backend,
+ * lalu redirect ke halaman login internal.
  */
 export const GET: APIRoute = async ({ cookies, request }) => {
   cookies.delete("auth_token", { path: "/" });
 
-  const headers = new Headers({ Location: "/internal" });
+  const headers = new Headers({ Location: "/internal/login" });
   const ssoCookie = await clearSsoSession(request.headers.get("cookie") ?? "");
   if (ssoCookie) headers.append("Set-Cookie", ssoCookie);
 

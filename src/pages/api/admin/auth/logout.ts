@@ -1,52 +1,29 @@
 import type { APIRoute } from "astro";
 
-const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
-
-async function clearSsoSession(cookieHeader: string): Promise<string> {
-  try {
-    const res = await fetch(`${BACKEND_URL}/api/v1/auth/logout`, {
-      method: "POST",
-      headers: cookieHeader ? { Cookie: cookieHeader } : {},
-    });
-
-    return res.headers.get("set-cookie") ?? "";
-  } catch {
-    return "";
-  }
-}
-
 /**
- * POST /api/admin/auth/logout
- * Menghapus cookie auth_token dan sesi SSO backend
+ * GET /api/admin/auth/logout
+ * Kembali ke portal internal TANPA menghapus sesi.
+ * Sesi (cookie auth_token + SSO) dipertahankan agar user tetap login
+ * saat kembali ke halaman internal. Logout sesungguhnya hanya dilakukan
+ * dari halaman internal via /api/internal/auth/logout.
  */
-export const POST: APIRoute = async ({ cookies, request }) => {
-  cookies.delete("auth_token", { path: "/" });
-
-  const headers = new Headers({ "Content-Type": "application/json" });
-  const ssoCookie = await clearSsoSession(request.headers.get("cookie") ?? "");
-  if (ssoCookie) headers.append("Set-Cookie", ssoCookie);
-
-  return new Response(
-    JSON.stringify({ success: true, message: "Berhasil logout" }),
-    {
-      status: 200,
-      headers,
-    },
-  );
+export const GET: APIRoute = async () => {
+  return new Response(null, {
+    status: 302,
+    headers: { Location: "/internal" },
+  });
 };
 
 /**
- * GET /api/admin/auth/logout — redirect ke portal internal
+ * POST /api/admin/auth/logout
+ * Respons sukses tanpa menghapus sesi (konsisten dengan GET).
  */
-export const GET: APIRoute = async ({ cookies, request }) => {
-  cookies.delete("auth_token", { path: "/" });
-
-  const headers = new Headers({ Location: "/internal" });
-  const ssoCookie = await clearSsoSession(request.headers.get("cookie") ?? "");
-  if (ssoCookie) headers.append("Set-Cookie", ssoCookie);
-
-  return new Response(null, {
-    status: 302,
-    headers,
-  });
+export const POST: APIRoute = async () => {
+  return new Response(
+    JSON.stringify({ success: true, message: "Kembali ke portal internal" }),
+    {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    },
+  );
 };
