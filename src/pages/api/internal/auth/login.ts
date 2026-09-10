@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { getSetCookies } from "../../../../lib/sso-server";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
@@ -29,8 +30,13 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     const headers = new Headers({ "Content-Type": "application/json" });
-    const ssoCookie = res.headers.get("set-cookie");
-    if (ssoCookie) headers.append("Set-Cookie", ssoCookie);
+    // Backend mengirim DUA Set-Cookie (access + refresh). headers.get("set-cookie")
+    // menggabungkan keduanya jadi satu string berkoma — browser menolak/mangling
+    // cookie kedua, sehingga refresh cookie hilang dan sesi tidak bisa
+    // diperpanjang setelah access token (15 menit) kedaluwarsa.
+    for (const cookie of getSetCookies(res)) {
+      headers.append("Set-Cookie", cookie);
+    }
 
     return new Response(JSON.stringify(data), {
       status: res.status,
