@@ -27,7 +27,7 @@
         { id: "responses", label: "Daftar Survei" },
         { id: "monthly", label: "Rekap Bulanan" },
     ];
-    const KRITIK_PER_PAGE = 5;
+    const KRITIK_PER_PAGE = 10;
 
     // Mapping kode demografi (integer) -> label, dipakai di tabel respons & export.
     const pendidikanLabels = {
@@ -105,7 +105,19 @@
     let monthlyResponses = $state([]);
     let exportingMonthly = $state(false);
     let monthlyUpdatedAt = $state("");
+    let monthlyLoaded = $state(false);
+    // Kritik & saran: server-side pagination via /responses?hasKritik=true.
     let kritikPage = $state(1);
+    let kritikItems = $state([]);
+    let kritikLoading = $state(false);
+    let kritikError = $state("");
+    let kritikLoaded = $state(false);
+    let kritikPagination = $state({
+        page: 1,
+        limit: KRITIK_PER_PAGE,
+        total: 0,
+        totalPages: 1,
+    });
     let mode = $state("create");
     let selected = $state(null);
     let formQuestion = $state("");
@@ -245,26 +257,8 @@
         return { pusat: sum("kepercayaanPusat"), daerah: sum("kepercayaanDaerah") };
     });
 
-    // Daftar kritik & saran anonim (hanya teks, tanpa identitas).
-    const kritikSaranRows = $derived(
-        feedbackRows
-            .map((r) => (r.kritikSaran ?? "").trim())
-            .filter((teks) => teks.length > 0),
-    );
-    // ponytail: pagination sisi klien — data sudah di memori via
-    // monthlyResponses, beratnya di DOM <li>, slice 5/halaman cukup.
-    const kritikTotalPages = $derived(
-        Math.max(1, Math.ceil(kritikSaranRows.length / KRITIK_PER_PAGE)),
-    );
-    const kritikSaranPageRows = $derived.by(() => {
-        const totalPages = Math.max(
-            1,
-            Math.ceil(kritikSaranRows.length / KRITIK_PER_PAGE),
-        );
-        const page = Math.min(Math.max(1, kritikPage), totalPages);
-        const start = (page - 1) * KRITIK_PER_PAGE;
-        return kritikSaranRows.slice(start, start + KRITIK_PER_PAGE);
-    });
+    // Kritik & saran diambil server-side (1 halaman = 1 fetch ringan),
+    // jadi daftar tidak perlu menunggu semua respons termuat.
 
     function formatSkala(num) {
         return Number(num).toLocaleString("id-ID", {
@@ -452,6 +446,48 @@
         }
     }
 
+    // Kritik & saran: pagination di sisi server supaya fetch awal ringan.
+    async function loadKritik(page = kritikPage) {
+        kritikLoading = true;
+        kritikError = "";
+        try {
+            const qs = new URLSearchParams({
+                hasKritik: "true",
+                page: String(page),
+                limit: String(KRITIK_PER_PAGE),
+            });
+            const res = await fetch(`${responsesUrl}?${qs}`, {
+                credentials: "same-origin",
+            });
+            const json = await res.json();
+            if (json.success === false) {
+                throw new Error(
+                    json.message ?? "Gagal memuat kritik & saran.",
+                );
+            }
+            kritikItems = json.data ?? [];
+            kritikPagination = json.pagination ?? {
+                page,
+                limit: KRITIK_PER_PAGE,
+                total: kritikItems.length,
+                totalPages: 1,
+            };
+            kritikPage = page;
+        } catch (e) {
+            kritikError = String(e);
+            kritikItems = [];
+        } finally {
+            kritikLoading = false;
+        }
+    }
+
+    function gotoKritikPage(page) {
+        const max = Math.max(1, kritikPagination.totalPages);
+        const target = Math.min(Math.max(1, page), max);
+        if (target === kritikPage && kritikItems.length) return;
+        loadKritik(target);
+    }
+
     async function loadMonthly() {
         monthlyLoading = true;
         monthlyError = "";
@@ -517,7 +553,6 @@
             ]);
             monthlyItems = results.flat();
             monthlyResponses = responsesRes;
-            kritikPage = 1;
             monthlyUpdatedAt = new Date().toLocaleTimeString("id-ID", {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -673,7 +708,8 @@
             const fileName = `${fileNameParts.join("-")}.xlsx`;
 
             // Format export: nama, no-telpon, tanggal layanan, pendidikan,
-            // usia, pekerjaan, disabilitas. Tanpa mapping (nilai raw).
+            // usia, pekerjaan, disabilitas, layanan (kolom terakhir agar
+            // mudah difilter di Excel). Tanpa mapping (nilai raw).
             const rows = allResponses.map((item) => ({
                 nama: item.applicantName ?? "",
                 "no-telpon": item.applicantPhone ?? "",
@@ -682,6 +718,7 @@
                 usia: item.usia ?? "",
                 pekerjaan: item.jenisPekerjaan ?? "",
                 disabilitas: item.disabilitas ?? "",
+                layanan: item.serviceTitle ?? "",
             }));
             const ws = XLSX.utils.json_to_sheet(rows, {
                 header: [
@@ -692,6 +729,7 @@
                     "usia",
                     "pekerjaan",
                     "disabilitas",
+                    "layanan",
                 ],
             });
             const wb = XLSX.utils.book_new();
@@ -817,6 +855,7 @@
                 "kritik saran",
                 "kepercayaan pusat",
                 "kepercayaan daerah",
+                "layanan",
             ];
 
             const rows = [...respByPerm.keys()]
@@ -853,6 +892,7 @@
                         base.kepercayaanPusat ?? "";
                     row["kepercayaan daerah"] =
                         base.kepercayaanDaerah ?? "";
+                    row["layanan"] = base.serviceTitle ?? "";
                     return row;
                 });
 
@@ -890,7 +930,18 @@
     });
 
     $effect(() => {
-        loadMonthly();
+        // Lazy: rekap bulanan & kritik hanya dimuat saat tab dibuka,
+        // agar load pertama halaman admin tetap ringan.
+        if (activeTab === "monthly") {
+            if (!monthlyLoaded) {
+                monthlyLoaded = true;
+                loadMonthly();
+            }
+            if (!kritikLoaded) {
+                kritikLoaded = true;
+                loadKritik(1);
+            }
+        }
     });
 </script>
 
@@ -1583,7 +1634,7 @@
                         diisi responden sebelum tahap profil.
                     </p>
 
-                    {#if feedbackRows.length === 0}
+                    {#if feedbackRows.length === 0 && kritikPagination.total === 0 && !kritikLoading}
                         <p class="py-8 text-sm text-ink/35">
                             Belum ada data.
                         </p>
@@ -1613,47 +1664,71 @@
 
                         <div class="mt-4">
                             <p class="text-xs font-bold uppercase tracking-wide text-ink/40 mb-3">
-                                Daftar Kritik & Saran (anonim)
+                                Daftar Kritik & Saran
                             </p>
-                            {#if kritikSaranRows.length === 0}
+                            {#if kritikLoading}
+                                <p class="text-sm text-ink/35">
+                                    Memuat kritik & saran…
+                                </p>
+                            {:else if kritikError}
+                                <p class="text-sm text-red-600">
+                                    {kritikError}
+                                </p>
+                            {:else if kritikPagination.total === 0}
                                 <p class="text-sm text-ink/35">
                                     Belum ada kritik & saran.
                                 </p>
                             {:else}
                                 <ul class="space-y-2">
-                                    {#each kritikSaranPageRows as teks, i (teks + "-" + i)}
+                                    {#each kritikItems as item (item.id)}
                                         <li
                                             class="border border-black/8 bg-black/[0.02] px-4 py-3 text-sm text-ink/75"
                                         >
-                                            {teks}
+                                            <div
+                                                class="flex flex-wrap items-center gap-2"
+                                            >
+                                                <span
+                                                    class="font-mono text-xs font-bold text-green"
+                                                >
+                                                    {item.permohonanId}
+                                                </span>
+                                                <span
+                                                    class="px-2 py-0.5 rounded-full bg-black/5 text-[11px] text-ink/55"
+                                                >
+                                                    {item.serviceTitle}
+                                                </span>
+                                                <span
+                                                    class="ml-auto text-[11px] text-ink/35"
+                                                >
+                                                    {formatDate(item.createdAt)}
+                                                </span>
+                                            </div>
+                                            <p class="mt-1.5 whitespace-pre-line">
+                                                {item.kritikSaran}
+                                            </p>
                                         </li>
                                     {/each}
                                 </ul>
-                                {#if kritikTotalPages > 1}
+                                {#if kritikPagination.totalPages > 1}
                                     <div
                                         class="mt-3 flex items-center justify-between gap-3"
                                     >
                                         <button
                                             onclick={() =>
-                                                (kritikPage = Math.max(
-                                                    1,
-                                                    kritikPage - 1,
-                                                ))}
-                                            disabled={kritikPage <= 1}
+                                                gotoKritikPage(kritikPage - 1)}
+                                            disabled={kritikPage <= 1 || kritikLoading}
                                             class="px-3 py-2 border border-black/10 text-xs font-bold uppercase disabled:opacity-40"
                                         >
                                             Sebelumnya
                                         </button>
                                         <span class="text-xs text-ink/45">
-                                            Halaman {Math.min(kritikPage, kritikTotalPages)} dari {kritikTotalPages}
+                                            Halaman {kritikPage} dari {kritikPagination.totalPages}
+                                            ({kritikPagination.total} kritik)
                                         </span>
                                         <button
                                             onclick={() =>
-                                                (kritikPage = Math.min(
-                                                    kritikTotalPages,
-                                                    kritikPage + 1,
-                                                ))}
-                                            disabled={kritikPage >= kritikTotalPages}
+                                                gotoKritikPage(kritikPage + 1)}
+                                            disabled={kritikPage >= kritikPagination.totalPages || kritikLoading}
                                             class="px-3 py-2 border border-black/10 text-xs font-bold uppercase disabled:opacity-40"
                                         >
                                             Berikutnya
