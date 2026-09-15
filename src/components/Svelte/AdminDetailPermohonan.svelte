@@ -57,6 +57,24 @@
             elapsedMs > totalSlaMs,
     );
     const overdueMs = $derived(isOverdue ? elapsedMs - totalSlaMs : 0);
+    const completionMs = $derived(
+        current.status === "Selesai" && current.selesaiAt
+            ? Math.max(
+                  0,
+                  new Date(current.selesaiAt).getTime() -
+                      new Date(current.submittedAt).getTime(),
+              )
+            : null,
+    );
+    const completionOverSla = $derived(
+        completionMs !== null && totalSlaMs > 0 && completionMs > totalSlaMs,
+    );
+    const completionNearSla = $derived(
+        completionMs !== null &&
+            totalSlaMs > 0 &&
+            !completionOverSla &&
+            completionMs > totalSlaMs * 0.8,
+    );
 
     function formatDuration(ms: number) {
         if (ms <= 0) return "-";
@@ -359,17 +377,20 @@
                 icon="mdi:clock-outline"
                 width="18"
                 height="18"
-                class={isOverdue
+                class={isOverdue || completionOverSla
                     ? "text-red-500"
-                    : current.status !== "Diproses"
-                      ? "text-ink/30"
-                      : "text-green"}
+                    : completionNearSla
+                      ? "text-amber-500"
+                      : current.status === "Diproses" ||
+                          current.status === "Selesai"
+                        ? "text-green"
+                        : "text-ink/30"}
             />
             <div>
                 <p
                     class="text-[10px] font-bold uppercase tracking-widest text-ink/40"
                 >
-                    {#if current.status === "Selesai"}Selesai
+                    {#if current.status === "Selesai"}Durasi Selesai
                     {:else if current.status === "Ditolak"}Status
                     {:else if current.status === "Diproses" && isOverdue}Terlambat
                     {:else if current.status === "Diproses"}SLA Tersisa
@@ -377,7 +398,28 @@
                     {/if}
                 </p>
                 {#if current.status === "Selesai"}
-                    <p class="text-sm font-bold text-green">✓ Selesai</p>
+                    {#if completionMs !== null}
+                        <p
+                            class={`text-lg font-bold ${completionOverSla ? "text-red-500" : completionNearSla ? "text-amber-500" : "text-green"}`}
+                        >
+                            {formatDuration(completionMs)}
+                        </p>
+                        <p class="text-[10px] text-ink/40">
+                            {#if completionOverSla}
+                                Telat +
+                                {formatDuration(completionMs - totalSlaMs)}
+                                dari SLA
+                            {:else if completionNearSla}
+                                Mepet SLA ({formatDuration(totalSlaMs)})
+                            {:else if totalSlaMs > 0}
+                                Dalam SLA ({formatDuration(totalSlaMs)})
+                            {:else}
+                                sejak dikirim
+                            {/if}
+                        </p>
+                    {:else}
+                        <p class="text-sm font-bold text-green">✓ Selesai</p>
+                    {/if}
                 {:else if current.status === "Ditolak"}
                     <p class="text-sm font-bold text-red-500">Ditolak</p>
                 {:else if !subService?.slaDuration}
@@ -923,6 +965,13 @@
                         label: "Tanggal Kirim",
                         value: formatDatetime(current.submittedAt),
                     })}
+                    {#if current.selesaiAt}
+                        {@render RingkasRow({
+                            icon: "check",
+                            label: "Tanggal Selesai",
+                            value: formatDatetime(current.selesaiAt),
+                        })}
+                    {/if}
                     {@render RingkasRow({
                         icon: "tag",
                         label: "Layanan",
@@ -962,7 +1011,9 @@
                   ? "mdi:tag"
                   : props.icon === "clock"
                     ? "mdi:clock-outline"
-                    : "mdi:phone"}
+                    : props.icon === "check"
+                      ? "mdi:check-circle-outline"
+                      : "mdi:phone"}
             width="14"
             height="14"
             class="text-ink/30 mt-0.5 shrink-0"

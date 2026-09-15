@@ -63,6 +63,46 @@ function calcSlaRemaining(item: any, svc: any | null): number | null {
   return Math.floor((totalMs - elapsedMs) / 60_000);
 }
 
+// Durasi penyelesaian untuk status Selesai — untuk badge audit
+function calcCompletion(item: any, svc: any | null) {
+  if (item.status !== "Selesai") return null;
+
+  const end = item.selesaiAt ?? item.selesai_at;
+  const start = item.submittedAt ?? item.submitted_at;
+  if (!end || !start) return null;
+
+  const minutes = Math.max(
+    0,
+    Math.floor((new Date(end).getTime() - new Date(start).getTime()) / 60_000),
+  );
+
+  const slaDuration = svc?.slaDuration ?? svc?.sla_duration;
+  const slaUnit = svc?.slaUnit ?? svc?.sla_unit;
+  let slaMinutes: number | null = null;
+  if (slaDuration && slaUnit) {
+    const unitMs =
+      slaUnit === "menit"
+        ? 60_000
+        : slaUnit === "jam"
+          ? 3_600_000
+          : slaUnit === "hari"
+            ? 86_400_000
+            : 0;
+    if (unitMs) slaMinutes = Math.floor((slaDuration * unitMs) / 60_000);
+  }
+
+  return {
+    minutes,
+    slaMinutes,
+    overSla: slaMinutes !== null ? minutes > slaMinutes : null,
+    // Mepet SLA: sudah terpakai > 80% target tapi belum lewat
+    nearSla:
+      slaMinutes !== null &&
+      minutes <= slaMinutes &&
+      minutes > slaMinutes * 0.8,
+  };
+}
+
 function permohonanJsonResponse(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
@@ -115,6 +155,7 @@ export const GET: APIRoute = async ({ url, cookies, request }) => {
         return {
           ...item,
           slaRemaining: calcSlaRemaining(item, svc),
+          completion: calcCompletion(item, svc),
         };
       });
 

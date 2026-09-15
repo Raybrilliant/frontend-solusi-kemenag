@@ -1,7 +1,18 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
     import { createColumnHelper } from "@tanstack/table-core";
+    import * as XLSX from "xlsx";
     import Table from "./Table.svelte";
+
+    // Portal action: pindahkan node modal ke <body> agar position: fixed aman
+    function portal(node: HTMLElement) {
+        document.body.appendChild(node);
+        return {
+            destroy() {
+                node.parentNode?.removeChild(node);
+            },
+        };
+    }
 
     let { apiUrl = "/api/admin/permohonan", userKecamatan = "" } = $props();
 
@@ -91,6 +102,193 @@
     });
 
     let deleting = $state(false);
+
+    // ── Modal Export XLSX ─────────────────────────────────────
+    let showExport = $state(false);
+    let exportDateFrom = $state("");
+    let exportDateTo = $state("");
+    let exportTotal = $state<number | null>(null);
+    let exportLoading = $state(false);
+    let exporting = $state(false);
+    let exportError = $state("");
+
+    const exportRangeLabel = $derived.by(() => {
+        const fmt = (v: string) =>
+            new Date(v + "T00:00:00").toLocaleDateString("id-ID", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+            });
+        if (exportDateFrom && exportDateTo)
+            return `${fmt(exportDateFrom)} – ${fmt(exportDateTo)}`;
+        if (exportDateFrom) return `sejak ${fmt(exportDateFrom)}`;
+        if (exportDateTo) return `sampai ${fmt(exportDateTo)}`;
+        return "semua data";
+    });
+
+    let _exportDebounce: any;
+    // Hitung jumlah data untuk rentang terpilih (preview sebelum export)
+    $effect(() => {
+        if (!showExport) return;
+        const from = exportDateFrom;
+        const to = exportDateTo;
+        clearTimeout(_exportDebounce);
+        _exportDebounce = setTimeout(() => {
+            exportLoading = true;
+            const params = new URLSearchParams({ page: "1", limit: "1" });
+            if (from) params.set("dateFrom", from);
+            if (to) params.set("dateTo", to);
+            fetch(`/api/admin/permohonan?${params}`)
+                .then((r) => r.json())
+                .then((res) => {
+                    exportTotal = res.pagination?.total ?? 0;
+                })
+                .catch(() => (exportTotal = null))
+                .finally(() => (exportLoading = false));
+        }, 250);
+    });
+
+    function openExportModal() {
+        exportError = "";
+        showExport = true;
+    }
+    function closeExportModal() {
+        if (exporting) return;
+        showExport = false;
+    }
+
+    function completionMinutes(r: any) {
+        if (!r.selesaiAt || !r.submittedAt) return 0;
+        return Math.max(
+            0,
+            Math.floor(
+                (new Date(r.selesaiAt).getTime() -
+                    new Date(r.submittedAt).getTime()) /
+                    60000,
+            ),
+        );
+    }
+
+    function absoluteUploadUrl(url: string | null | undefined) {
+        if (!url) return "";
+        const filename = url.split("/").pop();
+        if (!filename) return url;
+        return `${window.location.origin}/api/upload/${filename}`;
+    }
+
+    async function runExport() {
+        exportError = "";
+        exporting = true;
+        try {
+            const params = new URLSearchParams();
+            if (exportDateFrom) params.set("dateFrom", exportDateFrom);
+            if (exportDateTo) params.set("dateTo", exportDateTo);
+            const res = await fetch(`/api/admin/permohonan/export?${params}`);
+            const json = await res.json();
+            if (json.success === false)
+                throw new Error(
+                    json.message ?? "Gagal mengambil data export.",
+                );
+            const rows: any[] = json.data ?? [];
+
+            // Sheet 1: Permohonan
+            const permRows: any[][] = [
+                [
+                    "ID",
+                    "Nama Pemohon",
+                    "No HP",
+                    "Layanan",
+                    "Tgl Kirim",
+                    "Status",
+                    "Tgl Selesai",
+                    "Durasi Selesai",
+                    "Jumlah Dokumen",
+                ],
+            ];
+            for (const r of rows) {
+                permRows.push([
+                    r.id,
+                    r.applicantName,
+                    r.applicantPhone,
+                    r.serviceTitle,
+                    r.submittedAt
+                        ? new Date(r.submittedAt).toLocaleString("id-ID")
+                        : "",
+                    r.status,
+                    r.selesaiAt
+                        ? new Date(r.selesaiAt).toLocaleString("id-ID")
+                        : "",
+                    r.selesaiAt
+                        ? formatSlaDuration(completionMinutes(r))
+                        : "",
+                    (r.dokumen ?? []).length,
+                ]);
+            }
+            const wsPerm = XLSX.utils.aoa_to_sheet(permRows);
+            wsPerm["!cols"] = [
+                { wch: 16 },
+                { wch: 24 },
+                { wch: 16 },
+                { wch: 28 },
+                { wch: 20 },
+                { wch: 10 },
+                { wch: 20 },
+                { wch: 14 },
+                { wch: 14 },
+            ];
+
+            // Sheet 2: Dokumen (link absolut, klik-able di Excel)
+            const docRows: any[][] = [
+                [
+                    "ID Permohonan",
+                    "Nama Pemohon",
+                    "Nama Dokumen",
+                    "Tipe",
+                    "Ukuran (KB)",
+                    "Link",
+                ],
+            ];
+            for (const r of rows) {
+                for (const d of r.dokumen ?? []) {
+                    docRows.push([
+                        r.id,
+                        r.applicantName,
+                        d.nama,
+                        d.tipe,
+                        Math.round((d.ukuran ?? 0) / 1024),
+                        absoluteUploadUrl(d.url),
+                    ]);
+                }
+            }
+            const wsDok = XLSX.utils.aoa_to_sheet(docRows);
+            wsDok["!cols"] = [
+                { wch: 16 },
+                { wch: 24 },
+                { wch: 32 },
+                { wch: 12 },
+                { wch: 12 },
+                { wch: 48 },
+            ];
+            for (let i = 1; i < docRows.length; i++) {
+                const addr = XLSX.utils.encode_cell({ r: i, c: 5 });
+                const cell = wsDok[addr];
+                if (cell?.v) cell.l = { Target: String(cell.v) };
+            }
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, wsPerm, "Permohonan");
+            if (docRows.length > 1)
+                XLSX.utils.book_append_sheet(wb, wsDok, "Dokumen");
+
+            const from = exportDateFrom || "awal";
+            const to = exportDateTo || "sekarang";
+            XLSX.writeFile(wb, `permohonan_${from}_sd_${to}.xlsx`);
+        } catch (e) {
+            exportError = e instanceof Error ? e.message : String(e);
+        } finally {
+            exporting = false;
+        }
+    }
 
     async function deleteSelected() {
         if (!selected.length) return;
@@ -184,28 +382,36 @@
         return parts.join(" ");
     }
 
-    function exportCSV() {
-        const headers = [
-            "ID",
-            "Nama",
-            "No HP",
-            "Layanan",
-            "Tgl Kirim",
-            "Status",
-        ];
-        const body = data.map((r: any) => [
-            r.id,
-            r.applicantName,
-            r.applicantPhone,
-            r.serviceTitle,
-            r.submittedAt ? formatDate(r.submittedAt) : "",
-            r.status,
-        ]);
-        const csv = [headers, ...body].map((r: any) => r.join(",")).join("\n");
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-        a.download = `permohonan-${activeTab}.csv`;
-        a.click();
+    // Badge durasi penyelesaian: hijau = jauh dari SLA, kuning = mepet SLA,
+    // merah = telat (melewati SLA), abu = layanan tanpa SLA
+    function completionBadge(c: any) {
+        if (c.overSla === true)
+            return {
+                cls: "bg-red-50 text-red-600",
+                icon: "mdi:clock-alert-outline",
+                label: `Telat ${formatSlaDuration(c.minutes)}`,
+                title: `Melewati SLA (${formatSlaDuration(c.slaMinutes)})`,
+            };
+        if (c.overSla === false && c.nearSla)
+            return {
+                cls: "bg-amber-50 text-amber-700",
+                icon: "mdi:clock-outline",
+                label: formatSlaDuration(c.minutes),
+                title: `Mepet SLA (${formatSlaDuration(c.slaMinutes)})`,
+            };
+        if (c.overSla === false)
+            return {
+                cls: "bg-green/10 text-green",
+                icon: "mdi:check-circle",
+                label: formatSlaDuration(c.minutes),
+                title: `Dalam SLA (${formatSlaDuration(c.slaMinutes)})`,
+            };
+        return {
+            cls: "bg-black/5 text-ink/50",
+            icon: "mdi:check-circle",
+            label: formatSlaDuration(c.minutes),
+            title: "Durasi sejak dikirim",
+        };
     }
 
     const tabs = [
@@ -249,7 +455,7 @@
             class="border bg-white/50 border-black/10 rounded py-2 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors"
         />
         <button
-            onclick={exportCSV}
+            onclick={openExportModal}
             class="flex items-center gap-2 px-4 py-2 bg-green text-white text-sm font-semibold transition-colors cursor-pointer"
         >
             <Icon icon="mdi:download" class="w-4 h-4" /> Export
@@ -295,9 +501,26 @@
                 </p>
             </div>
         {:else if cell.column.id === "status"}
-            <span class="status-badge {statusBadgeClass(cell.getValue())}"
-                >{cell.getValue()}</span
-            >
+            <div class="flex flex-col items-start gap-1">
+                <span
+                    class="status-badge {statusBadgeClass(cell.getValue())}"
+                    >{cell.getValue()}</span
+                >
+                {#if cell.getValue() === "Selesai" &&
+                    cell.row.original.completion}
+                    {@const b = completionBadge(cell.row.original.completion)}
+                    <span
+                        class={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${b.cls}`}
+                        title={b.title}
+                    >
+                        <Icon
+                            icon={b.icon}
+                            class="w-3 h-3 shrink-0"
+                        />
+                        {b.label}
+                    </span>
+                {/if}
+            </div>
         {:else if cell.column.id === "slaRemaining"}
             {@const sla = cell.getValue()}
             {#if sla === null || sla === undefined}
@@ -407,6 +630,128 @@
     </div>
 {/if}
 
+<svelte:window
+    onkeydown={(e) => {
+        if (e.key === "Escape" && showExport) closeExportModal();
+    }}
+/>
+
+<!-- ── Modal Export XLSX ────────────────────────────────── -->
+{#if showExport}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_interactive_supports_focus -->
+    <div
+        use:portal
+        class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+        onclick={(e) => e.target === e.currentTarget && closeExportModal()}
+        role="dialog"
+        aria-modal="true"
+    >
+        <div class="bg-white w-full max-w-md shadow-2xl export-modal-in">
+            <!-- Header -->
+            <div
+                class="flex items-center justify-between px-5 py-4 border-b border-black/8"
+            >
+                <div>
+                    <h3 class="text-sm font-bold uppercase tracking-wide">
+                        Export Permohonan
+                    </h3>
+                    <p class="text-[11px] text-ink/40 mt-0.5">
+                        Format XLSX · termasuk link dokumen pemohon
+                    </p>
+                </div>
+                <button
+                    onclick={closeExportModal}
+                    class="text-ink/40 hover:text-ink transition p-1"
+                    aria-label="Tutup"
+                >
+                    <Icon icon="mdi:close" class="w-4 h-4" />
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="px-5 py-5 space-y-4">
+                <div>
+                    <p
+                        class="text-[10px] font-bold uppercase tracking-widest text-ink/40 mb-2"
+                    >
+                        Rentang Tanggal Kirim
+                    </p>
+                    <div class="flex items-center gap-1.5">
+                        <input
+                            type="date"
+                            bind:value={exportDateFrom}
+                            max={exportDateTo || undefined}
+                            class="flex-1 min-w-0 border border-black/10 bg-white/50 rounded py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors"
+                        />
+                        <span class="text-xs text-ink/40 shrink-0">s.d.</span>
+                        <input
+                            type="date"
+                            bind:value={exportDateTo}
+                            min={exportDateFrom || undefined}
+                            class="flex-1 min-w-0 border border-black/10 bg-white/50 rounded py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors"
+                        />
+                    </div>
+                    <p class="text-[11px] text-ink/40 mt-1.5">
+                        Kosongkan untuk mengekspor semua data.
+                    </p>
+                </div>
+
+                <div
+                    class="bg-ink/3 border border-ink/8 px-4 py-3 flex items-center gap-2.5"
+                >
+                    <Icon
+                        icon="mdi:information-outline"
+                        class="w-4 h-4 text-green shrink-0"
+                    />
+                    {#if exportLoading}
+                        <p class="text-xs text-ink/50">Menghitung data...</p>
+                    {:else if exportTotal === null}
+                        <p class="text-xs text-ink/50">
+                            Gagal menghitung jumlah data.
+                        </p>
+                    {:else}
+                        <p class="text-xs text-ink/70">
+                            <span class="font-bold"
+                                >{exportTotal.toLocaleString("id-ID")}</span
+                            >
+                            permohonan akan diekspor ({exportRangeLabel})
+                        </p>
+                    {/if}
+                </div>
+
+                {#if exportError}
+                    <p class="text-xs text-red-500">{exportError}</p>
+                {/if}
+            </div>
+
+            <!-- Footer -->
+            <div class="border-t border-black/8 px-5 py-4 flex gap-3">
+                <button
+                    onclick={closeExportModal}
+                    class="flex-1 border border-black/10 text-sm font-semibold py-2.5 hover:bg-black/5 transition cursor-pointer"
+                >
+                    Batal
+                </button>
+                <button
+                    onclick={runExport}
+                    disabled={exporting || exportLoading || !exportTotal}
+                    class="flex-1 bg-green text-white text-sm font-semibold py-2.5 hover:bg-green/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                >
+                    {#if exporting}
+                        <Icon icon="mdi:loading" class="w-4 h-4 animate-spin" />
+                        Menyiapkan...
+                    {:else}
+                        <Icon icon="mdi:download" class="w-4 h-4" />
+                        Export XLSX
+                    {/if}
+                </button>
+            </div>
+        </div>
+    </div>
+{/if}
+
 <style>
     .status-badge {
         display: inline-block;
@@ -440,5 +785,18 @@
         background: none;
         border: none;
         cursor: pointer;
+    }
+    .export-modal-in {
+        animation: exportModalIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes exportModalIn {
+        from {
+            opacity: 0;
+            transform: translateY(16px) scale(0.98);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
     }
 </style>
