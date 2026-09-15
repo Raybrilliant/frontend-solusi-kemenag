@@ -737,7 +737,7 @@
                     <select
                         bind:value={filterMonth}
                         onchange={onFilterChange}
-                        class="border border-black/10 px-2 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green/40"
+                        class="border border-black/10 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green/40 focus:border-green transition"
                     >
                         {#each BULAN_OPTIONS as nama, idx}
                             <option value={idx}>{nama}</option>
@@ -746,7 +746,7 @@
                     <select
                         bind:value={filterYear}
                         onchange={onFilterChange}
-                        class="border border-black/10 px-2 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green/40"
+                        class="border border-black/10 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green/40 focus:border-green transition"
                     >
                         {#each YEAR_OPTIONS as y}
                             <option value={y}>{y}</option>
