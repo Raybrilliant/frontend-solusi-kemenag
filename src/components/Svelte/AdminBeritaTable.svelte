@@ -14,6 +14,8 @@
     let searchTerm = $state("");
     let statusFilter = $state("all");
     let categoryFilter = $state("all");
+    let dateFrom = $state("");
+    let dateTo = $state("");
     let toast = $state(null);
     let limit = $state(20);
     let pagination = $state({ page: 1, limit: 20, total: 0, totalPages: 1 });
@@ -48,6 +50,8 @@
         const q = searchTerm;
         const s = statusFilter;
         const c = categoryFilter;
+        const df = dateFrom;
+        const dt = dateTo;
         const p = page;
         clearTimeout(_debounce);
         _debounce = setTimeout(
@@ -59,6 +63,8 @@
                 });
                 if (q.trim()) params.set("q", q.trim());
                 if (s !== "all") params.set("status", s);
+                if (df) params.set("dateFrom", df);
+                if (dt) params.set("dateTo", dt);
                 if (kecamatanKategori) {
                     params.set("kategori", kecamatanKategori);
                 } else if (c !== "all") {
@@ -89,6 +95,8 @@
         searchTerm;
         statusFilter;
         categoryFilter;
+        dateFrom;
+        dateTo;
         page = 1;
     });
 
@@ -209,7 +217,7 @@
         />
         <select
             bind:value={statusFilter}
-            class="border bg-white/50 border-black/10 rounded py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors"
+            class="border bg-white/50 border-black/10 rounded py-2 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors"
         >
             <option value="all">Semua status</option>
             <option value="draft">Draft</option>
@@ -226,12 +234,29 @@
         {:else}
             <select
                 bind:value={categoryFilter}
-                class="border bg-white/50 border-black/10 rounded py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors"
+                class="border bg-white/50 border-black/10 rounded py-2 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors"
             >
                 <option value="all">Semua kategori</option>
                 {#each categories as k}<option value={k}>{k}</option>{/each}
             </select>
         {/if}
+        <div class="flex items-center gap-1.5">
+            <input
+                type="date"
+                bind:value={dateFrom}
+                max={dateTo || undefined}
+                title="Tanggal publish — dari"
+                class="border bg-white/50 border-black/10 rounded py-2 px-4 text-sm text-ink/70 focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors w-36"
+            />
+            <span class="text-xs text-ink/40">s.d.</span>
+            <input
+                type="date"
+                bind:value={dateTo}
+                min={dateFrom || undefined}
+                title="Tanggal publish — sampai"
+                class="border bg-white/50 border-black/10 rounded py-2 px-4 text-sm text-ink/70 focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors w-36"
+            />
+        </div>
     </div>
     <a
         href="/admin/berita/tambah"
