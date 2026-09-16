@@ -10,6 +10,7 @@ const userEmail = user?.email ?? "";
 const userRole = user?.role ?? "";
 const isHumas = userRole === "humas";
 const isSatker = userRole === "satker";
+const isOperator = userRole === "operator";
 const isAdminManager = userRole === "super_admin" || userRole === "admin";
 const userInitials = userName
     .split(" ")
@@ -123,6 +124,15 @@ const navItems = isAdminManager
                           icon: "mdi:file-document-outline",
                           label: "Layanan",
                       },
+                      ...(isOperator
+                          ? [
+                                {
+                                    href: "/admin/survei",
+                                    icon: "mdi:clipboard-check-outline",
+                                    label: "Rekap Survei",
+                                },
+                            ]
+                          : []),
                   ]),
       ];
 
@@ -138,23 +148,15 @@ function isActive(href: string) {
     class="sidebar h-screen sticky top-0 flex flex-col shrink-0 overflow-hidden z-30"
 >
     <!-- Logo -->
-    <div
-        class="logo-row flex items-center gap-3 px-5 h-16 border-b border-white/8 shrink-0"
-    >
-        <div
-            class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center shrink-0 border border-white/20"
-        >
+    <div class="logo-row flex items-center gap-3 px-5 h-16 border-b border-white/8 shrink-0">
+        <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center shrink-0 border border-white/20">
             <img src="/logo.png" class="w-6 h-6 object-contain" alt="Logo" />
         </div>
         <div class="label-group min-w-0">
-            <p
-                class="text-[9px] font-extrabold uppercase tracking-[0.14em] text-white/40 leading-none"
-            >
+            <p class="text-[9px] font-extrabold uppercase tracking-[0.14em] text-white/40 leading-none">
                 Kementerian Agama
             </p>
-            <p
-                class="text-[11px] font-bold text-white leading-tight whitespace-nowrap"
-            >
+            <p class="text-[11px] font-bold text-white leading-tight whitespace-nowrap">
                 Kota Probolinggo
             </p>
         </div>
@@ -162,45 +164,41 @@ function isActive(href: string) {
 
     <!-- Nav -->
     <nav class="flex-1 overflow-y-auto overflow-x-hidden py-3 px-3">
-        <p
-            class="label-group text-[9px] font-extrabold uppercase tracking-[0.14em] text-white/25 px-3 py-2"
-        >
+        <p class="label-group text-[9px] font-extrabold uppercase tracking-[0.14em] text-white/25 px-3 py-2">
             Menu Utama
         </p>
 
-        {
-            navItems.map((item) => {
-                const active = isActive(item.href);
-                return (
-                    <a
-                        href={item.href}
-                        class={`nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 transition-colors ${
-                            active
-                                ? "bg-green text-white shadow-md"
-                                : "text-white/55 hover:bg-white/[0.07] hover:text-white/90"
-                        }`}
-                    >
+        {navItems.map((item) => {
+            const active = isActive(item.href);
+            return (
+                <a
+                    href={item.href}
+                    class={`nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 transition-colors ${
+                        active
+                            ? "bg-green text-white shadow-md"
+                            : "text-white/55 hover:bg-white/[0.07] hover:text-white/90"
+                    }`}
+                >
+                    <Icon
+                        name={item.icon}
+                        width="18"
+                        height="18"
+                        class="shrink-0"
+                    />
+                    <span class="label-group text-[13px] font-semibold whitespace-nowrap">
+                        {item.label}
+                    </span>
+                    {active && (
                         <Icon
-                            name={item.icon}
-                            width="18"
-                            height="18"
-                            class="shrink-0"
+                            name="mdi:chevron-right"
+                            width="16"
+                            height="16"
+                            class="ml-auto shrink-0 opacity-60"
                         />
-                        <span class="label-group text-[13px] font-semibold whitespace-nowrap">
-                            {item.label}
-                        </span>
-                        {active && (
-                            <Icon
-                                name="mdi:chevron-right"
-                                width="16"
-                                height="16"
-                                class="ml-auto shrink-0 opacity-60"
-                            />
-                        )}
-                    </a>
-                );
-            })
-        }
+                    )}
+                </a>
+            );
+        })}
     </nav>
 
     <!-- Zona Integritas card -->
@@ -216,9 +214,7 @@ function isActive(href: string) {
                 <p class="text-[11px] font-bold text-white leading-tight">
                     Zona Integritas
                 </p>
-                <p
-                    class="text-[10px] text-white/40 leading-relaxed mt-0.5 line-clamp-3"
-                >
+                <p class="text-[10px] text-white/40 leading-relaxed mt-0.5 line-clamp-3">
                     Layanan bebas pungli, transparan, dan profesional
                 </p>
             </div>
@@ -227,9 +223,9 @@ function isActive(href: string) {
             href="/pengaduan"
             class="flex items-center gap-2 bg-green hover:bg-green/90 transition-colors rounded-lg px-3 py-2"
         >
-            <span class="text-[11px] font-bold text-white"
-                >Laporkan Penyelewengan →</span
-            >
+            <span class="text-[11px] font-bold text-white">
+                Laporkan Penyelewengan →
+            </span>
         </a>
     </div>
 
@@ -274,18 +270,14 @@ function isActive(href: string) {
             aria-expanded="false"
             aria-haspopup="true"
         >
-            <div
-                class="w-8 h-8 rounded-full bg-green flex items-center justify-center shrink-0 text-white text-xs font-bold"
-            >
+            <div class="w-8 h-8 rounded-full bg-green flex items-center justify-center shrink-0 text-white text-xs font-bold">
                 {userInitials}
             </div>
             <div class="label-group min-w-0 flex-1 text-left">
                 <p class="text-[12px] font-bold text-white truncate">
                     {userName}
                 </p>
-                <p class="text-[10px] text-white/40 truncate">
-                    {userEmail}
-                </p>
+                <p class="text-[10px] text-white/40 truncate">{userEmail}</p>
             </div>
             <Icon
                 name="mdi:chevron-down"

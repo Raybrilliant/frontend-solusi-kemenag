@@ -1,6 +1,11 @@
 ---
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import AdminSurveiManager from "../../../components/Svelte/AdminSurveiManager.svelte";
+
+// Operator hanya melihat rekap survei layanan pada kategorinya.
+const role = Astro.locals.user?.role ?? "";
+const isOperator = role === "operator";
+const canManage = !isOperator;
 ---
 
 <style>
@@ -37,17 +42,19 @@ import AdminSurveiManager from "../../../components/Svelte/AdminSurveiManager.sv
     <div class="min-h-full">
         <div data-anim="hero" class="px-8 py-6">
             <h1 class="text-4xl font-bold uppercase tracking-tight text-ink">
-                Manajemen Survei
+                {isOperator ? "Rekap Survei" : "Manajemen Survei"}
             </h1>
             <p class="text-sm text-ink/50 mt-1">
-                Kelola pertanyaan SPKP dan SPAK serta pantau rekap nilai
-                bulanan.
+                {isOperator
+                    ? "Pantau rekap nilai survei layanan pada kategori Anda."
+                    : "Kelola pertanyaan SPKP dan SPAK serta pantau rekap nilai bulanan."}
             </p>
         </div>
 
         <div data-anim="content" class="px-8 py-6">
             <AdminSurveiManager
                 client:load
+                canManage={canManage}
                 questionsUrl="/api/admin/survei/questions"
                 responsesUrl="/api/admin/survei/responses"
                 answersUrl="/api/admin/survei/responses/answers"

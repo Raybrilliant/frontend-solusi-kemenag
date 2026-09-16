@@ -2,6 +2,7 @@
     import Icon from "@iconify/svelte";
     import * as XLSX from "xlsx";
     let {
+        canManage = true,
         questionsUrl = "/api/admin/survei/questions",
         responsesUrl = "/api/admin/survei/responses",
         answersUrl = "/api/admin/survei/responses/answers",
@@ -22,11 +23,17 @@
         },
     ];
 
-    const tabs = [
-        { id: "questions", label: "Pertanyaan" },
-        { id: "responses", label: "Daftar Survei" },
-        { id: "monthly", label: "Rekap Bulanan" },
-    ];
+    // Operator (canManage=false) hanya melihat rekap, tanpa kelola pertanyaan
+    // dan daftar survei; datanya pun di-scope per kategori oleh backend.
+    const tabs = $derived(
+        canManage
+            ? [
+                  { id: "questions", label: "Pertanyaan" },
+                  { id: "responses", label: "Daftar Survei" },
+                  { id: "monthly", label: "Rekap Bulanan" },
+              ]
+            : [{ id: "monthly", label: "Rekap Bulanan" }],
+    );
     const KRITIK_PER_PAGE = 10;
 
     // Mapping kode demografi (integer) -> label, dipakai di tabel respons & export.
@@ -83,7 +90,10 @@
     }
 
     let activeType = $state("SPKP");
-    let activeTab = $state("questions");
+    let selectedTab = $state(null);
+    const activeTab = $derived(
+        selectedTab ?? (canManage ? "questions" : "monthly"),
+    );
     let questions = $state([]);
     let questionsLoading = $state(true);
     let questionsError = $state("");
@@ -377,7 +387,7 @@
         formQuestion = item.question ?? "";
         formSortOrder = Number(item.sortOrder ?? 1);
         formIsActive = Boolean(item.isActive);
-        activeTab = "questions";
+        selectedTab = "questions";
     }
 
     async function loadQuestions(type = activeType) {
@@ -918,11 +928,13 @@
     }
 
     $effect(() => {
+        if (!canManage) return;
         const type = activeType;
         loadQuestions(type);
     });
 
     $effect(() => {
+        if (!canManage) return;
         const type = activeType;
         const page = responsePage;
         const ticket = ticketFilter;
@@ -965,6 +977,7 @@
 {/if}
 
 <div class="space-y-5">
+    {#if canManage}
     <section class="grid grid-cols-1 md:grid-cols-3 gap-3">
         {#each surveyTypes as type}
             <button
@@ -992,11 +1005,12 @@
             </button>
         {/each}
     </section>
+    {/if}
 
     <section class="flex flex-wrap items-center gap-2 border-b border-black/8">
         {#each tabs as tab}
             <button
-                onclick={() => (activeTab = tab.id)}
+                onclick={() => (selectedTab = tab.id)}
                 class={`px-4 py-3 text-sm font-bold border-b-2 transition-colors ${
                     activeTab === tab.id
                         ? "border-green text-green"
