@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import {
+  fetchBackendWithRefresh,
   getAdminAuthHeaders,
   hasAdminSession,
   jsonProxyResponse,
@@ -15,9 +16,10 @@ export const GET: APIRoute = async ({ url, cookies, request }) => {
     if (!hasAdminSession(headers)) return missingAdminSessionResponse();
 
     const qs = url.searchParams.toString();
-    const res = await fetch(
+    const { res } = await fetchBackendWithRefresh(
+      cookies,
+      request,
       `${BACKEND_URL}/api/v1/survei/responses${qs ? `?${qs}` : ""}`,
-      { headers },
     );
     const data = await readBackendJson(res);
     return jsonProxyResponse(data, res.ok ? 200 : res.status);

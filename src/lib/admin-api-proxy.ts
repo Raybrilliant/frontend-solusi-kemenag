@@ -1,4 +1,9 @@
 import { getUserFromToken, type AuthUser } from "./get-user";
+import {
+  SSO_COOKIE_NAMES,
+  applySetCookiesToAstro,
+  refreshSsoSession,
+} from "./sso-server";
 
 export function getAdminAuthHeaders(
   cookies: any,
@@ -87,3 +92,65 @@ export function adminJsonResponse(data: unknown, status = 200): Response {
 }
 
 export const jsonProxyResponse = adminJsonResponse;
+
+function bearerFromCookieJar(jar: string): string | null {
+  const m = jar.match(/(?:^|;\s*)auth_token=([^;]+)/);
+  return m ? decodeURIComponent(m[1]) : null;
+}
+
+/**
+ * Fetch ke backend dengan silent refresh: bila access token kedaluwarsa
+ * (401), rotasi sesi via refresh cookie SSO lalu ulangi request sekali.
+ * Cookie hasil rotasi diteruskan ke browser agar sesi tetap sinkron.
+ * Tanpa ini, fetch paging dari komponen yang diam > TTL access token (15m)
+ * selalu 401 karena refresh hanya terjadi di middleware saat navigasi
+ * halaman.
+ */
+export async function fetchBackendWithRefresh(
+  cookies: any,
+  request: Request,
+  url: string,
+  init: { method?: string; body?: string } = {},
+): Promise<{ res: Response }> {
+  const cookieHeader = request.headers.get("cookie") ?? "";
+  const method = init.method ?? "GET";
+
+  const doFetch = (headers: Record<string, string>) =>
+    fetch(url, {
+      method,
+      headers: {
+        Accept: "application/json",
+        ...(init.body ? { "Content-Type": "application/json" } : {}),
+        ...headers,
+      },
+      ...(init.body ? { body: init.body } : {}),
+    });
+
+  let res = await doFetch(getAdminAuthHeaders(cookies, request));
+
+  if (res.status === 401 && cookieHeader) {
+    const refreshed = await refreshSsoSession(cookieHeader);
+    if (refreshed) {
+      applySetCookiesToAstro(cookies, refreshed.setCookies);
+      // auth_token di jar masih yang lama (backend hanya men-rotasi cookie
+      // SSO) — timpa dengan access token baru supaya Bearer retry valid.
+      const freshAccess = refreshed.setCookies.find(
+        (c) => c.name === SSO_COOKIE_NAMES.access,
+      )?.value;
+      const bearer = freshAccess ?? bearerFromCookieJar(refreshed.cookieJar);
+      const cookieForRetry =
+        freshAccess && /(^|;\s*)auth_token=/.test(refreshed.cookieJar)
+          ? refreshed.cookieJar.replace(
+              /(^|;\s*)auth_token=[^;]*/,
+              `$1auth_token=${encodeURIComponent(freshAccess)}`,
+            )
+          : refreshed.cookieJar;
+      res = await doFetch({
+        ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
+        Cookie: cookieForRetry,
+      });
+    }
+  }
+
+  return { res };
+}
