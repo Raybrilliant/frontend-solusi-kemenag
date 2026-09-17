@@ -34,6 +34,8 @@
     let data = $state<PrestasiRow[]>([]);
     let loading = $state(true);
     let searchTerm = $state("");
+    let madrasahFilter = $state("");
+    let madrasahOptions = $state<string[]>([]);
     let toast = $state<{ type: string; msg: string } | null>(null);
     let usingMock = $state(false);
     let limit = $state(20);
@@ -74,24 +76,27 @@
         };
     }
 
-    function applyMock(query = "") {
+    function applyMock(query = "", madrasah = "") {
         const all = getPrestasiSiswaMockList().map(normalizeItem);
         const q = query.trim().toLowerCase();
-        const filtered = !q
-            ? all
-            : all.filter((item) =>
-                  [
-                      item.id,
-                      item.judul,
-                      item.prestasi,
-                      item.madrasah,
-                      item.tingkat,
-                      item.penyelenggara,
-                  ]
-                      .join(" ")
-                      .toLowerCase()
-                      .includes(q),
-              );
+        const filtered = all.filter((item) => {
+            const matchesQuery =
+                !q ||
+                [
+                    item.id,
+                    item.judul,
+                    item.prestasi,
+                    item.madrasah,
+                    item.tingkat,
+                    item.penyelenggara,
+                ]
+                    .join(" ")
+                    .toLowerCase()
+                    .includes(q);
+            const matchesMadrasah =
+                !madrasah || item.madrasah === madrasah;
+            return matchesQuery && matchesMadrasah;
+        });
 
         data = filtered;
         pagination = {
@@ -104,10 +109,30 @@
         loading = false;
     }
 
+    async function loadMadrasahOptions() {
+        try {
+            const res = await fetch(`${apiUrl}/madrasah`);
+            if (!res.ok) throw new Error("Gagal memuat daftar madrasah.");
+            const json = await res.json();
+            const list = Array.isArray(json?.data) ? json.data : [];
+            madrasahOptions = list.map((m: unknown) => String(m));
+        } catch {
+            const all = getPrestasiSiswaMockList().map(normalizeItem);
+            madrasahOptions = [
+                ...new Set(all.map((i) => i.madrasah).filter(Boolean)),
+            ];
+        }
+    }
+
+    $effect(() => {
+        loadMadrasahOptions();
+    });
+
     $effect(() => {
         const q = searchTerm;
         const p = page;
         const l = limit;
+        const m = madrasahFilter;
         clearTimeout(_debounce);
         _debounce = setTimeout(
             async () => {
@@ -117,6 +142,7 @@
                     limit: String(l),
                 });
                 if (q.trim()) params.set("q", q.trim());
+                if (m) params.set("madrasah", m);
 
                 try {
                     const res = await fetch(`${apiUrl}?${params}`);
@@ -133,7 +159,7 @@
                     };
                     usingMock = false;
                 } catch {
-                    applyMock(q);
+                    applyMock(q, m);
                 } finally {
                     loading = false;
                 }
@@ -147,6 +173,7 @@
     $effect(() => {
         searchTerm;
         limit;
+        madrasahFilter;
         page = 1;
     });
 
@@ -266,6 +293,16 @@
             class="border bg-white/50 border-black/10 rounded py-2 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors w-72"
             bind:value={searchTerm}
         />
+        <select
+            bind:value={madrasahFilter}
+            aria-label="Filter madrasah"
+            class="border bg-white/50 border-black/10 rounded py-2 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors cursor-pointer max-w-64"
+        >
+            <option value="">Semua Madrasah</option>
+            {#each madrasahOptions as m (m)}
+                <option value={m}>{m}</option>
+            {/each}
+        </select>
         {#if usingMock}
             <span
                 class="inline-flex items-center gap-1.5 px-3 py-2 border border-amber-200 bg-amber-50 text-amber-700 text-sm font-semibold rounded"
