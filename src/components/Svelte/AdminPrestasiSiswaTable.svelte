@@ -107,13 +107,14 @@
     $effect(() => {
         const q = searchTerm;
         const p = page;
+        const l = limit;
         clearTimeout(_debounce);
         _debounce = setTimeout(
             async () => {
                 loading = true;
                 const params = new URLSearchParams({
                     page: String(p),
-                    limit: String(limit),
+                    limit: String(l),
                 });
                 if (q.trim()) params.set("q", q.trim());
 
@@ -145,8 +146,19 @@
 
     $effect(() => {
         searchTerm;
+        limit;
         page = 1;
     });
+
+    const PAGE_SIZES = [10, 20, 50, 100];
+
+    function pageNumbers(current: number, total: number): (number | "…")[] {
+        if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+        if (current <= 4) return [1, 2, 3, 4, 5, "…", total];
+        if (current >= total - 3)
+            return [1, "…", total - 4, total - 3, total - 2, total - 1, total];
+        return [1, "…", current - 1, current, current + 1, "…", total];
+    }
 
     const rowInfo = $derived.by(() => {
         if (pagination.total === 0) return "";
@@ -220,7 +232,11 @@
             if (!res.ok || json.success === false) {
                 throw new Error(json.message ?? "Gagal menghapus prestasi.");
             }
-            data = data.filter((item) => item.id !== row.id);
+            const remaining = data.filter((item) => item.id !== row.id);
+            data = remaining;
+            if (remaining.length === 0 && pagination.page > 1) {
+                page = pagination.page - 1;
+            }
             showToast("success", "Prestasi berhasil dihapus.");
         } catch (err) {
             showToast("error", (err as Error).message || "Terjadi kesalahan.");
@@ -267,10 +283,6 @@
         <Icon icon="mdi:plus" class="w-3.5 h-3.5" />Tambah Prestasi
     </a>
 </div>
-
-{#if rowInfo}
-    <p class="text-xs text-ink/40 mb-3">{rowInfo}</p>
-{/if}
 
 <Table {data} {columns} {loading} disablePagination class="bg-white">
     {#snippet renderCell(cell: Cell<PrestasiRow, unknown>)}
@@ -343,3 +355,70 @@
         {/if}
     {/snippet}
 </Table>
+
+{#if !loading && pagination.total > 0}
+    <div
+        class="flex items-center justify-between px-4 py-3 bg-white border-t border-black/8 flex-wrap gap-3"
+    >
+        <!-- Info + page size -->
+        <div class="flex items-center gap-3 text-xs text-ink/45">
+            <span>{rowInfo}</span>
+            <div class="flex items-center gap-1.5">
+                <span>Tampilkan</span>
+                <select
+                    value={limit}
+                    onchange={(e) => (limit = Number(e.currentTarget.value))}
+                    class="border border-black/10 rounded-lg px-2 py-1 text-xs bg-white focus:outline-none focus:border-green cursor-pointer"
+                >
+                    {#each PAGE_SIZES as size (size)}
+                        <option value={size}>{size}</option>
+                    {/each}
+                </select>
+                <span>baris</span>
+            </div>
+        </div>
+
+        <!-- Page buttons -->
+        {#if pagination.totalPages > 1}
+            <div class="flex items-center gap-1">
+                <button
+                    onclick={() => (page = page - 1)}
+                    disabled={page <= 1}
+                    aria-label="Halaman sebelumnya"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg border border-black/10 hover:bg-black/4 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                >
+                    <Icon icon="mdi:chevron-left" class="w-4 h-4" />
+                </button>
+
+                {#each pageNumbers(page, pagination.totalPages) as p, i (i)}
+                    {#if p === "…"}
+                        <span
+                            class="w-8 h-8 flex items-center justify-center text-xs text-ink/30"
+                            >…</span
+                        >
+                    {:else}
+                        <button
+                            onclick={() => (page = Number(p))}
+                            class="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-semibold transition-colors cursor-pointer {
+                                page === p
+                                    ? 'bg-green text-white shadow-sm'
+                                    : 'hover:bg-black/4 text-ink/60 border border-black/10'
+                            }"
+                        >
+                            {p}
+                        </button>
+                    {/if}
+                {/each}
+
+                <button
+                    onclick={() => (page = page + 1)}
+                    disabled={page >= pagination.totalPages}
+                    aria-label="Halaman berikutnya"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg border border-black/10 hover:bg-black/4 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                >
+                    <Icon icon="mdi:chevron-right" class="w-4 h-4" />
+                </button>
+            </div>
+        {/if}
+    </div>
+{/if}
