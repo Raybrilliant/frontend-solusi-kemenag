@@ -66,6 +66,7 @@
     let searchQ = $state("");
     let filterMonth = $state(new Date().getMonth() + 1); // 1-12, default bulan ini
     let filterYear = $state(new Date().getFullYear());
+    let filterDate = $state(""); // YYYY-MM-DD, kosong = pakai filter bulan/tahun
     let exportingPdf = $state(false);
     const BULAN_OPTIONS = [
         "Semua","Januari","Februari","Maret","April","Mei","Juni",
@@ -526,9 +527,15 @@
         fetchList();
     }
 
-    // ── Filter bulan/tahun & export PDF ────────────────────────
+    // ── Filter tanggal/bulan/tahun & export PDF ────────────────
     function buildDateParams(): URLSearchParams {
         const params = new URLSearchParams();
+        if (filterDate) {
+            // Tanggal spesifik menimpa filter bulan/tahun
+            params.set("from", filterDate);
+            params.set("to", filterDate);
+            return params;
+        }
         if (filterMonth > 0) {
             const mm = String(filterMonth).padStart(2, "0");
             const from = `${filterYear}-${mm}-01`;
@@ -546,6 +553,11 @@
     function onFilterChange() {
         page = 1;
         fetchList();
+    }
+
+    function clearDateFilter() {
+        filterDate = "";
+        onFilterChange();
     }
 
     async function exportPdf() {
@@ -734,21 +746,42 @@
                     />
                 </div>
                 <div class="flex items-center gap-2 ml-auto">
+                    <input
+                        type="date"
+                        bind:value={filterDate}
+                        onchange={onFilterChange}
+                        aria-label="Filter tanggal kunjungan"
+                        class="border border-black/10 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green/40 focus:border-green transition {filterDate
+                            ? "text-ink font-semibold"
+                            : "text-ink/50"}"
+                    />
+                    {#if filterDate}
+                        <button
+                            type="button"
+                            onclick={clearDateFilter}
+                            aria-label="Hapus filter tanggal"
+                            class="w-8 h-8 flex items-center justify-center border border-black/10 text-ink/40 hover:text-red-500 hover:border-red-200 transition"
+                        >
+                            <Icon icon="mdi:close" width="14" height="14" />
+                        </button>
+                    {/if}
                     <select
                         bind:value={filterMonth}
                         onchange={onFilterChange}
-                        class="border border-black/10 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green/40 focus:border-green transition"
+                        disabled={!!filterDate}
+                        class="border border-black/10 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green/40 focus:border-green transition disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                        {#each BULAN_OPTIONS as nama, idx}
+                        {#each BULAN_OPTIONS as nama, idx (idx)}
                             <option value={idx}>{nama}</option>
                         {/each}
                     </select>
                     <select
                         bind:value={filterYear}
                         onchange={onFilterChange}
-                        class="border border-black/10 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green/40 focus:border-green transition"
+                        disabled={!!filterDate}
+                        class="border border-black/10 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green/40 focus:border-green transition disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                        {#each YEAR_OPTIONS as y}
+                        {#each YEAR_OPTIONS as y (y)}
                             <option value={y}>{y}</option>
                         {/each}
                     </select>
