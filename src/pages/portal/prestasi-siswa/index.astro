@@ -8,6 +8,9 @@ const PRESTASI_ENDPOINT = new URL(
     Astro.url.origin,
 ).toString();
 
+// Hanya muat halaman pertama saat SSR; sisanya diambil bertahap saat scroll.
+const PAGE_SIZE = 9;
+
 Astro.response.headers.set(
     "Cache-Control",
     "public, max-age=180, stale-while-revalidate=300",
@@ -91,16 +94,27 @@ function normalizePrestasi(item: any) {
 }
 
 let prestasiList: ReturnType<typeof normalizePrestasi>[] = [];
+let pagination = {
+    page: 1,
+    limit: PAGE_SIZE,
+    total: 0,
+    totalPages: 1,
+};
 
 try {
-    const res = await fetch(PRESTASI_ENDPOINT);
+    const res = await fetch(`${PRESTASI_ENDPOINT}?page=1&limit=${PAGE_SIZE}`);
     if (res.ok) {
         const json = await res.json();
         prestasiList = toArray(json?.data ?? json?.items ?? json).map(
             normalizePrestasi,
         );
+        if (json?.pagination && typeof json.pagination === "object") {
+            pagination = { ...pagination, ...json.pagination };
+        }
     }
 } catch {}
+
+const hasMore = pagination.totalPages > 1;
 
 const pageUrl = `${Astro.url.origin}/portal/prestasi-siswa`;
 const firstImage = prestasiList[0]?.image;
@@ -249,9 +263,7 @@ const structuredData = {
 
         <div class="flex items-center gap-3 mb-2">
             <div class="w-1 h-7 bg-green shrink-0"></div>
-            <h1
-                class="text-4xl font-extrabold uppercase tracking-tight text-ink"
-            >
+            <h1 class="text-4xl font-extrabold uppercase tracking-tight text-ink">
                 Prestasi Siswa
             </h1>
         </div>
@@ -262,28 +274,122 @@ const structuredData = {
         </p>
     </section>
 
-    {
-        prestasiList.length === 0 ? (
+    {prestasiList.length === 0 ? (
+        <div
+            data-anim="up"
+            class="py-24 text-center border border-black/8 bg-white/60"
+        >
+            <Icon
+                name="mdi:trophy-outline"
+                class="w-10 h-10 text-ink/20 mx-auto mb-3"
+            />
+            <p class="text-sm font-semibold uppercase tracking-wider text-ink/35">
+                Belum ada data prestasi siswa
+            </p>
+        </div>
+    ) : (
+        <>
             <div
-                data-anim="up"
-                class="py-24 text-center border border-black/8 bg-white/60"
+                id="prestasi-grid"
+                class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-10"
             >
-                <Icon
-                    name="mdi:trophy-outline"
-                    class="w-10 h-10 text-ink/20 mx-auto mb-3"
-                />
-                <p class="text-sm font-semibold uppercase tracking-wider text-ink/35">
-                    Belum ada data prestasi siswa
-                </p>
+                {prestasiList.map((item, index) => (
+                    <a
+                        href={`/portal/prestasi-siswa/${item.id}`}
+                        data-reveal="up"
+                        data-delay={String((index % 6) + 1)}
+                        class="achievement-card group border border-black/8 bg-white/70 overflow-hidden flex flex-col h-full"
+                    >
+                        <div class="achievement-visual relative h-64 overflow-hidden">
+                            <div class="absolute top-4 left-4 z-10 inline-flex items-center gap-1 rounded-full bg-green/8 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-green border border-green/10">
+                                <Icon
+                                    name="mdi:trophy-award"
+                                    class="w-3.5 h-3.5"
+                                />
+                                {item.tahun || "Prestasi"}
+                            </div>
+
+                            {item.image ? (
+                                <img
+                                    src={item.image}
+                                    alt={item.title}
+                                    class="achievement-image w-full h-full object-cover"
+                                    loading="lazy"
+                                />
+                            ) : (
+                                <div class="achievement-placeholder h-full w-full flex items-center justify-center border-b border-black/6">
+                                    <div class="text-center px-6">
+                                        <Icon
+                                            name="mdi:image-outline"
+                                            class="w-16 h-16 text-green/35 mx-auto mb-3"
+                                        />
+                                        <p class="text-xs font-semibold uppercase tracking-wider text-ink/35">
+                                            Foto lomba belum tersedia
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div class="border-t border-black/6 px-5 py-5 bg-cream/80 flex flex-col flex-1">
+                            <div class="flex items-start gap-3 justify-between mb-3">
+                                <div>
+                                    <p class="text-[11px] uppercase tracking-wider text-green/70 font-black mb-1">
+                                        Prestasi Siswa
+                                    </p>
+                                    <h2 class="text-lg font-bold text-ink leading-tight group-hover:text-green transition-colors line-clamp-2">
+                                        {item.title}
+                                    </h2>
+                                </div>
+                                <Icon
+                                    name="mdi:arrow-top-right"
+                                    class="w-4 h-4 text-ink/30 group-hover:text-green transition-colors shrink-0 mt-1"
+                                />
+                            </div>
+
+                            {item.prestasi && (
+                                <div class="mb-3 border-l-4 border-yellow pl-3">
+                                    <p class="text-[11px] font-black uppercase tracking-wider text-yellow/80 mb-1">
+                                        Capaian
+                                    </p>
+                                    <p class="text-sm font-semibold text-ink">
+                                        {item.prestasi}
+                                    </p>
+                                </div>
+                            )}
+
+                            <div class="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-ink/40 mb-3">
+                                {item.tingkat && <span>{item.tingkat}</span>}
+                                {item.tingkat && item.madrasah && (
+                                    <span>•</span>
+                                )}
+                                {item.madrasah && <span>{item.madrasah}</span>}
+                            </div>
+
+                            <p class="text-sm text-ink/55 leading-relaxed line-clamp-3 flex-1">
+                                {item.description ||
+                                    "Lihat detail prestasi dan daftar siswa pemenang pada halaman ini."}
+                            </p>
+
+                            <div class="mt-4 flex items-center justify-between text-sm">
+                                <span class="text-green font-semibold">
+                                    Lihat Detail
+                                </span>
+                                <span class="text-ink/35 font-medium">
+                                    {item.winnerCount} pemenang
+                                </span>
+                            </div>
+                        </div>
+                    </a>
+                ))}
             </div>
-        ) : (
-            <>
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-10">
-                    {prestasiList.map((item, index) => (
+
+            {hasMore && (
+                <>
+                    <template id="prestasi-card-template">
                         <a
-                            href={`/portal/prestasi-siswa/${item.id}`}
+                            href="#"
                             data-reveal="up"
-                            data-delay={String((index % 6) + 1)}
                             class="achievement-card group border border-black/8 bg-white/70 overflow-hidden flex flex-col h-full"
                         >
                             <div class="achievement-visual relative h-64 overflow-hidden">
@@ -292,29 +398,31 @@ const structuredData = {
                                         name="mdi:trophy-award"
                                         class="w-3.5 h-3.5"
                                     />
-                                    {item.tahun || "Prestasi"}
+                                    <span data-field="tahun">Prestasi</span>
                                 </div>
 
-                                {item.image ? (
-                                    <img
-                                        src={item.image}
-                                        alt={item.title}
-                                        class="achievement-image w-full h-full object-cover"
-                                        loading="lazy"
-                                    />
-                                ) : (
-                                    <div class="achievement-placeholder h-full w-full flex items-center justify-center border-b border-black/6">
-                                        <div class="text-center px-6">
-                                            <Icon
-                                                name="mdi:image-outline"
-                                                class="w-16 h-16 text-green/35 mx-auto mb-3"
-                                            />
-                                            <p class="text-xs font-semibold uppercase tracking-wider text-ink/35">
-                                                Foto lomba belum tersedia
-                                            </p>
-                                        </div>
+                                <img
+                                    data-el="image"
+                                    src=""
+                                    alt=""
+                                    class="achievement-image w-full h-full object-cover"
+                                    loading="lazy"
+                                    style="display: none"
+                                />
+                                <div
+                                    data-el="placeholder"
+                                    class="achievement-placeholder h-full w-full flex items-center justify-center border-b border-black/6"
+                                >
+                                    <div class="text-center px-6">
+                                        <Icon
+                                            name="mdi:image-outline"
+                                            class="w-16 h-16 text-green/35 mx-auto mb-3"
+                                        />
+                                        <p class="text-xs font-semibold uppercase tracking-wider text-ink/35">
+                                            Foto lomba belum tersedia
+                                        </p>
                                     </div>
-                                )}
+                                </div>
                             </div>
 
                             <div class="border-t border-black/6 px-5 py-5 bg-cream/80 flex flex-col flex-1">
@@ -324,7 +432,7 @@ const structuredData = {
                                             Prestasi Siswa
                                         </p>
                                         <h2 class="text-lg font-bold text-ink leading-tight group-hover:text-green transition-colors line-clamp-2">
-                                            {item.title}
+                                            <span data-field="title" />
                                         </h2>
                                     </div>
                                     <Icon
@@ -333,32 +441,35 @@ const structuredData = {
                                     />
                                 </div>
 
-                                {item.prestasi && (
-                                    <div class="mb-3 border-l-4 border-yellow pl-3">
-                                        <p class="text-[11px] font-black uppercase tracking-wider text-yellow/80 mb-1">
-                                            Capaian
-                                        </p>
-                                        <p class="text-sm font-semibold text-ink">
-                                            {item.prestasi}
-                                        </p>
-                                    </div>
-                                )}
+                                <div
+                                    data-el="prestasi-block"
+                                    class="mb-3 border-l-4 border-yellow pl-3"
+                                    style="display: none"
+                                >
+                                    <p class="text-[11px] font-black uppercase tracking-wider text-yellow/80 mb-1">
+                                        Capaian
+                                    </p>
+                                    <p class="text-sm font-semibold text-ink">
+                                        <span data-field="prestasi" />
+                                    </p>
+                                </div>
 
                                 <div class="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-ink/40 mb-3">
-                                    {item.tingkat && (
-                                        <span>{item.tingkat}</span>
-                                    )}
-                                    {item.tingkat && item.madrasah && (
-                                        <span>•</span>
-                                    )}
-                                    {item.madrasah && (
-                                        <span>{item.madrasah}</span>
-                                    )}
+                                    <span
+                                        data-field="tingkat"
+                                        style="display: none"
+                                    />
+                                    <span data-el="dot" style="display: none">
+                                        •
+                                    </span>
+                                    <span
+                                        data-field="madrasah"
+                                        style="display: none"
+                                    />
                                 </div>
 
                                 <p class="text-sm text-ink/55 leading-relaxed line-clamp-3 flex-1">
-                                    {item.description ||
-                                        "Lihat detail prestasi dan daftar siswa pemenang pada halaman ini."}
+                                    <span data-field="description" />
                                 </p>
 
                                 <div class="mt-4 flex items-center justify-between text-sm">
@@ -366,38 +477,359 @@ const structuredData = {
                                         Lihat Detail
                                     </span>
                                     <span class="text-ink/35 font-medium">
-                                        {item.winnerCount} pemenang
+                                        <span data-field="winnerCount">0</span>
+                                        pemenang
                                     </span>
                                 </div>
                             </div>
                         </a>
-                    ))}
-                </div>
-            </>
-        )
-    }
+                    </template>
+
+                    <div
+                        id="prestasi-status"
+                        class="pb-10 flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wider text-ink/35"
+                        data-total-pages={String(pagination.totalPages)}
+                        data-total={String(pagination.total)}
+                        data-limit={String(PAGE_SIZE)}
+                        hidden
+                    />
+                    <div
+                        id="prestasi-sentinel"
+                        class="h-px w-full"
+                        aria-hidden="true"
+                    />
+                </>
+            )}
+        </>
+    )}
 
     <script>
-        function initPrestasiReveal() {
-            const items = document.querySelectorAll("[data-reveal]");
-            if (!items.length) return;
+        function initPrestasiPage() {
+            const grid = document.getElementById("prestasi-grid");
 
-            const observer = new IntersectionObserver(
+            // ── Reveal-on-scroll (kartu SSR + kartu hasil append) ──
+            let revealObserver = null;
+            function observeReveal(el) {
+                if (!revealObserver) {
+                    revealObserver = new IntersectionObserver(
+                        (entries) => {
+                            entries.forEach((entry) => {
+                                if (entry.isIntersecting) {
+                                    entry.target.classList.add("revealed");
+                                    revealObserver.unobserve(entry.target);
+                                }
+                            });
+                        },
+                        { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
+                    );
+                }
+                revealObserver.observe(el);
+            }
+
+            if (grid) {
+                grid.querySelectorAll("[data-reveal]").forEach((el) => {
+                    if (!el.classList.contains("revealed")) observeReveal(el);
+                });
+            }
+
+            // ── Infinite scroll ─────────────────────────────────────
+            const sentinel = document.getElementById("prestasi-sentinel");
+            const template = document.getElementById("prestasi-card-template");
+            const status = document.getElementById("prestasi-status");
+            if (!grid || !sentinel || !template || !status) return;
+            if (sentinel.dataset.bound) return;
+            sentinel.dataset.bound = "1";
+
+            const totalPages = Number(status.dataset.totalPages || 2);
+            const totalItems = Number(status.dataset.total || 0);
+            const pageLimit = Number(status.dataset.limit || 9);
+
+            let nextPage = 2;
+            let loading = false;
+            let finished = nextPage > totalPages;
+
+            function firstFilled() {
+                for (let i = 0; i < arguments.length; i++) {
+                    const value = arguments[i];
+                    if (typeof value === "string" && value.trim())
+                        return value.trim();
+                    if (typeof value === "number" && Number.isFinite(value))
+                        return String(value);
+                }
+                return "";
+            }
+
+            function toUploadProxyUrl(source) {
+                if (!source) return "";
+                if (
+                    source.startsWith("data:") ||
+                    source.startsWith("blob:") ||
+                    source.startsWith("/api/upload/")
+                )
+                    return source;
+
+                const clean = source.split("?")[0].split("#")[0];
+                const isHttp = /^https?:\/\//i.test(clean);
+                const shouldProxy =
+                    clean.includes("/api/v1/upload/") ||
+                    clean.startsWith("/upload/") ||
+                    clean.startsWith("upload/") ||
+                    (!isHttp && !clean.startsWith("/"));
+                if (!shouldProxy) return clean;
+
+                let pathname = clean;
+                try {
+                    pathname = new URL(clean, "http://upload.local").pathname;
+                } catch {}
+                const filename = pathname.split("/").filter(Boolean).pop();
+                return filename
+                    ? "/api/upload/" +
+                          encodeURIComponent(decodeURIComponent(filename))
+                    : "";
+            }
+
+            function normalizeItem(item) {
+                const raw = item || {};
+                const pesertaRaw =
+                    raw.pemenang ?? raw.winners ?? raw.siswa ?? raw.students;
+                const peserta = Array.isArray(pesertaRaw) ? pesertaRaw : [];
+
+                return {
+                    id: firstFilled(raw.id, raw._id, raw.slug),
+                    title:
+                        firstFilled(
+                            raw.judul,
+                            raw.title,
+                            raw.namaPrestasi,
+                            raw.namaLomba,
+                            raw.lomba,
+                            raw.prestasi,
+                        ) || "Prestasi Siswa",
+                    prestasi: firstFilled(
+                        raw.prestasi,
+                        raw.achievement,
+                        raw.juara,
+                        raw.peringkat,
+                        raw.hasil,
+                    ),
+                    description: firstFilled(
+                        raw.deskripsi,
+                        raw.description,
+                        raw.ringkasan,
+                        raw.summary,
+                    ),
+                    tahun: firstFilled(raw.tahun, raw.year, raw.periode),
+                    tingkat: firstFilled(
+                        raw.tingkat,
+                        raw.level,
+                        raw.kategoriLomba,
+                    ),
+                    madrasah: firstFilled(
+                        raw.madrasah,
+                        raw.schoolName,
+                        raw.namaMadrasah,
+                    ),
+                    image:
+                        toUploadProxyUrl(
+                            firstFilled(
+                                raw.fotoLomba,
+                                raw.thumbnail,
+                                raw.image,
+                                raw.foto,
+                                raw.cover,
+                            ),
+                        ) ||
+                        firstFilled(
+                            raw.fotoLomba,
+                            raw.thumbnail,
+                            raw.image,
+                            raw.foto,
+                            raw.cover,
+                        ),
+                    winnerCount:
+                        peserta.length ||
+                        Number(
+                            raw.jumlahPemenang ??
+                                raw.winnerCount ??
+                                raw.totalSiswa,
+                        ) ||
+                        0,
+                };
+            }
+
+            function setHidden(el, hidden) {
+                if (hidden) {
+                    el.style.display = "none";
+                } else {
+                    el.style.removeProperty("display");
+                }
+            }
+
+            function buildCard(item, index) {
+                const node = template.content.firstElementChild.cloneNode(true);
+                node.href = "/portal/prestasi-siswa/" + item.id;
+                node.dataset.delay = String((index % 6) + 1);
+
+                const field = (name) =>
+                    node.querySelector('[data-field="' + name + '"]');
+                const el = (name) =>
+                    node.querySelector('[data-el="' + name + '"]');
+
+                field("tahun").textContent = item.tahun || "Prestasi";
+
+                const image = el("image");
+                const placeholder = el("placeholder");
+                if (item.image) {
+                    image.src = item.image;
+                    image.alt = item.title;
+                    setHidden(image, false);
+                    setHidden(placeholder, true);
+                } else {
+                    setHidden(image, true);
+                    setHidden(placeholder, false);
+                }
+
+                field("title").textContent = item.title;
+
+                const prestasiBlock = el("prestasi-block");
+                if (item.prestasi) {
+                    field("prestasi").textContent = item.prestasi;
+                    setHidden(prestasiBlock, false);
+                } else {
+                    setHidden(prestasiBlock, true);
+                }
+
+                field("tingkat").textContent = item.tingkat;
+                setHidden(field("tingkat"), !item.tingkat);
+                setHidden(el("dot"), !(item.tingkat && item.madrasah));
+                field("madrasah").textContent = item.madrasah;
+                setHidden(field("madrasah"), !item.madrasah);
+
+                field("description").textContent =
+                    item.description ||
+                    "Lihat detail prestasi dan daftar siswa pemenang pada halaman ini.";
+                field("winnerCount").textContent = String(item.winnerCount);
+
+                return node;
+            }
+
+            function renderStatus(state, message) {
+                status.hidden = false;
+                status.innerHTML = "";
+                status.classList.remove("text-green/70");
+
+                if (state === "done") {
+                    status.classList.add("text-green/70");
+                    status.textContent = message;
+                    return;
+                }
+                if (state === "error") {
+                    const label = document.createElement("span");
+                    label.textContent = message;
+                    const retry = document.createElement("button");
+                    retry.type = "button";
+                    retry.textContent = "Coba Lagi";
+                    retry.className =
+                        "underline underline-offset-2 hover:text-green transition-colors cursor-pointer";
+                    retry.addEventListener("click", () => loadMore());
+                    status.append(label, retry);
+                    return;
+                }
+
+                // loading
+                status.innerHTML =
+                    '<svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+                    '<circle class="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>' +
+                    '<path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" stroke-width="4" stroke-linecap="round"></path>' +
+                    "</svg>";
+                const label = document.createElement("span");
+                label.textContent = message;
+                status.appendChild(label);
+            }
+
+            function finish() {
+                finished = true;
+                sentinelObserver.disconnect();
+                setHidden(sentinel, true);
+                const shown = grid.querySelectorAll(".achievement-card").length;
+                if (totalItems > shown) {
+                    renderStatus(
+                        "done",
+                        "Semua " + totalItems + " prestasi ditampilkan",
+                    );
+                } else {
+                    status.hidden = true;
+                    status.innerHTML = "";
+                }
+            }
+
+            async function loadMore() {
+                if (loading || finished) return;
+                loading = true;
+                renderStatus("loading", "Memuat prestasi...");
+
+                try {
+                    const res = await fetch(
+                        "/api/prestasi-siswa?page=" +
+                            nextPage +
+                            "&limit=" +
+                            pageLimit,
+                    );
+                    if (!res.ok) throw new Error("HTTP " + res.status);
+                    const json = await res.json();
+                    const rows = Array.isArray(json)
+                        ? json
+                        : json && Array.isArray(json.data)
+                          ? json.data
+                          : [];
+
+                    if (!rows.length) {
+                        finish();
+                        return;
+                    }
+
+                    const startIndex =
+                        grid.querySelectorAll(".achievement-card").length;
+                    rows.forEach((raw, i) => {
+                        const card = buildCard(
+                            normalizeItem(raw),
+                            startIndex + i,
+                        );
+                        grid.appendChild(card);
+                        observeReveal(card);
+                    });
+
+                    nextPage += 1;
+                    const reportedTotal = Number(
+                        json?.pagination?.totalPages || 0,
+                    );
+                    if (reportedTotal && nextPage > reportedTotal) {
+                        finish();
+                    } else if (!reportedTotal && rows.length < pageLimit) {
+                        finish();
+                    } else {
+                        renderStatus("idle", "");
+                        status.hidden = true;
+                    }
+                } catch {
+                    renderStatus("error", "Gagal memuat prestasi.");
+                } finally {
+                    loading = false;
+                }
+            }
+
+            const sentinelObserver = new IntersectionObserver(
                 (entries) => {
                     entries.forEach((entry) => {
-                        if (entry.isIntersecting) {
-                            entry.target.classList.add("revealed");
-                            observer.unobserve(entry.target);
-                        }
+                        if (entry.isIntersecting) loadMore();
                     });
                 },
-                { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
+                { rootMargin: "400px 0px" },
             );
-
-            items.forEach((item) => observer.observe(item));
+            sentinelObserver.observe(sentinel);
         }
 
-        initPrestasiReveal();
-        document.addEventListener("astro:page-load", initPrestasiReveal);
+        initPrestasiPage();
+        document.addEventListener("astro:page-load", initPrestasiPage);
     </script>
 </BaseLayout>
