@@ -158,12 +158,12 @@
     }
 
     function completionMinutes(r: any) {
-        if (!r.selesaiAt || !r.submittedAt) return 0;
+        if (!r.selesaiAt || !r.processedAt) return 0;
         return Math.max(
             0,
             Math.floor(
                 (new Date(r.selesaiAt).getTime() -
-                    new Date(r.submittedAt).getTime()) /
+                    new Date(r.processedAt).getTime()) /
                     60000,
             ),
         );
@@ -199,9 +199,10 @@
                     "No HP",
                     "Layanan",
                     "Tgl Kirim",
+                    "Tgl Proses",
                     "Status",
                     "Tgl Selesai",
-                    "Durasi Selesai",
+                    "Durasi Proses-Selesai",
                     "Jumlah Dokumen",
                 ],
             ];
@@ -213,6 +214,9 @@
                     r.serviceTitle,
                     r.submittedAt
                         ? new Date(r.submittedAt).toLocaleString("id-ID")
+                        : "",
+                    r.processedAt
+                        ? new Date(r.processedAt).toLocaleString("id-ID")
                         : "",
                     r.status,
                     r.selesaiAt
@@ -230,6 +234,7 @@
                 { wch: 24 },
                 { wch: 16 },
                 { wch: 28 },
+                { wch: 20 },
                 { wch: 20 },
                 { wch: 10 },
                 { wch: 20 },
@@ -410,7 +415,7 @@
             cls: "bg-black/5 text-ink/50",
             icon: "mdi:check-circle",
             label: formatSlaDuration(c.minutes),
-            title: "Durasi sejak dikirim",
+            title: "Durasi sejak diproses",
         };
     }
 

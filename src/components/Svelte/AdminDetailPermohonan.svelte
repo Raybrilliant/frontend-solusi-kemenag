@@ -46,7 +46,9 @@
             : 0,
     );
     const elapsedMs = $derived(
-        now - new Date(current.processedAt ?? current.submittedAt).getTime(),
+        current.processedAt
+            ? now - new Date(current.processedAt).getTime()
+            : 0,
     );
     const remainMs = $derived(
         totalSlaMs > 0 ? Math.max(0, totalSlaMs - elapsedMs) : 0,
@@ -58,11 +60,11 @@
     );
     const overdueMs = $derived(isOverdue ? elapsedMs - totalSlaMs : 0);
     const completionMs = $derived(
-        current.status === "Selesai" && current.selesaiAt
+        current.status === "Selesai" && current.selesaiAt && current.processedAt
             ? Math.max(
                   0,
                   new Date(current.selesaiAt).getTime() -
-                      new Date(current.submittedAt).getTime(),
+                      new Date(current.processedAt).getTime(),
               )
             : null,
     );
@@ -414,7 +416,7 @@
                             {:else if totalSlaMs > 0}
                                 Dalam SLA ({formatDuration(totalSlaMs)})
                             {:else}
-                                sejak dikirim
+                                sejak diproses
                             {/if}
                         </p>
                     {:else}
@@ -965,6 +967,13 @@
                         label: "Tanggal Kirim",
                         value: formatDatetime(current.submittedAt),
                     })}
+                    {#if current.processedAt}
+                        {@render RingkasRow({
+                            icon: "play",
+                            label: "Tanggal Proses",
+                            value: formatDatetime(current.processedAt),
+                        })}
+                    {/if}
                     {#if current.selesaiAt}
                         {@render RingkasRow({
                             icon: "check",
@@ -1013,7 +1022,9 @@
                     ? "mdi:clock-outline"
                     : props.icon === "check"
                       ? "mdi:check-circle-outline"
-                      : "mdi:phone"}
+                      : props.icon === "play"
+                        ? "mdi:play-circle-outline"
+                        : "mdi:phone"}
             width="14"
             height="14"
             class="text-ink/30 mt-0.5 shrink-0"

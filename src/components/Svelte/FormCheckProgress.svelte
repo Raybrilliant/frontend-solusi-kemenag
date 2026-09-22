@@ -1110,7 +1110,7 @@
                         Estimasi selesai dalam <span
                             class="font-semibold text-gray-600"
                             >{data.durasiLabel}</span
-                        > sejak pendaftaran
+                        > sejak diproses
                     </p>
                 {/if}
 

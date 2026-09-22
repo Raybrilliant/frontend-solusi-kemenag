@@ -46,11 +46,9 @@ function calcSlaRemaining(item: any, svc: any | null): number | null {
   const slaUnit = svc.slaUnit ?? svc.sla_unit;
   if (!slaDuration || !slaUnit) return null;
 
-  const startTime =
-    item.processedAt ??
-    item.processed_at ??
-    item.submittedAt ??
-    item.submitted_at;
+  // Waktu hanya berjalan sejak admin menekan "Proses" (processedAt),
+  // bukan sejak pengajuan user yang bisa di luar jam kerja
+  const startTime = item.processedAt ?? item.processed_at;
   if (!startTime) return null;
 
   let totalMs = 0;
@@ -67,8 +65,9 @@ function calcSlaRemaining(item: any, svc: any | null): number | null {
 function calcCompletion(item: any, svc: any | null) {
   if (item.status !== "Selesai") return null;
 
+  // Audit durasi layanan: dihitung dari proses → selesai, bukan dari pengajuan
   const end = item.selesaiAt ?? item.selesai_at;
-  const start = item.submittedAt ?? item.submitted_at;
+  const start = item.processedAt ?? item.processed_at;
   if (!end || !start) return null;
 
   const minutes = Math.max(
