@@ -1,15 +1,17 @@
 <script>
     import Icon from "@iconify/svelte";
 
-    const WA_NUMBER = "6281359136007";
+    const WA_NUMBER = "6287838100425";
     const WA_MESSAGE =
         "Halo, saya ingin bertanya mengenai layanan Kementerian Agama Kota Probolinggo.";
     const waUrl = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(WA_MESSAGE)}`;
+    const AI_URL = "https://tanya.kemenagkotaprobolinggo.id/";
 
     const BASE_SIZE = 16;
 
     // ── state ──────────────────────────────────────────────
     let a11yOpen = $state(false);
+    let contactOpen = $state(false);
     let fontSize = $state(0); // -2 … +4
     let darkMode = $state(false);
     let readable = $state(false); // spacing + font
@@ -131,7 +133,10 @@
     });
 
     function onKeydown(e) {
-        if (e.key === "Escape") a11yOpen = false;
+        if (e.key === "Escape") {
+            a11yOpen = false;
+            contactOpen = false;
+        }
     }
 
     const CB_OPTS = [
@@ -355,17 +360,49 @@
         <Icon icon="mdi:accessibility" width="21" height="21" />
     </button>
 
-    <!-- FAB: WhatsApp -->
-    <a
-        href={waUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        class="fab wa-fab"
-        aria-label="Hubungi WhatsApp Center"
-        title="Hubungi WA Center"
+    <!-- FAB: Hubungi Kami (WA / AI Assistant) -->
+    {#if contactOpen}
+        <div class="contact-menu" role="menu" aria-label="Pilih cara menghubungi">
+            <a
+                href={waUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                role="menuitem"
+                class="contact-item"
+                onclick={() => (contactOpen = false)}
+            >
+                <span class="ci-icon wa"><Icon icon="mdi:whatsapp" width="17" height="17" /></span>
+                <span class="ci-text">
+                    <strong>WhatsApp Center</strong>
+                    <small>Chat langsung dengan petugas</small>
+                </span>
+            </a>
+            <a
+                href={AI_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                role="menuitem"
+                class="contact-item"
+                onclick={() => (contactOpen = false)}
+            >
+                <span class="ci-icon ai"><Icon icon="mdi:robot-outline" width="17" height="17" /></span>
+                <span class="ci-text">
+                    <strong>AI Assistant</strong>
+                    <small>Tanya jawab otomatis 24 jam</small>
+                </span>
+            </a>
+        </div>
+    {/if}
+
+    <button
+        onclick={() => (contactOpen = !contactOpen)}
+        class="fab wa-fab {contactOpen ? 'open' : ''}"
+        aria-label="Pilihan menghubungi: WhatsApp atau AI Assistant"
+        aria-expanded={contactOpen}
+        title="Hubungi Kami"
     >
-        <Icon icon="mdi:whatsapp" width="21" height="21" />
-    </a>
+        <Icon icon={contactOpen ? "mdi:close" : "mdi:whatsapp"} width="21" height="21" />
+    </button>
 </div>
 
 <style>
@@ -397,10 +434,10 @@
         text-decoration: none;
         animation: fabIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
-    .fab:nth-child(2) {
+    .fab:nth-of-type(1) {
         animation-delay: 0.05s;
     }
-    .fab:nth-child(3) {
+    .fab:nth-of-type(2) {
         animation-delay: 0.12s;
     }
     .fab:hover {
@@ -422,6 +459,67 @@
     }
     .wa-fab:hover {
         background: #1fba59;
+    }
+    .wa-fab.open {
+        background: #1fba59;
+    }
+
+    /* ── Contact menu ── */
+    .contact-menu {
+        background: white;
+        border: 1px solid #e5e7eb;
+        width: 230px;
+        padding: 6px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+        animation: panelIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .contact-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px;
+        border-radius: 8px;
+        text-decoration: none;
+        color: #111827;
+        transition: background 0.15s ease;
+    }
+    .contact-item:hover {
+        background: #f3f4f6;
+    }
+
+    .ci-icon {
+        width: 32px;
+        height: 32px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        color: white;
+    }
+    .ci-icon.wa {
+        background: #25d366;
+    }
+    .ci-icon.ai {
+        background: #4f46e5;
+    }
+
+    .ci-text {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.3;
+    }
+    .ci-text strong {
+        font-size: 12px;
+        font-weight: 700;
+    }
+    .ci-text small {
+        font-size: 10.5px;
+        color: #6b7280;
     }
 
     /* ── Panel ── */
