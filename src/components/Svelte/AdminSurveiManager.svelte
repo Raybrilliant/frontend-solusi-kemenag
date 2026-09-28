@@ -272,6 +272,53 @@
         return { pusat: sum("kepercayaanPusat"), daerah: sum("kepercayaanDaerah") };
     });
 
+    // Rekap penilaian petugas (puas/tidak puas). Sumber: feedbackRows
+    // (unik per tiket — nilai SPKP & SPAK identik, jangan dihitung dobel).
+    // Kartu ringkasan = semua waktu; tabel bulanan = 12 bulan terakhir.
+    const petugasRecap = $derived.by(() => {
+        const counts = { PUAS: 0, TIDAK_PUAS: 0, total: 0 };
+        const monthly = new Map();
+        const cutoff = new Date();
+        cutoff.setMonth(cutoff.getMonth() - 11);
+        cutoff.setDate(1);
+        cutoff.setHours(0, 0, 0, 0);
+
+        for (const r of feedbackRows) {
+            if (r.penilaianPetugas !== "PUAS" && r.penilaianPetugas !== "TIDAK_PUAS")
+                continue;
+            counts[r.penilaianPetugas] += 1;
+            counts.total += 1;
+
+            const date = new Date(r.createdAt);
+            if (Number.isNaN(date.getTime()) || date < cutoff) continue;
+            const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+            const row = monthly.get(key) ?? {
+                key,
+                label: date.toLocaleDateString("id-ID", {
+                    month: "long",
+                    year: "numeric",
+                }),
+                timestamp: new Date(
+                    date.getFullYear(),
+                    date.getMonth(),
+                    1,
+                ).getTime(),
+                puas: 0,
+                tidakPuas: 0,
+            };
+            if (r.penilaianPetugas === "PUAS") row.puas += 1;
+            else row.tidakPuas += 1;
+            monthly.set(key, row);
+        }
+
+        return {
+            ...counts,
+            monthly: [...monthly.values()].sort(
+                (a, b) => b.timestamp - a.timestamp,
+            ),
+        };
+    });
+
     // Kritik & saran diambil server-side (1 halaman = 1 fetch ringan),
     // jadi daftar tidak perlu menunggu semua respons termuat.
 
@@ -280,6 +327,11 @@
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
         });
+    }
+
+    function petugasPct(part, total) {
+        if (!total) return "-";
+        return `${Math.round((part / total) * 100)}%`;
     }
 
     function showToast(type, msg) {
@@ -1651,6 +1703,120 @@
                             </article>
                         {/each}
                     </div>
+                </div>
+
+                <div class="mt-6">
+                    <h3 class="font-bold uppercase text-ink">
+                        Penilaian Petugas
+                    </h3>
+                    <p class="text-xs text-ink/45 mt-1">
+                        Rekap kepuasan responden terhadap petugas yang melayani
+                        (puas / tidak puas), dihitung satu kali per tiket.
+                    </p>
+
+                    {#if petugasRecap.total === 0}
+                        <p class="py-8 text-sm text-ink/35">
+                            Belum ada data.
+                        </p>
+                    {:else}
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+                            <div class="border border-black/10 p-4">
+                                <p class="text-xs text-ink/45">😊 Puas</p>
+                                <p class="text-2xl font-bold text-green mt-1">
+                                    {petugasRecap.PUAS}
+                                    <span class="text-sm text-ink/40">
+                                        {petugasPct(
+                                            petugasRecap.PUAS,
+                                            petugasRecap.total,
+                                        )}
+                                    </span>
+                                </p>
+                            </div>
+                            <div class="border border-black/10 p-4">
+                                <p class="text-xs text-ink/45">😞 Tidak Puas</p>
+                                <p class="text-2xl font-bold text-red-600 mt-1">
+                                    {petugasRecap.TIDAK_PUAS}
+                                    <span class="text-sm text-ink/40">
+                                        {petugasPct(
+                                            petugasRecap.TIDAK_PUAS,
+                                            petugasRecap.total,
+                                        )}
+                                    </span>
+                                </p>
+                            </div>
+                            <div class="border border-black/10 p-4">
+                                <p class="text-xs text-ink/45">
+                                    Total Penilaian
+                                </p>
+                                <p class="text-2xl font-bold text-ink mt-1">
+                                    {petugasRecap.total}
+                                </p>
+                            </div>
+                        </div>
+
+                        {#if petugasRecap.monthly.length}
+                            <div
+                                class="mt-4 border border-black/10 p-4 overflow-x-auto"
+                            >
+                                <p
+                                    class="text-xs font-bold uppercase tracking-wide text-ink/40 mb-3"
+                                >
+                                    Rekap Bulanan (12 Bulan Terakhir)
+                                </p>
+                                <table class="w-full text-sm">
+                                    <thead>
+                                        <tr class="border-b border-black/8">
+                                            <th
+                                                class="py-2 text-left text-[11px] uppercase text-ink/40"
+                                                >Bulan</th
+                                            >
+                                            <th
+                                                class="py-2 text-right text-[11px] uppercase text-ink/40"
+                                                >😊 Puas</th
+                                            >
+                                            <th
+                                                class="py-2 text-right text-[11px] uppercase text-ink/40"
+                                                >😞 Tidak Puas</th
+                                            >
+                                            <th
+                                                class="py-2 text-right text-[11px] uppercase text-ink/40"
+                                                >% Puas</th
+                                            >
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {#each petugasRecap.monthly as row (row.key)}
+                                            <tr
+                                                class="border-b border-black/5"
+                                            >
+                                                <td class="py-2 text-ink/70">
+                                                    {row.label}
+                                                </td>
+                                                <td
+                                                    class="py-2 text-right font-bold text-green"
+                                                >
+                                                    {row.puas}
+                                                </td>
+                                                <td
+                                                    class="py-2 text-right font-bold text-red-600"
+                                                >
+                                                    {row.tidakPuas}
+                                                </td>
+                                                <td
+                                                    class="py-2 text-right font-mono text-xs text-ink/55"
+                                                >
+                                                    {petugasPct(
+                                                        row.puas,
+                                                        row.puas + row.tidakPuas,
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        {/each}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {/if}
+                    {/if}
                 </div>
 
                 <div class="mt-6">
