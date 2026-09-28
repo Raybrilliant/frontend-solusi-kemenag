@@ -56,10 +56,17 @@
     ];
 
     const nilaiOptions = [
-        { value: 1, label: "1", text: "Tidak baik" },
-        { value: 2, label: "2", text: "Kurang baik" },
-        { value: 3, label: "3", text: "Baik" },
-        { value: 4, label: "4", text: "Sangat baik" },
+        { value: 1, label: "1", text: "Tidak baik", emoji: "😭", anim: "cry" },
+        { value: 2, label: "2", text: "Kurang baik", emoji: "🙁", anim: "sad" },
+        { value: 3, label: "3", text: "Baik", emoji: "🙂", anim: "happy" },
+        { value: 4, label: "4", text: "Sangat baik", emoji: "🤩", anim: "celebrate" },
+    ];
+
+    const CONFETTI_EMOJIS = ["🎉", "🤩", "⭐", "🎊"];
+
+    const petugasOptions = [
+        { value: "PUAS", text: "Puas", emoji: "😊", anim: "celebrate" },
+        { value: "TIDAK_PUAS", text: "Tidak puas", emoji: "😞", anim: "sad" },
     ];
 
     let ticket = $state(initialTicket);
@@ -77,17 +84,25 @@
     let kritikSaran = $state("");
     let kepercayaanPusat = $state(0);
     let kepercayaanDaerah = $state(0);
+    let penilaianPetugas = $state(""); // "PUAS" | "TIDAK_PUAS" | ""
 
-    const currentType = $derived(surveyTypes[activeIndex]);
-    const currentForm = $derived(forms[currentType.value] ?? null);
-    const currentAnswers = $derived(answers[currentType.value] ?? {});
+    // Alur: 0 = penilaian petugas, 1..n = form survei, n+1 = kritik,
+    // n+2 = profil.
+    const isPetugasStep = $derived(activeIndex === 0);
+    const currentType = $derived(surveyTypes[activeIndex - 1]);
+    const currentForm = $derived(
+        currentType ? (forms[currentType.value] ?? null) : null,
+    );
+    const currentAnswers = $derived(
+        currentType ? (answers[currentType.value] ?? {}) : {},
+    );
     const totalQuestions = $derived(currentForm?.questions?.length ?? 0);
     const answeredCount = $derived(
         Object.values(currentAnswers).filter(Boolean).length,
     );
-    const isProfileStep = $derived(activeIndex >= surveyTypes.length + 1);
+    const isProfileStep = $derived(activeIndex >= surveyTypes.length + 2);
     // Step "Kritik & Kepercayaan" berada tepat sebelum profil.
-    const isFeedbackStep = $derived(activeIndex === surveyTypes.length);
+    const isFeedbackStep = $derived(activeIndex === surveyTypes.length + 1);
     const skalaKepercayaan = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     // Tanggal menerima layanan di-derive backend, ditampilkan read-only.
     // Ambil dari form pertama yang dimuat (semua form untuk tiket yang sama punya nilai sama).
@@ -114,6 +129,62 @@
                 [questionId]: nilai,
             },
         };
+    }
+
+    // Animasi emoji per klik + confetti (hanya nilai 4).
+    let pop = $state({ target: "", key: "" });
+    let popSeq = 0;
+    let confettiPieces = $state([]);
+    let confettiSeq = 0;
+
+    // Layer confetti di-portal ke <body> supaya `position: fixed` tetap
+    // relatif viewport — animasi `data-anim="form"` di halaman membuat
+    // containing block yang menggeser koordinat fixed saat di-scroll.
+    function portal(node) {
+        document.body.appendChild(node);
+        return () => node.remove();
+    }
+
+    function chooseNilai(questionId, option, event) {
+        answerQuestion(questionId, option.value);
+        const target = `${questionId}-${option.value}`;
+        pop = { target, key: `${target}-${++popSeq}` };
+        if (option.value === 4) burstConfetti(event);
+    }
+
+    function choosePetugas(option, event) {
+        penilaianPetugas = option.value;
+        const target = `petugas-${option.value}`;
+        pop = { target, key: `${target}-${++popSeq}` };
+        if (option.value === "PUAS") burstConfetti(event);
+    }
+
+    function burstConfetti(event) {
+        const rect = event?.currentTarget?.getBoundingClientRect();
+        const ox = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+        const oy = rect ? rect.top + rect.height / 2 : window.innerHeight / 2;
+
+        const pieces = Array.from({ length: 26 }, (_, i) => ({
+            id: ++confettiSeq,
+            emoji:
+                i % 2 === 0
+                    ? "🎉"
+                    : CONFETTI_EMOJIS[(Math.random() * CONFETTI_EMOJIS.length) | 0],
+            ox,
+            oy,
+            dx: (Math.random() - 0.5) * 360,
+            dy: -(120 + Math.random() * 220),
+            rot: (Math.random() - 0.5) * 900,
+            scale: 0.7 + Math.random() * 1.1,
+            dur: 1.1 + Math.random() * 0.7,
+            delay: Math.random() * 0.12,
+        }));
+
+        confettiPieces = [...confettiPieces, ...pieces];
+        const ids = new Set(pieces.map((p) => p.id));
+        setTimeout(() => {
+            confettiPieces = confettiPieces.filter((p) => !ids.has(p.id));
+        }, 2200);
     }
 
     async function loadForms() {
@@ -164,7 +235,12 @@
     }
 
     function nextStep() {
-        if (isFeedbackStep) {
+        if (isPetugasStep) {
+            if (!penilaianPetugas) {
+                error = "Pilih penilaian petugas terlebih dahulu.";
+                return;
+            }
+        } else if (isFeedbackStep) {
             if (
                 !kepercayaanPusat ||
                 !kepercayaanDaerah ||
@@ -217,6 +293,11 @@
             return;
         }
 
+        if (!penilaianPetugas) {
+            error = "Penilaian petugas wajib dipilih.";
+            return;
+        }
+
         const disabilitasStr = [...disabilitas].sort((a, b) => a - b).join(",");
         const kritikSaranTrim = kritikSaran.trim();
 
@@ -237,6 +318,7 @@
                     kritikSaran: kritikSaranTrim,
                     kepercayaanPusat: Number(kepercayaanPusat),
                     kepercayaanDaerah: Number(kepercayaanDaerah),
+                    penilaianPetugas,
                     answers: (form?.questions ?? []).map((question) => ({
                         questionId: question.id,
                         nilai: Number(answerMap[question.id]),
@@ -340,17 +422,29 @@
             <section class="bg-white border border-black/10">
                 <div class="p-4 md:p-5 border-b border-black/8">
                     <div class="flex flex-wrap items-center gap-2">
-                        {#each surveyTypes as type, index}
+                        <div
+                            class={`flex items-center gap-2 px-3 py-2 border text-xs font-bold uppercase ${
+                                isPetugasStep
+                                    ? "bg-green/8 text-green border-green/30"
+                                    : activeIndex > 0
+                                      ? "bg-green text-white border-green"
+                                      : "bg-white text-ink/35 border-black/10"
+                            }`}
+                        >
+                            <span>1</span>
+                            <span>Petugas</span>
+                        </div>
+                        {#each surveyTypes as type, index (type.value)}
                             <div
                                 class={`flex items-center gap-2 px-3 py-2 border text-xs font-bold uppercase ${
-                                    index < activeIndex
+                                    index + 1 < activeIndex
                                         ? "bg-green text-white border-green"
-                                        : index === activeIndex
+                                        : index + 1 === activeIndex
                                           ? "bg-green/8 text-green border-green/30"
                                           : "bg-white text-ink/35 border-black/10"
                                 }`}
                             >
-                                <span>{index + 1}</span>
+                                <span>{index + 2}</span>
                                 <span>{type.label}</span>
                             </div>
                         {/each}
@@ -358,12 +452,12 @@
                             class={`flex items-center gap-2 px-3 py-2 border text-xs font-bold uppercase ${
                                 isFeedbackStep
                                     ? "bg-green/8 text-green border-green/30"
-                                    : activeIndex > surveyTypes.length
+                                    : activeIndex > surveyTypes.length + 1
                                       ? "bg-green text-white border-green"
                                       : "bg-white text-ink/35 border-black/10"
                             }`}
                         >
-                            <span>{surveyTypes.length + 1}</span>
+                            <span>{surveyTypes.length + 2}</span>
                             <span>Penilaian</span>
                         </div>
                         <div
@@ -373,13 +467,73 @@
                                     : "bg-white text-ink/35 border-black/10"
                             }`}
                         >
-                            <span>{surveyTypes.length + 2}</span>
+                            <span>{surveyTypes.length + 3}</span>
                             <span>Profil</span>
                         </div>
                     </div>
                 </div>
 
-                {#if !isProfileStep && !isFeedbackStep}
+                {#if isPetugasStep}
+                    <div class="p-4 md:p-6">
+                        <p
+                            class="text-xs font-bold uppercase tracking-widest text-green"
+                        >
+                            Penilaian Petugas
+                        </p>
+                        <h2 class="text-2xl font-bold uppercase text-ink mt-1">
+                            Bagaimana penilaian Anda terhadap petugas?
+                        </h2>
+                        <p class="text-sm text-ink/50 mt-1 max-w-2xl">
+                            Pilih satu sesuai kepuasan Anda terhadap petugas
+                            yang melayani pengajuan Anda.
+                        </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
+                            {#each petugasOptions as option (option.value)}
+                                <button
+                                    type="button"
+                                    onclick={(e) => choosePetugas(option, e)}
+                                    class={`border px-5 py-6 text-center transition-colors ${
+                                        penilaianPetugas === option.value
+                                            ? "border-green bg-green text-white"
+                                            : "border-black/10 hover:border-green/40"
+                                    }`}
+                                >
+                                    <span
+                                        class="block text-4xl leading-none select-none"
+                                    >
+                                        {#if pop.target ===
+                                            `petugas-${option.value}`}
+                                            {#key pop.key}
+                                                <span
+                                                    class={`pop-emoji anim-${option.anim}`}
+                                                    >{option.emoji}</span
+                                                >
+                                            {/key}
+                                        {:else}
+                                            {option.emoji}
+                                        {/if}
+                                    </span>
+                                    <span
+                                        class="block text-sm font-bold uppercase mt-3"
+                                    >
+                                        {option.text}
+                                    </span>
+                                </button>
+                            {/each}
+                        </div>
+                        <div
+                            class="mt-6 flex flex-wrap items-center justify-end gap-3 border-t border-black/8 pt-5"
+                        >
+                            <button
+                                type="button"
+                                onclick={nextStep}
+                                class="px-5 py-3 bg-green text-white text-sm font-bold uppercase hover:bg-green/90 transition-colors"
+                            >
+                                Berikutnya
+                            </button>
+                        </div>
+                    </div>
+                {:else if !isProfileStep && !isFeedbackStep}
                     <div class="p-4 md:p-6">
                         <div
                             class="flex flex-wrap items-start justify-between gap-4 mb-6"
@@ -408,7 +562,7 @@
                         </div>
 
                         <div class="space-y-4">
-                            {#each currentForm.questions as question, index}
+                            {#each currentForm.questions as question, index (question.id)}
                                 <article class="border border-black/8 p-4">
                                     <div class="flex gap-3">
                                         <span
@@ -425,13 +579,14 @@
                                             <div
                                                 class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4"
                                             >
-                                                {#each nilaiOptions as option}
+                                                {#each nilaiOptions as option (option.value)}
                                                     <button
                                                         type="button"
-                                                        onclick={() =>
-                                                            answerQuestion(
+                                                        onclick={(e) =>
+                                                            chooseNilai(
                                                                 question.id,
-                                                                option.value,
+                                                                option,
+                                                                e,
                                                             )}
                                                         class={`border px-3 py-3 text-left transition-colors ${
                                                             currentAnswers[
@@ -442,12 +597,22 @@
                                                         }`}
                                                     >
                                                         <span
-                                                            class="block text-lg font-bold"
+                                                            class="block text-2xl leading-none select-none"
                                                         >
-                                                            {option.label}
+                                                            {#if pop.target ===
+                                                                `${question.id}-${option.value}`}
+                                                                {#key pop.key}
+                                                                    <span
+                                                                        class={`pop-emoji anim-${option.anim}`}
+                                                                        >{option.emoji}</span
+                                                                    >
+                                                                {/key}
+                                                            {:else}
+                                                                {option.emoji}
+                                                            {/if}
                                                         </span>
                                                         <span
-                                                            class="block text-xs opacity-75"
+                                                            class="block text-xs opacity-75 mt-1"
                                                         >
                                                             {option.text}
                                                         </span>
@@ -532,7 +697,7 @@
                                 <div
                                     class="mt-3 grid grid-cols-5 sm:grid-cols-10 gap-2"
                                 >
-                                    {#each skalaKepercayaan as nilai}
+                                    {#each skalaKepercayaan as nilai (nilai)}
                                         <button
                                             type="button"
                                             onclick={() =>
@@ -560,7 +725,7 @@
                                 <div
                                     class="mt-3 grid grid-cols-5 sm:grid-cols-10 gap-2"
                                 >
-                                    {#each skalaKepercayaan as nilai}
+                                    {#each skalaKepercayaan as nilai (nilai)}
                                         <button
                                             type="button"
                                             onclick={() =>
@@ -642,7 +807,7 @@
                                     class="mt-2 w-full border border-black/10 px-4 py-3 text-sm focus:outline-none focus:border-green"
                                 >
                                     <option value={0}>Pilih pendidikan</option>
-                                    {#each pendidikanOptions as option}
+                                    {#each pendidikanOptions as option (option.value)}
                                         <option value={option.value}>
                                             {option.value}. {option.label}
                                         </option>
@@ -681,7 +846,7 @@
                                     class="mt-2 w-full border border-black/10 px-4 py-3 text-sm focus:outline-none focus:border-green"
                                 >
                                     <option value={0}>Pilih pekerjaan</option>
-                                    {#each pekerjaanOptions as option}
+                                    {#each pekerjaanOptions as option (option.value)}
                                         <option value={option.value}>
                                             {option.value}. {option.label}
                                         </option>
@@ -702,7 +867,7 @@
                             <div
                                 class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2"
                             >
-                                {#each disabilitasOptions as option}
+                                {#each disabilitasOptions as option (option.value)}
                                     <label
                                         class={`flex items-center gap-3 border px-4 py-3 cursor-pointer transition-colors ${
                                             disabilitas.has(option.value)
@@ -751,4 +916,145 @@
             </section>
         {/if}
     {/if}
+
+    <!-- Lapisan confetti (hanya untuk nilai 4) -->
+    <div class="confetti-layer" aria-hidden="true" {@attach portal}>
+        {#each confettiPieces as p (p.id)}
+            <span
+                class="confetti-piece"
+                style={`left:${p.ox}px;top:${p.oy}px;--cx:${p.dx}px;--cy:${p.dy}px;--cr:${p.rot}deg;--cs:${p.scale};animation-duration:${p.dur}s;animation-delay:${p.delay}s`}
+            >
+                {p.emoji}
+            </span>
+        {/each}
+    </div>
 </div>
+
+<style>
+    /* ── Emoji pop per nilai ── */
+    .pop-emoji {
+        display: inline-block;
+        animation-duration: 0.7s;
+        animation-fill-mode: both;
+    }
+
+    .anim-cry {
+        animation-name: cryShake;
+    }
+    @keyframes cryShake {
+        0% {
+            transform: scale(1) rotate(0);
+        }
+        20% {
+            transform: scale(1.3) rotate(-10deg);
+        }
+        40% {
+            transform: scale(1.15) rotate(10deg);
+        }
+        60% {
+            transform: scale(1.25) rotate(-8deg);
+        }
+        80% {
+            transform: scale(1.1) rotate(5deg);
+        }
+        100% {
+            transform: scale(1) rotate(0);
+        }
+    }
+
+    .anim-sad {
+        animation-name: sadDroop;
+    }
+    @keyframes sadDroop {
+        0% {
+            transform: translateY(0) scale(1);
+        }
+        40% {
+            transform: translateY(6px) scale(1.25) rotate(-12deg);
+        }
+        70% {
+            transform: translateY(3px) scale(1.1) rotate(6deg);
+        }
+        100% {
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    .anim-happy {
+        animation-name: happyBounce;
+    }
+    @keyframes happyBounce {
+        0% {
+            transform: translateY(0) scale(1);
+        }
+        35% {
+            transform: translateY(-8px) scale(1.25);
+        }
+        60% {
+            transform: translateY(0) scale(1.05);
+        }
+        80% {
+            transform: translateY(-4px) scale(1.15);
+        }
+        100% {
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    .anim-celebrate {
+        animation-name: celebrateJump;
+    }
+    @keyframes celebrateJump {
+        0% {
+            transform: translateY(0) scale(1) rotate(0);
+        }
+        30% {
+            transform: translateY(-12px) scale(1.35) rotate(-12deg);
+        }
+        55% {
+            transform: translateY(0) scale(1.1) rotate(8deg);
+        }
+        75% {
+            transform: translateY(-6px) scale(1.2) rotate(-6deg);
+        }
+        100% {
+            transform: translateY(0) scale(1) rotate(0);
+        }
+    }
+
+    /* ── Confetti ── */
+    .confetti-layer {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        overflow: hidden;
+        pointer-events: none;
+    }
+    .confetti-piece {
+        position: absolute;
+        font-size: 24px;
+        line-height: 1;
+        animation-name: confettiBurst;
+        animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+        animation-fill-mode: both;
+        will-change: transform, opacity;
+    }
+    @keyframes confettiBurst {
+        0% {
+            transform: translate(-50%, -50%) scale(0.3) rotate(0deg);
+            opacity: 1;
+        }
+        55% {
+            opacity: 1;
+        }
+        100% {
+            transform: translate(
+                    calc(-50% + var(--cx)),
+                    calc(-50% - var(--cy))
+                )
+                scale(var(--cs))
+                rotate(var(--cr));
+            opacity: 0;
+        }
+    }
+</style>

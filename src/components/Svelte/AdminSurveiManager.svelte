@@ -88,6 +88,11 @@
             .map((p) => disabilitasLabels[Number(p)] ?? `Kode ${p}`);
         return parts.length ? parts.join(", ") : "Tidak";
     }
+    function labelPetugas(value) {
+        if (value === "PUAS") return "😊 Puas";
+        if (value === "TIDAK_PUAS") return "😞 Tidak Puas";
+        return "-";
+    }
 
     let activeType = $state("SPKP");
     let selectedTab = $state(null);
@@ -1297,6 +1302,10 @@
                                 >
                                 <th
                                     class="px-4 py-3 text-left text-[11px] uppercase tracking-wide text-ink/40"
+                                    >Petugas</th
+                                >
+                                <th
+                                    class="px-4 py-3 text-left text-[11px] uppercase tracking-wide text-ink/40"
                                     >Tanggal</th
                                 >
                             </tr>
@@ -1351,6 +1360,11 @@
                                                 item.disabilitas,
                                             )}
                                         </p>
+                                    </td>
+                                    <td
+                                        class="px-4 py-3 text-xs text-ink/70 whitespace-nowrap"
+                                    >
+                                        {labelPetugas(item.penilaianPetugas)}
                                     </td>
                                     <td
                                         class="px-4 py-3 text-xs text-ink/45 whitespace-nowrap"
