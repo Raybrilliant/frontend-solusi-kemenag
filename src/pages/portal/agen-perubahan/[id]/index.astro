@@ -66,7 +66,20 @@ if (notFound) {
     Astro.response.status = 404;
 }
 
-const d = detail!;
+// Fallback kosong agar dereference di bawah tidak melempar 500
+// saat id tidak ditemukan; markup tetap bercabang via `notFound`.
+const d = detail ?? {
+    nama: "",
+    jabatan: "",
+    unitKerja: "",
+    tahun: new Date().getFullYear(),
+    foto: "",
+    inovasi: "",
+    deskripsi: "",
+    latarBelakang: "",
+    tujuan: [],
+    hasil: [],
+};
 const fotoUrl = d.foto;
 const backgroundParagraphs = String(d.latarBelakang ?? "")
     .split("\n")
@@ -81,6 +94,53 @@ const pageTitle = notFound
 const pageDescription = notFound
     ? "Halaman agen perubahan yang Anda cari tidak ditemukan."
     : `${d.nama} · ${d.inovasi} · Agen Perubahan Kementerian Agama Kota Probolinggo.`;
+
+const structuredData = notFound
+    ? undefined
+    : [
+          {
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                  {
+                      "@type": "ListItem",
+                      position: 1,
+                      name: "Portal",
+                      item: `${Astro.url.origin}/portal`,
+                  },
+                  {
+                      "@type": "ListItem",
+                      position: 2,
+                      name: "Agen Perubahan",
+                      item: `${Astro.url.origin}/portal/agen-perubahan`,
+                  },
+                  {
+                      "@type": "ListItem",
+                      position: 3,
+                      name: d.nama,
+                      item: `${Astro.url.origin}/portal/agen-perubahan/${id}`,
+                  },
+              ],
+          },
+          {
+              "@context": "https://schema.org",
+              "@type": "ProfilePage",
+              mainEntity: {
+                  "@type": "Person",
+                  name: d.nama,
+                  jobTitle: d.jabatan || undefined,
+                  description:
+                      [d.inovasi, d.deskripsi].filter(Boolean).join(" — ") ||
+                      undefined,
+                  image: fotoUrl || undefined,
+                  worksFor: {
+                      "@type": "GovernmentOrganization",
+                      name: "Kantor Kementerian Agama Kota Probolinggo",
+                      url: Astro.url.origin,
+                  },
+              },
+          },
+      ];
 ---
 
 <style>
@@ -155,6 +215,7 @@ const pageDescription = notFound
     description={pageDescription}
     ogDescription={pageDescription}
     robots={notFound ? "noindex, nofollow" : "index, follow"}
+    structuredData={structuredData}
 >
     {notFound ? (
         <section class="py-16 max-w-3xl mx-auto">

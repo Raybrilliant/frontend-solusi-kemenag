@@ -35,8 +35,6 @@ export const GET: APIRoute = async () => {
     "/portal/prestasi-siswa",
     "/information",
     "/pengaduan",
-    "/check-progress",
-    "/survei",
     "/zona-integritas",
   ];
 

@@ -83,6 +83,27 @@ async function validateToken(
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const { url, cookies, redirect, request } = context;
+
+  // Kanonikalisasi URL untuk konsolidasi sinyal SEO (hanya untuk GET/HEAD,
+  // agar permintaan API/POST tidak terkena redirect):
+  // 1. Host www → domain utama (keduanya di-whitelist dan keduanya bisa melayani konten).
+  // 2. Trailing slash dihapus (kecuali root) agar sesuai format tautan internal
+  //    dan canonical yang dinormalisasi di BaseLayout.
+  if (request.method === "GET" || request.method === "HEAD") {
+    const host = request.headers.get("host") ?? "";
+    if (host.toLowerCase().startsWith("www.")) {
+      const target = new URL(request.url);
+      target.host = host.slice(4);
+      return redirect(target.href, 301);
+    }
+
+    if (url.pathname.length > 1 && url.pathname.endsWith("/")) {
+      const target = new URL(request.url);
+      target.pathname = url.pathname.replace(/\/+$/, "");
+      return redirect(target.href, 301);
+    }
+  }
+
   const isAdminApiMutationRequest = isAdminApiMutation(
     url.pathname,
     request.method,
@@ -130,7 +151,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // Skip public paths
   if (isPublicPath(url.pathname)) {
-    return next();
+    const response = await next();
+    // Halaman login internal tetap privat meski rutenya publik
+    if (url.pathname.startsWith("/internal") || url.pathname.startsWith("/admin")) {
+      response.headers.set("X-Robots-Tag", "noindex, nofollow");
+    }
+    return response;
   }
 
   const isAdminRoute = url.pathname.startsWith("/admin");
@@ -246,5 +272,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
   context.locals.user = user;
   context.locals.token = token;
 
-  return next();
+  const response = await next();
+  // Pertahanan berlapis: halaman privat tidak boleh diindeks meski robots.txt
+  // dilewati oleh crawler yang tidak patuh.
+  response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  return response;
 });
