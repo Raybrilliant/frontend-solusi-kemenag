@@ -564,9 +564,9 @@
         exportingPdf = true;
         listError = "";
         try {
-            const params = new URLSearchParams();
-            params.set("month", String(filterMonth));
-            params.set("year", String(filterYear));
+            // Export mengikuti periode yang sedang difilter di tabel:
+            // harian jika tanggal spesifik dipilih, bulanan/tahunan jika tidak.
+            const params = buildDateParams();
             const res = await fetch(`/api/admin/tamu/export-pdf?${params}`);
             if (!res.ok) {
                 const json = await res.json().catch(() => null);
@@ -578,7 +578,10 @@
             a.href = objUrl;
             const cd = res.headers.get("content-disposition") ?? "";
             const m = cd.match(/filename="?([^"]+)"?/);
-            a.download = m?.[1] ?? `buku-tamu-${filterMonth}-${filterYear}.pdf`;
+            const fallback = filterDate
+                ? `buku-tamu-${filterDate}.pdf`
+                : `buku-tamu-${String(filterMonth).padStart(2, "0")}-${filterYear}.pdf`;
+            a.download = m?.[1] ?? fallback;
             document.body.appendChild(a);
             a.click();
             a.remove();
