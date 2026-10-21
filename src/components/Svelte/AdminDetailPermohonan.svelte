@@ -1,6 +1,11 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
-    let { permohonan, syarat = [], subService = null } = $props();
+    let {
+        permohonan,
+        syarat = [],
+        subService = null,
+        statusApiUrl = "/api/admin/permohonan",
+    } = $props();
 
     type Toast = { type: "success" | "error"; msg: string };
 
@@ -220,7 +225,7 @@
             }
 
             const res = await fetch(
-                `/api/admin/permohonan/${current.id}/status`,
+                `${statusApiUrl}/${current.id}/status`,
                 {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },

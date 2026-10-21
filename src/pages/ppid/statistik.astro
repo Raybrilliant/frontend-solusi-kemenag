@@ -2,7 +2,7 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import StatistikPortal from "../../components/Svelte/StatistikPortal.svelte";
 
-const pageUrl = `${Astro.url.origin}/portal/statistik`;
+const pageUrl = `${Astro.url.origin}/ppid/statistik`;
 const structuredData = [
     {
         "@context": "https://schema.org",
@@ -11,8 +11,8 @@ const structuredData = [
             {
                 "@type": "ListItem",
                 position: 1,
-                name: "Portal",
-                item: `${Astro.url.origin}/portal`,
+                name: "Beranda",
+                item: `${Astro.url.origin}`,
             },
             {
                 "@type": "ListItem",
@@ -79,21 +79,17 @@ const structuredData = [
     <!-- ── Page header ────────────────────────────────── -->
     <div data-anim="down" class="pt-8 pb-6">
         <a
-            href="/portal"
+            href="/ppid"
             class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink/35 hover:text-green transition-colors mb-4"
         >
             <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
-                <path
-                    d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
-                ></path>
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path>
             </svg>
-            Portal
+            PPID
         </a>
         <div class="flex items-center gap-3 mb-2">
             <div class="w-1 h-7 bg-green shrink-0"></div>
-            <h1
-                class="text-4xl font-extrabold uppercase tracking-tight text-ink"
-            >
+            <h1 class="text-4xl font-extrabold uppercase tracking-tight text-ink">
                 Statistik
             </h1>
         </div>
@@ -114,12 +110,10 @@ const structuredData = [
             fill="currentColor"
             class="shrink-0 text-ink/30 mt-0.5"
         >
-            <path
-                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
-            ></path>
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path>
         </svg>
-        Data diambil secara langsung dari Google Sheets Kemenag Kota Probolinggo dan
-        diperbarui otomatis setiap kali halaman dimuat.
+        Data diambil secara langsung dari Google Sheets Kemenag Kota Probolinggo
+        dan diperbarui otomatis setiap kali halaman dimuat.
     </div>
 
     <!-- ── Svelte viewer ──────────────────────────────── -->

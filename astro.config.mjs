@@ -25,6 +25,12 @@ export default defineConfig({
       { hostname: "www.kemenagkotaprobolinggo.id", protocol: "https" },
     ],
   },
+  redirects: {
+    "/portal/ppid": "/ppid",
+    "/portal/profil": "/ppid/profil",
+    "/portal/statistik": "/ppid/statistik",
+    "/portal/regulasi": "/ppid/regulasi",
+  },
   vite: {
     plugins: [tailwindcss()],
     optimizeDeps: {

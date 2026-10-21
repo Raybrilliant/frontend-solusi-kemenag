@@ -7,11 +7,15 @@ const pathname = Astro.url.pathname;
 
 function isActive(href: string) {
     if (href === "/") return pathname === "/";
+    if (href === "/portal") {
+        return pathname === "/portal" || pathname.startsWith("/portal/");
+    }
     return pathname.startsWith(href);
 }
 
 const navLinks = [
     { href: "/portal", label: "Portal" },
+    { href: "/ppid", label: "PPID" },
     { href: "/", label: "Layanan" },
     // { href: "/panduan", label: "Panduan" },
     { href: "/check-progress", label: "Cek Status" },
@@ -50,9 +54,7 @@ const navButtons = [
                 decoding="async"
                 format="webp"
             />
-            <div
-                class="font-semibold -space-y-1 lg:-space-y-2 uppercase leading-tight"
-            >
+            <div class="font-semibold -space-y-1 lg:-space-y-2 uppercase leading-tight">
                 <h3 class="text-[11px] lg:text-sm">Kantor Kementerian Agama</h3>
                 <h3 class="text-[11px] lg:text-sm">Kota Probolinggo</h3>
             </div>
@@ -60,37 +62,33 @@ const navButtons = [
 
         <!-- Desktop nav links (lg+) -->
         <ul class="hidden lg:flex gap-5 uppercase font-semibold text-sm">
-            {
-                navLinks.map((l) => (
-                    <li>
-                        <a
-                            href={l.href}
-                            data-astro-prefetch
-                            class={`nav-link ${isActive(l.href) ? "active" : ""}`}
-                        >
-                            {l.label}
-                        </a>
-                    </li>
-                ))
-            }
+            {navLinks.map((l) => (
+                <li>
+                    <a
+                        href={l.href}
+                        data-astro-prefetch
+                        class={`nav-link ${isActive(l.href) ? "active" : ""}`}
+                    >
+                        {l.label}
+                    </a>
+                </li>
+            ))}
         </ul>
 
         <!-- Desktop login buttons (lg+) -->
         <ul class="hidden lg:flex items-center font-semibold text-sm">
-            {
-                navButtons.map((b) => (
-                    <li>
-                        <a
-                            href={b.href}
-                            data-astro-prefetch
-                            class={`btn-asn py-3 uppercase ${b.label == "Masuk" ? "text-white" : ""} ${b.label == "Masuk" ? "px-7" : "px-10"} flex items-center gap-2 cursor-pointer ${b.bg}`}
-                        >
-                            <Icon name={b.icon} />
-                            {b.label}
-                        </a>
-                    </li>
-                ))
-            }
+            {navButtons.map((b) => (
+                <li>
+                    <a
+                        href={b.href}
+                        data-astro-prefetch
+                        class={`btn-asn py-3 uppercase ${b.label == "Masuk" ? "text-white" : ""} ${b.label == "Masuk" ? "px-7" : "px-10"} flex items-center gap-2 cursor-pointer ${b.bg}`}
+                    >
+                        <Icon name={b.icon} />
+                        {b.label}
+                    </a>
+                </li>
+            ))}
         </ul>
 
         <!-- Mobile & tablet: hamburger (< lg) -->
@@ -100,15 +98,9 @@ const navButtons = [
             aria-label="Buka menu"
             aria-expanded="false"
         >
-            <span
-                class="ham-line block w-6 h-0.5 bg-ink rounded transition-all duration-300 origin-center"
-            ></span>
-            <span
-                class="ham-line block w-6 h-0.5 bg-ink rounded transition-all duration-300"
-            ></span>
-            <span
-                class="ham-line block w-6 h-0.5 bg-ink rounded transition-all duration-300 origin-center"
-            ></span>
+            <span class="ham-line block w-6 h-0.5 bg-ink rounded transition-all duration-300 origin-center"></span>
+            <span class="ham-line block w-6 h-0.5 bg-ink rounded transition-all duration-300"></span>
+            <span class="ham-line block w-6 h-0.5 bg-ink rounded transition-all duration-300 origin-center"></span>
         </button>
     </nav>
 
@@ -121,21 +113,19 @@ const navButtons = [
         <div class="border-t border-ink/8 pt-3 pb-5">
             <!-- Nav links: 1-col on mobile, 2-col grid on tablet -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-0.5">
-                {
-                    navLinks.map((l) => (
-                        <a
-                            href={l.href}
-                            data-astro-prefetch
-                            class={`flex items-center gap-3 px-3 py-2.5 text-sm font-semibold uppercase rounded-lg transition-colors
+                {navLinks.map((l) => (
+                    <a
+                        href={l.href}
+                        data-astro-prefetch
+                        class={`flex items-center gap-3 px-3 py-2.5 text-sm font-semibold uppercase rounded-lg transition-colors
                 ${isActive(l.href) ? "text-green bg-green/5" : "text-ink/60 hover:text-ink hover:bg-black/4"}`}
-                        >
-                            {l.label}
-                            {isActive(l.href) && (
-                                <span class="ml-auto w-1.5 h-1.5 rounded-full bg-green shrink-0" />
-                            )}
-                        </a>
-                    ))
-                }
+                    >
+                        {l.label}
+                        {isActive(l.href) && (
+                            <span class="ml-auto w-1.5 h-1.5 rounded-full bg-green shrink-0" />
+                        )}
+                    </a>
+                ))}
             </div>
 
             <!-- Divider -->
@@ -143,19 +133,17 @@ const navButtons = [
 
             <!-- Login buttons -->
             <div class="flex flex-col sm:flex-row gap-2">
-                {
-                    navButtons.map((b) => (
-                        <a
-                            href={b.href}
-                            data-astro-prefetch
-                            class={`btn-asn ${b.bg} font-bold uppercase text-sm px-5 py-3
+                {navButtons.map((b) => (
+                    <a
+                        href={b.href}
+                        data-astro-prefetch
+                        class={`btn-asn ${b.bg} font-bold uppercase text-sm px-5 py-3
                 flex items-center justify-between sm:justify-center gap-2 cursor-pointer sm:flex-1`}
-                        >
-                            <Icon name={b.icon} />
-                            <span>{b.label}</span>
-                        </a>
-                    ))
-                }
+                    >
+                        <Icon name={b.icon} />
+                        <span>{b.label}</span>
+                    </a>
+                ))}
             </div>
         </div>
     </div>

@@ -227,8 +227,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
       "/admin/testimoni",
       "/admin/survei",
       "/admin/profil",
+      "/admin/permohonan-ppid",
       "/api/admin/auth/logout",
       "/api/admin/testimoni",
+      "/api/admin/ppid-permohonan",
     ];
 
     if (url.pathname === "/admin" || url.pathname === "/admin/") {

@@ -14,7 +14,11 @@
         };
     }
 
-    let { apiUrl = "/api/admin/permohonan", userKecamatan = "" } = $props();
+    let {
+        apiUrl = "/api/admin/permohonan",
+        detailBase = "/admin/permohonan",
+        userKecamatan = "",
+    } = $props();
 
     let data = $state<any[]>([]);
     let loading = $state(true);
@@ -138,7 +142,7 @@
             const params = new URLSearchParams({ page: "1", limit: "1" });
             if (from) params.set("dateFrom", from);
             if (to) params.set("dateTo", to);
-            fetch(`/api/admin/permohonan?${params}`)
+            fetch(`${apiUrl}?${params}`)
                 .then((r) => r.json())
                 .then((res) => {
                     exportTotal = res.pagination?.total ?? 0;
@@ -183,7 +187,7 @@
             const params = new URLSearchParams();
             if (exportDateFrom) params.set("dateFrom", exportDateFrom);
             if (exportDateTo) params.set("dateTo", exportDateTo);
-            const res = await fetch(`/api/admin/permohonan/export?${params}`);
+            const res = await fetch(`${apiUrl}/export?${params}`);
             const json = await res.json();
             if (json.success === false)
                 throw new Error(
@@ -307,7 +311,7 @@
         try {
             await Promise.all(
                 ids.map((id) =>
-                    fetch(`/api/admin/permohonan/${id}`, { method: "DELETE" }),
+                    fetch(`${apiUrl}/${id}`, { method: "DELETE" }),
                 ),
             );
             data = data.filter((row) => !ids.includes(row.id));
@@ -569,7 +573,7 @@
             {/if}
         {:else if cell.column.id === "_aksi"}
             <a
-                href={`/admin/permohonan/${cell.row.original.id}`}
+                href={`${detailBase}/${cell.row.original.id}`}
                 class="w-7 h-7 inline-flex items-center justify-center rounded-lg border border-black/10 hover:bg-black/4 text-ink/50 hover:text-ink transition-colors"
                 aria-label="Lihat detail"
             >

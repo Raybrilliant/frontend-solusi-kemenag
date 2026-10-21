@@ -14,10 +14,10 @@
   let mode     = $state(/** @type {string|null} */ (null));
   let selected = $state(/** @type {any} */ (null));
 
-  // ── Form fields (maps to backend: type, label, title, description, fileUrl) ──
+  // ── Form fields (maps to backend: type, label, tentang, description, fileUrl) ──
   let formType        = $state('PMA');
   let formLabel       = $state('');
-  let formTitle       = $state('');
+  let formTentang     = $state('');
   let formDescription = $state('');
   // Sumber dokumen: file PDF terunggah ATAU tautan eksternal (Google Drive).
   let docMode         = $state('upload');
@@ -33,19 +33,23 @@
   let saveError     = $state('');
   let saveSuccess   = $state(false);
 
-  const JENIS_LIST = ["UU", "PERPU", "PP", "PERPRES", "INPRES", "PERMEN", "PMA", "KMA", "PERDIRJEN", "SE", "SKB"];
+  // Urutan hierarki peraturan perundang-undangan (UU 12/2011 & KMA terkait):
+  // Kepdirjen (Keputusan Dirjen) berada di bawah Perdirjen, sebelum Surat Edaran.
+  const JENIS_LIST = ["UU", "PERPU", "PP", "PERPRES", "INPRES", "PERMEN", "PMA", "KMA", "PERDIRJEN", "KEPDIRJEN", "SE", "SKB"];
 
   const JENIS_COLORS = {
-    PMA:       'bg-green/10 text-green',
-    KMA:       'bg-yellow/40 text-yellow-800',
-    PP:        'bg-ink/8 text-ink/60',
-    Perpres:   'bg-purple-100 text-purple-700',
-    Kepdirjen: 'bg-blue-100 text-blue-700',
     UU:        'bg-pink-100 text-pink-700',
     PERPU:     'bg-orange-100 text-orange-700',
+    PP:        'bg-ink/8 text-ink/60',
     PERPRES:   'bg-sky-100 text-sky-700',
     INPRES:    'bg-indigo-100 text-indigo-700',
     PERMEN:    'bg-red-100 text-red-700',
+    PMA:       'bg-green/10 text-green',
+    KMA:       'bg-yellow/40 text-yellow-800',
+    PERDIRJEN: 'bg-teal-100 text-teal-700',
+    KEPDIRJEN: 'bg-blue-100 text-blue-700',
+    SE:        'bg-violet-100 text-violet-700',
+    SKB:       'bg-cyan-100 text-cyan-700',
     Lainnya:   'bg-ink/5 text-ink/50',
   };
 
@@ -93,7 +97,7 @@
     selected        = null;
     formType        = 'PMA';
     formLabel       = '';
-    formTitle       = '';
+    formTentang     = '';
     formDescription = '';
     docMode         = 'upload';
     formLink        = '';
@@ -109,7 +113,7 @@
     selected        = item;
     formType        = item.type        ?? 'PMA';
     formLabel       = item.label       ?? '';
-    formTitle       = item.title       ?? '';
+    formTentang     = item.tentang     ?? '';
     formDescription = item.description ?? '';
     pdfFile         = null;
     if (isExternalUrl(item.fileUrl)) {
@@ -132,8 +136,8 @@
 
   // ── Save (create or update) ──────────────────────────────────
   async function handleSave() {
-    if (!formLabel.trim() || !formTitle.trim()) {
-      saveError = 'Nomor dan Judul wajib diisi.';
+    if (!formLabel.trim() || !formTentang.trim()) {
+      saveError = 'Nomor dan Tentang wajib diisi.';
       return;
     }
 
@@ -155,7 +159,7 @@
       const body = /** @type {any} */ ({
         type:        formType,
         label:       formLabel.trim(),
-        title:       formTitle.trim(),
+        tentang:     formTentang.trim(),
         description: formDescription.trim(),
         fileUrl:     nextFileUrl,
       });
@@ -272,7 +276,7 @@
             <tr class="bg-ink/4 border-b border-ink/10">
               <th class="text-left px-4 py-3 text-xs font-bold uppercase tracking-wide text-ink/50">Nomor</th>
               <th class="text-left px-4 py-3 text-xs font-bold uppercase tracking-wide text-ink/50 hidden sm:table-cell">Jenis</th>
-              <th class="text-left px-4 py-3 text-xs font-bold uppercase tracking-wide text-ink/50">Judul</th>
+              <th class="text-left px-4 py-3 text-xs font-bold uppercase tracking-wide text-ink/50">Tentang</th>
               <th class="text-left px-4 py-3 text-xs font-bold uppercase tracking-wide text-ink/50 hidden lg:table-cell">Keterangan</th>
               <th class="text-left px-4 py-3 text-xs font-bold uppercase tracking-wide text-ink/50 hidden md:table-cell">Dokumen</th>
               <th class="text-left px-4 py-3 text-xs font-bold uppercase tracking-wide text-ink/50 hidden xl:table-cell">Tanggal</th>
@@ -289,7 +293,7 @@
                   <span class="text-[10px] font-bold uppercase px-2 py-0.5 {JENIS_COLORS[item.type] ?? 'bg-ink/8 text-ink/60'}">{item.type}</span>
                 </td>
                 <td class="px-4 py-3 font-medium text-ink max-w-xs">
-                  <span class="line-clamp-2 text-sm">{item.title}</span>
+                  <span class="line-clamp-2 text-sm">{item.tentang}</span>
                 </td>
                 <td class="px-4 py-3 text-ink/55 hidden lg:table-cell max-w-xs">
                   <span class="line-clamp-2 text-xs">{item.description ?? '-'}</span>
@@ -390,16 +394,16 @@
           />
         </div>
 
-        <!-- Title (judul) -->
+        <!-- Tentang (materi yang diatur) -->
         <div>
-          <label class="text-[10px] font-bold uppercase tracking-wide text-ink/50 block mb-1.5" for="form-title">
-            Judul <span class="text-red-400">*</span>
+          <label class="text-[10px] font-bold uppercase tracking-wide text-ink/50 block mb-1.5" for="form-tentang">
+            Tentang <span class="text-red-400">*</span>
           </label>
           <input
-            id="form-title"
+            id="form-tentang"
             type="text"
-            bind:value={formTitle}
-            placeholder="Judul peraturan..."
+            bind:value={formTentang}
+            placeholder="Tentang peraturan, contoh: Organisasi dan Tata Kerja..."
             class="w-full border border-ink/20 px-3 py-2 text-sm focus:outline-none focus:border-green"
           />
         </div>

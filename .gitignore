@@ -24,3 +24,6 @@ api.yaml
 
 # jetbrains setting folder
 .idea/
+
+# design-taste-frontend inspect artifacts
+.taste-skill/

@@ -33,3 +33,74 @@ body::before {
   from { background-position: 0 0; }
   to   { background-position: 48px 48px; }
 }
+
+/*
+ * Extend hero dark background up into the navbar area.
+ * Navbar gets full-bleed (mirrors body padding as negative margin)
+ * so the dark bg covers the full page width — no cream strips on sides.
+ * Only the navbar + hero are dark; everything else stays cream (global CSS).
+ * Berlaku untuk halaman mana pun yang punya elemen #hero-section (portal & ppid).
+ */
+body:has(#hero-section) #site-header {
+  background-color: #0a1a0c;
+  color: white;
+  margin-left: -1rem;
+  margin-right: -1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+@media (min-width: 640px) {
+  body:has(#hero-section) #site-header {
+    margin-left: -2rem;
+    margin-right: -2rem;
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+@media (min-width: 768px) {
+  body:has(#hero-section) #site-header {
+    margin-left: -3.5rem;
+    margin-right: -3.5rem;
+    padding-left: 3.5rem;
+    padding-right: 3.5rem;
+  }
+}
+@media (min-width: 1024px) {
+  body:has(#hero-section) #site-header {
+    margin-left: -5rem;
+    margin-right: -5rem;
+    padding-left: 5rem;
+    padding-right: 5rem;
+  }
+}
+body:has(#hero-section) #site-header .ham-line {
+  background-color: white;
+}
+/* Keep ASN button text dark (readable on yellow bg) */
+body:has(#hero-section) #site-header .btn-asn {
+  color: #111111;
+}
+/* Active nav link + underline: yellow on the dark header (green fails contrast there) */
+body:has(#hero-section) #site-header .nav-link.active {
+  color: #f6c744;
+}
+body:has(#hero-section) #site-header .nav-link::after {
+  background-color: #f6c744;
+}
+/* Mobile drawer dark bg */
+body:has(#hero-section) #mobile-menu {
+  background-color: #0b1e0d;
+}
+body:has(#hero-section) #mobile-menu .border-t {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+body:has(#hero-section) #mobile-menu a:not(.btn-asn) {
+  color: rgba(255, 255, 255, 0.6);
+}
+body:has(#hero-section) #mobile-menu a:not(.btn-asn):hover {
+  color: white;
+  background-color: rgba(255, 255, 255, 0.06);
+}
+body:has(#hero-section) #mobile-menu a.text-green {
+  color: #f6c744;
+}
