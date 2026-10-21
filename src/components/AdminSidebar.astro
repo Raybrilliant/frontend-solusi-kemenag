@@ -50,6 +50,11 @@ const contentItems = [
         icon: "mdi:inbox-arrow-down-outline",
         label: "Permohonan PPID",
     },
+    {
+        href: "/admin/pengumuman",
+        icon: "mdi:bullhorn-outline",
+        label: "Pengumuman",
+    },
 ];
 
 const humasItems = contentItems.filter((item) =>
@@ -59,6 +64,7 @@ const humasItems = contentItems.filter((item) =>
         "/admin/survei",
         "/admin/testimoni",
         "/admin/permohonan-ppid",
+        "/admin/pengumuman",
     ].includes(item.href),
 );
 
