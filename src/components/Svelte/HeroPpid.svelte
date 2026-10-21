@@ -1,29 +1,104 @@
 <script lang="ts">
-    let { apiUrl = "/api/ppid/permohonan" } = $props();
+    let { streamUrl = "/api/ppid/stream" } = $props();
 
     let total = $state<number | null>(null);
 
-    // ── Statistik realtime ──
-    async function loadTotal() {
-        try {
-            const res = await fetch(`${apiUrl}?page=1&limit=1`);
-            if (!res.ok) return;
-            const json = await res.json();
-            total = json?.pagination?.total ?? null;
-        } catch {
-            // biarkan nilai terakhir
+    // Total permohonan didorong via SSE (event ppid:stats) — tanpa polling.
+    $effect(() => {
+        const es = new EventSource(streamUrl);
+
+        es.addEventListener("ppid:stats", (e) => {
+            try {
+                total = JSON.parse(e.data).total;
+            } catch {
+                // abaikan payload tak valid; koneksi tetap terbuka
+            }
+        });
+
+        return () => {
+            es.close();
+        };
+    });
+
+    // ── Highlight tagline per huruf mengikuti scroll ──
+    const WORDS = [
+        "Pejabat",
+        "Pengelola",
+        "Informasi",
+        "dan",
+        "Dokumentasi",
+    ];
+
+    // Offset huruf pertama tiap kata dalam urutan flat semua huruf
+    const WORD_STARTS: number[] = (() => {
+        const starts: number[] = [];
+        let acc = 0;
+        for (const w of WORDS) {
+            starts.push(acc);
+            acc += w.length;
         }
+        return starts;
+    })();
+    const TOTAL_LETTERS = WORDS.reduce((n, w) => n + w.length, 0);
+    const WAVE = 3; // lebar gelombang kuning dalam jumlah huruf
+
+    let sectionEl: HTMLElement;
+    let progress = $state(0);
+
+    // Linear murni: huruf k mulai menyala saat progress menyentuhnya dan
+    // penuh setelah WAVE huruf berikutnya; huruf terakhir selesai tepat di 1.
+    function letterColor(k: number): string {
+        const f = Math.min(
+            1,
+            Math.max(0, (progress * (TOTAL_LETTERS - 1 + WAVE) - k) / WAVE),
+        );
+        if (f <= 0) return "rgba(255, 255, 255, 0.35)";
+        if (f >= 1) return "rgba(255, 255, 255, 0.95)";
+        // huruf di "garis depan" menyala kuning, lalu mengendap putih
+        return `rgba(246, 199, 68, ${(0.35 + 0.6 * f).toFixed(3)})`;
     }
 
     $effect(() => {
-        loadTotal();
-        const t = setInterval(loadTotal, 15000);
-        return () => clearInterval(t);
+        const el = sectionEl;
+        if (!el) return;
+
+        if (
+            window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ) {
+            progress = 1;
+            return;
+        }
+
+        let raf = 0;
+        const update = () => {
+            raf = 0;
+            const rect = el.getBoundingClientRect();
+            const vh = window.innerHeight || 1;
+            // 0 saat halaman di puncak, 1 saat hero tergulir ~75% tingginya
+            const distance = Math.max(rect.height * 0.75, 320);
+            progress = Math.min(
+                1,
+                Math.max(0, (-rect.top + vh * 0.05) / distance),
+            );
+        };
+        const onScroll = () => {
+            if (!raf) raf = requestAnimationFrame(update);
+        };
+
+        update();
+        window.addEventListener("scroll", onScroll, { passive: true });
+        window.addEventListener("resize", onScroll, { passive: true });
+        return () => {
+            window.removeEventListener("scroll", onScroll);
+            window.removeEventListener("resize", onScroll);
+            if (raf) cancelAnimationFrame(raf);
+        };
     });
 </script>
 
 <section
     id="hero-section"
+    bind:this={sectionEl}
     class="ppid-hero -mx-4 sm:-mx-8 md:-mx-14 lg:-mx-20 relative overflow-hidden flex flex-col"
 >
     <!-- Latar: dot grid + glow hijau (bahasa hero portal) -->
@@ -62,13 +137,20 @@
             <div class="h-px bg-white/15 flex-1"></div>
         </div>
 
-        <!-- Tagline -->
+        <!-- Tagline: huruf menyala berurutan secara linear mengikuti scroll -->
         <p
-            class="hero-in mt-5 sm:mt-6 text-xl sm:text-3xl lg:text-4xl font-extrabold uppercase tracking-tight leading-[1.08] max-w-4xl"
+            class="hero-in mt-5 sm:mt-6 flex flex-wrap items-baseline gap-x-3 text-xl sm:text-3xl lg:text-4xl font-extrabold uppercase tracking-tight leading-[1.08] max-w-4xl"
             style="animation-delay: 0.4s;"
         >
-            <span class="text-white/90">Pejabat Pengelola</span>
-            <span class="text-white/45">Informasi dan Dokumentasi</span>
+            {#each WORDS as word, wi (wi)}
+                <span class="inline-block whitespace-nowrap">
+                    {#each word.split("") as ch, ci (ci)}
+                        <span
+                            style={`color: ${letterColor(WORD_STARTS[wi] + ci)};`}>{ch}</span
+                        >
+                    {/each}
+                </span>
+            {/each}
         </p>
 
         <p

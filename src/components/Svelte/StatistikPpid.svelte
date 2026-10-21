@@ -1,7 +1,5 @@
 <script lang="ts">
-    let { apiUrl = "/api/ppid/permohonan" } = $props();
-
-    const REFRESH_MS = 15000;
+    let { streamUrl = "/api/ppid/stream" } = $props();
 
     let total = $state<number | null>(null);
     let selesai = $state<number | null>(null);
@@ -9,37 +7,28 @@
     let proses = $state<number | null>(null);
     let updatedAt = $state<Date | null>(null);
 
-    async function fetchCount(status?: string): Promise<number> {
-        const qs = new URLSearchParams({ page: "1", limit: "1" });
-        if (status) qs.set("status", status);
-        const res = await fetch(`${apiUrl}?${qs.toString()}`);
-        if (!res.ok) throw new Error("gagal memuat statistik");
-        const json = await res.json();
-        return json?.pagination?.total ?? 0;
-    }
-
-    async function load() {
-        try {
-            const [t, s, d, p] = await Promise.all([
-                fetchCount(),
-                fetchCount("Selesai"),
-                fetchCount("Ditolak"),
-                fetchCount("Diproses"),
-            ]);
-            total = t;
-            selesai = s;
-            ditolak = d;
-            proses = p;
-            updatedAt = new Date();
-        } catch {
-            // biarkan nilai terakhir; polling berikutnya akan mencoba lagi
-        }
-    }
-
+    // Statistik didorong via SSE (event ppid:stats) — tanpa polling.
+    // Backend mengirim state awal saat tersambung dan push ulang saat ada
+    // permohonan baru maupun perubahan status oleh admin.
     $effect(() => {
-        load();
-        const interval = setInterval(load, REFRESH_MS);
-        return () => clearInterval(interval);
+        const es = new EventSource(streamUrl);
+
+        es.addEventListener("ppid:stats", (e) => {
+            try {
+                const stats = JSON.parse(e.data);
+                total = stats.total;
+                proses = stats.diproses;
+                selesai = stats.selesai;
+                ditolak = stats.ditolak;
+                updatedAt = new Date();
+            } catch {
+                // abaikan payload tak valid; koneksi tetap terbuka
+            }
+        });
+
+        return () => {
+            es.close();
+        };
     });
 
     const cards = $derived([
