@@ -19,6 +19,9 @@
   let formLabel       = $state('');
   let formTitle       = $state('');
   let formDescription = $state('');
+  // Sumber dokumen: file PDF terunggah ATAU tautan eksternal (Google Drive).
+  let docMode         = $state('upload');
+  let formLink        = $state('');
   let pdfFile         = $state(/** @type {File|null} */ (null));
   let existingFileUrl  = $state('');
 
@@ -57,6 +60,15 @@
     return `/api/upload/${encodeURIComponent(filename)}`;
   }
 
+  function isExternalUrl(url) {
+    return /^https?:\/\//i.test(url ?? '');
+  }
+
+  // Tautan eksternal dibuka langsung; PDF lokal lewat proxy upload.
+  function docUrl(url) {
+    return isExternalUrl(url) ? url : pdfProxyUrl(url);
+  }
+
   // ── Fetch ────────────────────────────────────────────────────
   async function fetchList() {
     loading = true; fetchError = '';
@@ -83,6 +95,8 @@
     formLabel       = '';
     formTitle       = '';
     formDescription = '';
+    docMode         = 'upload';
+    formLink        = '';
     pdfFile         = null;
     existingFileUrl  = '';
     saveError       = '';
@@ -98,7 +112,15 @@
     formTitle       = item.title       ?? '';
     formDescription = item.description ?? '';
     pdfFile         = null;
-    existingFileUrl  = item.fileUrl    ?? '';
+    if (isExternalUrl(item.fileUrl)) {
+      docMode          = 'link';
+      formLink         = item.fileUrl ?? '';
+      existingFileUrl  = '';
+    } else {
+      docMode          = 'upload';
+      formLink         = '';
+      existingFileUrl  = item.fileUrl ?? '';
+    }
     saveError       = '';
     saveSuccess     = false;
     confirmDelete   = false;
@@ -114,10 +136,20 @@
       saveError = 'Nomor dan Judul wajib diisi.';
       return;
     }
-    if (mode === 'create' && !pdfFile && !existingFileUrl) {
-      saveError = 'Dokumen PDF wajib diunggah.';
+
+    let nextFileUrl = existingFileUrl;
+    if (docMode === 'link') {
+      const link = formLink.trim();
+      if (!/^https?:\/\/\S+$/i.test(link)) {
+        saveError = 'Tautan tidak valid. Gunakan format lengkap, mis. https://drive.google.com/...';
+        return;
+      }
+      nextFileUrl = link;
+    } else if (!pdfFile && !existingFileUrl) {
+      saveError = 'Unggah dokumen PDF atau gunakan tautan dokumen.';
       return;
     }
+
     saving = true; saveError = ''; saveSuccess = false;
     try {
       const body = /** @type {any} */ ({
@@ -125,11 +157,11 @@
         label:       formLabel.trim(),
         title:       formTitle.trim(),
         description: formDescription.trim(),
-        fileUrl:     existingFileUrl,
+        fileUrl:     nextFileUrl,
       });
 
       // Upload PDF if a new file was selected
-      if (pdfFile) {
+      if (docMode === 'upload' && pdfFile) {
         uploading = true;
         const fd = new FormData();
         fd.append('file', pdfFile);
@@ -147,7 +179,11 @@
         body:    JSON.stringify(body),
       });
       const json = await res.json();
-      if (!json.success) { saveError = json.message ?? 'Gagal menyimpan.'; return; }
+      if (!json.success) {
+        // Termasuk penolakan duplikat nomor regulasi (HTTP 409) dari backend.
+        saveError = json.message ?? 'Gagal menyimpan.';
+        return;
+      }
 
       if (isCreate) {
         items      = [json.data, ...items];
@@ -157,7 +193,15 @@
         selected = json.data;
       }
 
-      existingFileUrl = json.data.fileUrl ?? '';
+      if (isExternalUrl(json.data.fileUrl)) {
+        docMode         = 'link';
+        formLink        = json.data.fileUrl ?? '';
+        existingFileUrl = '';
+      } else {
+        docMode         = 'upload';
+        formLink        = '';
+        existingFileUrl = json.data.fileUrl ?? '';
+      }
       pdfFile         = null;
       saveSuccess     = true;
       setTimeout(() => (saveSuccess = false), 3000);
@@ -230,7 +274,7 @@
               <th class="text-left px-4 py-3 text-xs font-bold uppercase tracking-wide text-ink/50 hidden sm:table-cell">Jenis</th>
               <th class="text-left px-4 py-3 text-xs font-bold uppercase tracking-wide text-ink/50">Judul</th>
               <th class="text-left px-4 py-3 text-xs font-bold uppercase tracking-wide text-ink/50 hidden lg:table-cell">Keterangan</th>
-              <th class="text-left px-4 py-3 text-xs font-bold uppercase tracking-wide text-ink/50 hidden md:table-cell">PDF</th>
+              <th class="text-left px-4 py-3 text-xs font-bold uppercase tracking-wide text-ink/50 hidden md:table-cell">Dokumen</th>
               <th class="text-left px-4 py-3 text-xs font-bold uppercase tracking-wide text-ink/50 hidden xl:table-cell">Tanggal</th>
             </tr>
           </thead>
@@ -252,10 +296,16 @@
                 </td>
                 <td class="px-4 py-3 hidden md:table-cell">
                   {#if item.fileUrl}
-                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-green">
-<Icon icon="mdi:file-document-outline" width="12" height="12" />
-                      PDF
-                    </span>
+                    <a
+                      href={docUrl(item.fileUrl)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onclick={(e) => e.stopPropagation()}
+                      class="inline-flex items-center gap-1 text-[10px] font-bold text-green hover:underline"
+                    >
+<Icon icon={isExternalUrl(item.fileUrl) ? 'mdi:link-variant' : 'mdi:file-document-outline'} width="12" height="12" />
+                      {isExternalUrl(item.fileUrl) ? 'Tautan' : 'PDF'}
+                    </a>
                   {:else}
                     <span class="text-[10px] text-ink/25">—</span>
                   {/if}
@@ -366,12 +416,47 @@
           ></textarea>
         </div>
 
-        <!-- PDF Upload -->
+        <!-- Sumber dokumen: upload PDF atau tautan (Google Drive) -->
         <div>
-          <label class="text-[10px] font-bold uppercase tracking-wide text-ink/50 block mb-1.5">
-            Dokumen PDF
-            <span class="font-normal normal-case opacity-60">(maks. 10 MB)</span>
-          </label>
+          <label class="text-[10px] font-bold uppercase tracking-wide text-ink/50 block mb-1.5">Sumber Dokumen</label>
+          <div class="grid grid-cols-2 border border-ink/20">
+            <button
+              type="button"
+              onclick={() => (docMode = 'upload')}
+              class="py-1.5 text-[10px] font-bold uppercase transition-colors {docMode === 'upload' ? 'bg-green text-white' : 'text-ink/60 hover:bg-ink/5'}"
+            >Upload PDF</button>
+            <button
+              type="button"
+              onclick={() => (docMode = 'link')}
+              class="py-1.5 text-[10px] font-bold uppercase transition-colors {docMode === 'link' ? 'bg-green text-white border-l border-ink/20' : 'text-ink/60 hover:bg-ink/5 border-l border-ink/20'}"
+            >Tautan (Drive)</button>
+          </div>
+        </div>
+
+        {#if docMode === 'link'}
+          <!-- Tautan dokumen (mis. Google Drive) -->
+          <div>
+            <label class="text-[10px] font-bold uppercase tracking-wide text-ink/50 block mb-1.5" for="form-link">
+              Tautan Dokumen <span class="text-red-400">*</span>
+            </label>
+            <input
+              id="form-link"
+              type="url"
+              bind:value={formLink}
+              placeholder="https://drive.google.com/..."
+              class="w-full border border-ink/20 px-3 py-2 text-sm focus:outline-none focus:border-green"
+            />
+            <p class="text-[10px] text-ink/40 mt-1.5">
+              Tempel tautan Google Drive atau layanan lain. Pastikan izin akses "siapa saja yang memiliki link" agar dokumen bisa dibuka publik.
+            </p>
+          </div>
+        {:else}
+          <!-- Upload PDF -->
+          <div>
+            <label class="text-[10px] font-bold uppercase tracking-wide text-ink/50 block mb-1.5">
+              Dokumen PDF
+              <span class="font-normal normal-case opacity-60">(maks. 10 MB)</span>
+            </label>
 
           <!-- Existing PDF -->
           {#if existingFileUrl && !pdfFile}
@@ -423,7 +508,8 @@
               />
             </label>
           {/if}
-        </div>
+          </div>
+        {/if}
 
         <!-- Feedback -->
         {#if saveError}
