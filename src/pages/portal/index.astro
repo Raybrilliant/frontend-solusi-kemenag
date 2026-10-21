@@ -1,10 +1,8 @@
 ---
-import { Image } from "astro:assets";
-import { Icon } from "astro-icon/components";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import { Icon } from "astro-icon/components";
 import { toUploadProxyUrl } from "../../lib/upload-url";
 import { categoryColor, categoryAccent } from "../../lib/berita-kategori";
-import kemenagImage from "../../assets/images/kemenag.png";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
@@ -29,12 +27,15 @@ const TYPE_ORDER = [
     "SKB",
 ];
 
-// Fetch berita (6 terbaru) dan regulasi secara paralel
-const [beritaRaw, regulasiRaw] = await Promise.allSettled([
-    fetch(`${BACKEND_URL}/api/v1/berita/?limit=6`).then((r) =>
+// Fetch berita (1 lead + 3 headline + 8 grid), regulasi, dan pengumuman paralel
+const [beritaRaw, regulasiRaw, pengumumanRaw] = await Promise.allSettled([
+    fetch(`${BACKEND_URL}/api/v1/berita/?limit=12`).then((r) =>
         r.ok ? r.json() : { data: [] },
     ),
     fetch(`${BACKEND_URL}/api/v1/regulasi/?limit=100`).then((r) =>
+        r.ok ? r.json() : { data: [] },
+    ),
+    fetch(`${BACKEND_URL}/api/v1/pengumuman?limit=10`).then((r) =>
         r.ok ? r.json() : { data: [] },
     ),
 ]);
@@ -52,6 +53,10 @@ const regulasiAll = (
     ...r,
     fileUrl: toUploadProxyUrl(r.fileUrl) || r.fileUrl,
 }));
+
+const pengumuman = ((pengumumanRaw.status === "fulfilled"
+    ? pengumumanRaw.value?.data
+    : null) ?? []) as Array<{ id: number; judul: string; link: string | null }>;
 
 // Sort by legal hierarchy then take 6
 const regulasi = [...regulasiAll]
@@ -73,27 +78,6 @@ function formatDate(dateStr: string | null) {
         year: "numeric",
     });
 }
-
-// Fetch semua kategori unik dari berita yang ada
-let rawKategori: string[] = [];
-try {
-    const katRes = await fetch(`${BACKEND_URL}/api/v1/berita/?limit=500`);
-    if (katRes.ok) {
-        const katData = await katRes.json();
-        rawKategori = [
-            ...new Set(
-                ((katData?.data ?? []) as any[])
-                    .map((b) =>
-                        String(b.kategori ?? "")
-                            .trim()
-                            .toLowerCase(),
-                    )
-                    .filter(Boolean),
-            ),
-        ];
-        rawKategori.sort();
-    }
-} catch {}
 
 function regulasiBadge(type: string) {
     const t = type.toUpperCase();
@@ -118,9 +102,9 @@ function regulasiBadge(type: string) {
 const structuredData = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: "Portal Resmi Kemenag Kota Probolinggo",
+    name: "Berita Resmi Kemenag Kota Probolinggo",
     description:
-        "Portal resmi berisi berita, regulasi, profil, statistik, PPID, KUA, dan informasi publik Kantor Kementerian Agama Kota Probolinggo.",
+        "Berita resmi, pengumuman, dan liputan kegiatan Kantor Kementerian Agama Kota Probolinggo beserta regulasi dan informasi publik.",
     url: `${Astro.url.origin}/portal`,
     isPartOf: {
         "@type": "WebSite",
@@ -131,42 +115,31 @@ const structuredData = {
 ---
 
 <style>
-    /* ── Dot grid hero ───────────────────────────────────── */
-    .hero-dots {
-        background-image: radial-gradient(
-            circle,
-            rgba(255, 255, 255, 0.16) 1px,
-            transparent 1px
-        );
-        background-size: 28px 28px;
+    /* ── Ticker berita terkini ───────────────────────────── */
+    .ticker-track {
+        display: flex;
+        width: max-content;
+        animation: ticker-scroll 40s linear infinite;
     }
-
-    /* ── Scroll hint bounce ──────────────────────────────── */
-    @keyframes bounce-y {
-        0%,
-        100% {
-            transform: translateY(0);
+    .ticker:hover .ticker-track {
+        animation-play-state: paused;
+    }
+    /* Pita pengumuman: lebih pelan dari ticker berita */
+    .pengumuman-track {
+        animation-duration: 55s;
+    }
+    @keyframes ticker-scroll {
+        from {
+            transform: translateX(0);
         }
-        50% {
-            transform: translateY(6px);
+        to {
+            transform: translateX(-50%);
         }
     }
-    .bounce-arrow {
-        animation: bounce-y 1.6s ease-in-out infinite;
-    }
-
-    /* ── Hero entrance animations ────────────────────────── */
-    [data-hero="badge"] {
-        animation: fadeDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
-    }
-    [data-hero="h1"] {
-        animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
-    }
-    [data-hero="sub"] {
-        animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both;
-    }
-    [data-hero="hint"] {
-        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
+    @media (prefers-reduced-motion: reduce) {
+        .ticker-track {
+            animation: none;
+        }
     }
 
     /* ── Scroll reveal ───────────────────────────────────── */
@@ -206,27 +179,6 @@ const structuredData = {
         transition-delay: 0.48s;
     }
 
-    @keyframes fadeDown {
-        from {
-            opacity: 0;
-            transform: translateY(-14px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    @keyframes fadeUp {
-        from {
-            opacity: 0;
-            transform: translateY(24px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
     /* ── News card hover ─────────────────────────────────── */
     .news-card {
         transition:
@@ -240,141 +192,259 @@ const structuredData = {
 </style>
 
 <BaseLayout
-    title="Portal Resmi"
-    description="Portal resmi Kantor Kementerian Agama Kota Probolinggo berisi berita, regulasi, profil, statistik, PPID, dan informasi publik."
-    ogTitle="Portal Resmi Kemenag Kota Probolinggo"
-    ogDescription="Jelajahi berita resmi, regulasi, PPID, profil, statistik, dan layanan publik Kemenag Kota Probolinggo."
+    title="Berita Resmi"
+    description="Berita resmi, pengumuman, dan liputan kegiatan Kantor Kementerian Agama Kota Probolinggo beserta regulasi dan informasi publik."
+    ogTitle="Berita Resmi Kemenag Kota Probolinggo"
+    ogDescription="Ikuti berita terkini, pengumuman, dan liputan kegiatan resmi Kemenag Kota Probolinggo."
     structuredData={structuredData}
 >
-    <!-- ══ HERO ════════════════════════════════════════════ -->
-    <section
-        id="hero-section"
-        class="-mx-4 sm:-mx-8 md:-mx-14 lg:-mx-20"
-        style="height: 190vh;"
-    >
-        <div
-            class="sticky top-0 h-screen overflow-hidden flex flex-col"
-            style="background:#0a1a0c;"
-        >
-            <!-- Background patterns -->
-            <div class="absolute inset-0 hero-dots pointer-events-none"></div>
-            <div class="absolute -bottom-32 -left-32 w-[500px] h-[500px] bg-green/15 rounded-full blur-3xl pointer-events-none"></div>
-            <div class="absolute top-1/4 right-0 w-80 h-80 bg-green/8 rounded-full blur-3xl pointer-events-none"></div>
-
-            <!-- ── Welcome text ───────────────────────── -->
-            <div class="relative z-10 flex flex-col items-center text-center pt-16 sm:pt-20 md:pt-24 px-4 sm:px-8 md:px-16 lg:px-24">
-                <!-- <div data-hero="badge"
-                     class="inline-flex items-center gap-2 bg-green/20 border border-green/30 rounded-full px-4 py-1.5 mb-5">
-                    <span class="w-1.5 h-1.5 rounded-full bg-green animate-pulse shrink-0"></span>
-                    <span class="text-[11px] font-bold text-green/80 uppercase tracking-[0.16em]">
-                        Portal Resmi — Kemenag Kota Probolinggo
-                    </span>
-                </div> -->
-
-                <h1
-                    data-hero="h1"
-                    class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white uppercase leading-tight tracking-tight max-w-5xl"
-                >
-                    Selamat Datang di
-                    <br />
-                    <span class="text-green">Portal Resmi</span>
-                    <br />
-                    Kementerian Agama <br /> Kota Probolinggo
-                </h1>
-
-                <p
-                    data-hero="sub"
-                    class="mt-4 text-sm sm:text-base text-white/45 max-w-xl leading-relaxed"
-                >
-                    Informasi resmi, berita terkini, regulasi, dan layanan
-                    publik Kantor Kementerian Agama Kota Probolinggo dalam satu
-                    portal.
-                </p>
-
-                <div
-                    data-hero="hint"
-                    id="scroll-hint"
-                    class="mt-8 flex flex-col items-center gap-2 transition-opacity duration-300"
-                >
-                    <span class="text-[11px] font-semibold text-white/25 uppercase tracking-widest">
-                        Scroll untuk menjelajahi
-                    </span>
-                    <div class="bounce-arrow">
-                        <svg
-                            viewBox="0 0 24 24"
-                            width="18"
-                            height="18"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            class="text-white/25"
+    <!-- ══ TICKER TERKINI ══════════════════════════════════ -->
+    {berita.length > 0 && (
+        <div class="ticker -mx-4 sm:-mx-8 md:-mx-14 lg:-mx-20 bg-ink text-cream flex items-stretch overflow-hidden">
+            <span class="shrink-0 z-10 bg-green text-white text-[10px] font-black uppercase tracking-[0.2em] px-3 sm:px-4 flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                Terkini
+            </span>
+            <div class="relative overflow-hidden flex-1">
+                <div class="ticker-track">
+                    {[0, 1].map((dup) => (
+                        <div
+                            class="flex shrink-0 items-center"
+                            aria-hidden={dup === 1}
                         >
-                            <path d="m6 9 6 6 6-6" />
-                        </svg>
-                    </div>
+                            {berita.slice(0, 5).map((b: any) => (
+                                <a
+                                    href={`/portal/berita/${b.slug}`}
+                                    class="flex items-center gap-2 px-5 py-2.5 text-xs text-cream/65 hover:text-white whitespace-nowrap transition-colors"
+                                >
+                                    <span class="w-1 h-1 bg-yellow shrink-0"></span>
+                                    {b.judul}
+                                </a>
+                            ))}
+                        </div>
+                    ))}
                 </div>
             </div>
+        </div>
+    )}
 
-            <!-- ── Parallax image ─────────────────────── -->
-            <Image
-                id="parallax-img"
-                src={kemenagImage}
-                alt="Kantor Kementerian Agama Kota Probolinggo"
-                class="absolute left-0 right-0 bottom-0 w-full object-cover object-bottom pointer-events-none select-none"
-                style="filter: grayscale(100%) brightness(0.5); will-change: transform;"
-                widths={[768, 1024, 1280, 1600, 1920]}
-                sizes="100vw"
-                loading="eager"
-                fetchpriority="high"
-                decoding="async"
-                format="webp"
-            />
+    <!-- ══ MARQUEE PENGUMUMAN ══════════════════════════════ -->
+    {pengumuman.length > 0 && (
+        <div class="ticker pengumuman-marquee -mx-4 sm:-mx-8 md:-mx-14 lg:-mx-20 bg-yellow/15 border-b border-ink/10 flex items-stretch overflow-hidden">
+            <span class="shrink-0 z-10 bg-yellow text-ink text-[10px] font-black uppercase tracking-[0.2em] px-3 sm:px-4 flex items-center gap-2">
+                <Icon name="mdi:bullhorn" class="w-3 h-3" />
+                Pengumuman
+            </span>
+            <div class="relative overflow-hidden flex-1">
+                <div class="ticker-track pengumuman-track">
+                    {[0, 1].map((dup) => (
+                        <div
+                            class="flex shrink-0 items-center"
+                            aria-hidden={dup === 1}
+                        >
+                            {pengumuman.map((p) =>
+                                p.link ? (
+                                    <a
+                                        href={p.link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="flex items-center gap-2 px-5 py-2.5 text-xs text-ink/70 hover:text-ink whitespace-nowrap transition-colors"
+                                    >
+                                        <span class="w-1 h-1 bg-green shrink-0"></span>
+                                        {p.judul}
+                                        <Icon
+                                            name="mdi:arrow-top-right"
+                                            class="w-3 h-3 opacity-40"
+                                        />
+                                    </a>
+                                ) : (
+                                    <span class="flex items-center gap-2 px-5 py-2.5 text-xs text-ink/70 whitespace-nowrap">
+                                        <span class="w-1 h-1 bg-green shrink-0"></span>
+                                        {p.judul}
+                                    </span>
+                                ),
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    )}
 
-            <!-- Fade to dark at bottom -->
+    <!-- ══ LEAD PACKAGE ════════════════════════════════════ -->
+    <section class="pt-8 md:pt-12 pb-12 md:pb-16">
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-10">
+            <!-- Berita utama -->
+            {berita[0] && (
+                <a
+                    href={`/portal/berita/${berita[0].slug}`}
+                    data-reveal="up"
+                    class="news-card lg:col-span-3 group flex flex-col bg-cream border border-ink/10 overflow-hidden cursor-pointer"
+                >
+                    <div class="relative overflow-hidden h-64 sm:h-80 lg:h-[420px] shrink-0 bg-ink/5">
+                        {berita[0].thumbnail ? (
+                            <img
+                                src={berita[0].thumbnail}
+                                alt={berita[0].judul}
+                                class="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-500 ease-out"
+                                loading="eager"
+                                fetchpriority="high"
+                            />
+                        ) : (
+                            <div class="w-full h-full flex items-center justify-center">
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    width="32"
+                                    height="32"
+                                    fill="currentColor"
+                                    class="text-ink/10"
+                                >
+                                    <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+                                </svg>
+                            </div>
+                        )}
+                        <span
+                            class={`absolute top-3 left-3 text-[10px] font-black uppercase tracking-wider px-2 py-1 ${categoryColor(berita[0].kategori)}`}
+                        >
+                            {berita[0].kategori}
+                        </span>
+                    </div>
+
+                    <div class="p-6 md:p-8 flex flex-col flex-1">
+                        <span class="text-[11px] text-ink/35 font-medium mb-2 block">
+                            {formatDate(
+                                berita[0].publishedAt ?? berita[0].createdAt,
+                            )}
+                        </span>
+
+                        <h1 class="text-xl sm:text-2xl md:text-3xl font-extrabold text-ink leading-tight group-hover:text-green transition-colors">
+                            {berita[0].judul}
+                        </h1>
+
+                        <p class="text-sm text-ink/50 leading-relaxed line-clamp-3 mt-3">
+                            {berita[0].ringkasan}
+                        </p>
+
+                        <div class="flex items-center gap-1.5 mt-auto pt-5 text-[11px] font-bold uppercase tracking-wider text-green/60 group-hover:text-green transition-colors">
+                            Baca Selengkapnya
+                            <svg
+                                viewBox="0 0 24 24"
+                                width="12"
+                                height="12"
+                                fill="currentColor"
+                                class="group-hover:translate-x-1 transition-transform"
+                            >
+                                <path d="M6.4 18L5 16.6 14.6 7H6V5h12v12h-2V8.4z" />
+                            </svg>
+                        </div>
+                    </div>
+                </a>
+            )}
+
+            <!-- Headline lainnya -->
             <div
-                class="absolute bottom-0 left-0 right-0 h-36 pointer-events-none"
-                style="background: linear-gradient(to bottom, transparent, #0a1a0c);"
-            ></div>
+                class="lg:col-span-2 flex flex-col border border-ink/10 bg-cream divide-y divide-ink/10"
+                data-reveal="up"
+                data-delay="1"
+            >
+                <div class="px-5 py-3 border-b border-ink/10 flex items-center gap-3">
+                    <div class="w-1 h-4 bg-green shrink-0"></div>
+                    <span class="text-[11px] font-black uppercase tracking-[0.18em] text-ink/60">
+                        Headline Lainnya
+                    </span>
+                </div>
+
+                {berita.slice(1, 4).map((b: any) => (
+                    <a
+                        href={`/portal/berita/${b.slug}`}
+                        class="group flex gap-4 p-5 flex-1 items-start hover:bg-ink/3 transition-colors"
+                    >
+                        <div class="relative w-24 h-24 shrink-0 overflow-hidden bg-ink/5">
+                            {b.thumbnail ? (
+                                <img
+                                    src={b.thumbnail}
+                                    alt={b.judul}
+                                    class="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-500 ease-out"
+                                    loading="lazy"
+                                />
+                            ) : (
+                                <div class="w-full h-full flex items-center justify-center">
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                        width="24"
+                                        height="24"
+                                        fill="currentColor"
+                                        class="text-ink/10"
+                                    >
+                                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+                                    </svg>
+                                </div>
+                            )}
+                        </div>
+
+                        <div class="flex flex-col min-w-0 flex-1 self-stretch">
+                            <span
+                                class={`self-start text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 mb-1.5 ${categoryColor(b.kategori)}`}
+                            >
+                                {b.kategori}
+                            </span>
+
+                            <h3 class="text-sm font-bold text-ink leading-snug group-hover:text-green transition-colors line-clamp-3">
+                                {b.judul}
+                            </h3>
+
+                            <span class="text-[11px] text-ink/35 mt-auto pt-2">
+                                {formatDate(b.publishedAt ?? b.createdAt)}
+                            </span>
+                        </div>
+                    </a>
+                ))}
+            </div>
         </div>
     </section>
 
-    <!-- ══ BERITA TERBARU ══════════════════════════════════ -->
-    <section class="py-14 md:py-20">
-        <div class="mb-10 md:mb-12">
-            <div data-reveal="up" class="flex items-center gap-3 mb-3">
-                <div class="w-1 h-6 bg-green"></div>
-                <span class="text-[11px] font-black uppercase tracking-[0.18em] text-green">
-                    Berita & Informasi
-                </span>
+    <!-- ══ BERITA TERBARU (GRID) ═══════════════════════════ -->
+    <section class="pb-14 md:pb-20">
+        <div data-reveal="up" class="mb-8 flex items-end justify-between gap-4">
+            <div>
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-1 h-6 bg-green"></div>
+                    <span class="text-[11px] font-black uppercase tracking-[0.18em] text-green">
+                        Terbaru & Pengumuman
+                    </span>
+                </div>
+                <h2 class="text-3xl sm:text-4xl font-extrabold uppercase tracking-tight text-ink">
+                    Berita Terbaru
+                </h2>
             </div>
-            <h2
-                data-reveal="up"
-                data-delay="1"
-                class="text-3xl sm:text-4xl md:text-5xl font-extrabold uppercase tracking-tight text-ink"
+
+            <a
+                href="/portal/berita"
+                class="hidden sm:inline-flex shrink-0 items-center gap-2 border border-ink/20 bg-cream px-5 py-2.5 text-xs font-bold uppercase tracking-wide hover:border-green hover:text-green transition-colors"
             >
-                Berita Terbaru
-            </h2>
-            <p
-                data-reveal="up"
-                data-delay="2"
-                class="text-sm text-ink/50 mt-2 max-w-lg"
-            >
-                Informasi dan pengumuman resmi terkini dari Kantor Kementerian
-                Agama Kota Probolinggo.
-            </p>
+                Lihat Semua
+                <svg
+                    viewBox="0 0 24 24"
+                    width="13"
+                    height="13"
+                    fill="currentColor"
+                >
+                    <path d="M6.4 18L5 16.6 14.6 7H6V5h12v12h-2V8.4z" />
+                </svg>
+            </a>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {berita.length === 0 ? (
-                <p class="col-span-3 text-center py-16 text-sm text-ink/30 font-medium uppercase tracking-wider">
+                <p class="col-span-full text-center py-16 text-sm text-ink/30 font-medium uppercase tracking-wider">
                     Belum ada berita
                 </p>
             ) : (
-                berita.map((b: any, i: number) => (
+                berita.slice(4).map((b: any, i: number) => (
                     <a
                         href={`/portal/berita/${b.slug}`}
                         data-reveal="up"
-                        data-delay={String((i % 3) + 1)}
+                        data-delay={String((i % 4) + 1)}
                         class="news-card bg-cream border border-ink/10 flex flex-col cursor-pointer group overflow-hidden"
                     >
                         <!-- Thumbnail -->
@@ -442,7 +512,7 @@ const structuredData = {
             )}
         </div>
 
-        <div data-reveal="up" class="mt-8 text-center">
+        <div data-reveal="up" class="mt-8 text-center sm:hidden">
             <a
                 href="/portal/berita"
                 class="inline-flex items-center gap-2 border border-ink/20 bg-cream px-6 py-3 text-sm font-bold uppercase tracking-wide hover:border-green hover:text-green transition-colors"
@@ -457,106 +527,6 @@ const structuredData = {
                     <path d="M6.4 18L5 16.6 14.6 7H6V5h12v12h-2V8.4z" />
                 </svg>
             </a>
-        </div>
-    </section>
-
-    <!-- ══ REGULASI ════════════════════════════════════════ -->
-    <section
-        class="-mx-4 sm:-mx-8 md:-mx-14 lg:-mx-20 px-4 sm:px-8 md:px-14 lg:px-20 py-14 md:py-20"
-        style="background:#111111; color:#f6f1e8;"
-    >
-        <div class="grid grid-cols-1 lg:grid-cols-5 gap-10 lg:gap-16 items-start">
-            <!-- Left: heading -->
-            <div class="lg:col-span-2 lg:sticky lg:top-10">
-                <div data-reveal="left" class="flex items-center gap-3 mb-3">
-                    <div class="w-1 h-6 bg-yellow"></div>
-                    <span class="text-[11px] font-black uppercase tracking-[0.18em] text-yellow">
-                        Hukum & Kebijakan
-                    </span>
-                </div>
-                <h2
-                    data-reveal="left"
-                    data-delay="1"
-                    class="text-3xl sm:text-4xl md:text-5xl font-extrabold uppercase tracking-tight leading-tight mb-4"
-                >
-                    Regulasi &<br />
-                    Peraturan
-                </h2>
-                <p
-                    data-reveal="left"
-                    data-delay="2"
-                    class="text-sm text-white/45 leading-relaxed max-w-sm"
-                >
-                    Kumpulan peraturan perundang-undangan yang menjadi landasan
-                    hukum pelaksanaan tugas Kementerian Agama.
-                </p>
-                <a
-                    data-reveal="left"
-                    data-delay="3"
-                    href="/ppid/regulasi"
-                    class="inline-flex items-center gap-2 mt-6 border border-white/15 px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-white/60 hover:border-yellow hover:text-yellow transition-colors"
-                >
-                    Lihat Semua Regulasi
-                    <svg
-                        viewBox="0 0 24 24"
-                        width="13"
-                        height="13"
-                        fill="currentColor"
-                    >
-                        <path d="M6.4 18L5 16.6 14.6 7H6V5h12v12h-2V8.4z" />
-                    </svg>
-                </a>
-            </div>
-
-            <!-- Right: list -->
-            <div class="lg:col-span-3 flex flex-col divide-y divide-white/8">
-                {regulasi.length === 0 ? (
-                    <p class="py-10 text-sm text-white/25 font-medium uppercase tracking-wider">
-                        Belum ada regulasi
-                    </p>
-                ) : (
-                    regulasi.map((r: any, i: number) => (
-                        <a
-                            href={r.fileUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            data-reveal="up"
-                            data-delay={String((i % 3) + 1)}
-                            class="group flex items-start gap-4 py-4 md:py-5 hover:bg-white/3 -mx-2 px-2 transition-colors cursor-pointer"
-                        >
-                            <span
-                                class={`text-[10px] font-black uppercase tracking-wider px-2 py-1 shrink-0 mt-0.5 ${regulasiBadge(r.type)}`}
-                            >
-                                {r.type}
-                            </span>
-
-                            <div class="flex-1 min-w-0">
-                                <p class="text-[11px] text-white/30 font-mono mb-0.5">
-                                    {r.label}
-                                </p>
-                                <h3 class="text-sm sm:text-base font-bold text-white group-hover:text-yellow transition-colors leading-snug">
-                                    {r.tentang}
-                                </h3>
-                                {r.description && (
-                                    <p class="text-xs text-white/40 mt-0.5 leading-snug line-clamp-1">
-                                        {r.description}
-                                    </p>
-                                )}
-                            </div>
-
-                            <svg
-                                viewBox="0 0 24 24"
-                                width="14"
-                                height="14"
-                                fill="currentColor"
-                                class="shrink-0 text-white/15 group-hover:text-yellow/60 transition-colors mt-1"
-                            >
-                                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
-                            </svg>
-                        </a>
-                    ))
-                )}
-            </div>
         </div>
     </section>
 
@@ -688,34 +658,6 @@ const structuredData = {
 
 <script>
     {
-        // ── Parallax scroll ───────────────────────────────────
-        const section = document.getElementById(
-            "hero-section",
-        ) as HTMLElement | null;
-        const img = document.getElementById(
-            "parallax-img",
-        ) as HTMLImageElement | null;
-        const hint = document.getElementById(
-            "scroll-hint",
-        ) as HTMLElement | null;
-
-        function updateParallax() {
-            if (!section || !img) return;
-            const rect = section.getBoundingClientRect();
-            const scrolled = Math.max(0, -rect.top);
-            const scrollable = section.offsetHeight - window.innerHeight;
-            const progress =
-                scrollable > 0 ? Math.min(1, scrolled / scrollable) : 0;
-
-            // Image rises from 65% of viewport height → 0
-            const startY = window.innerHeight * 0.65;
-            img.style.transform = `translateY(${startY * (1 - progress)}px)`;
-
-            // Scroll hint fades out quickly as user scrolls
-            if (hint)
-                hint.style.opacity = String(Math.max(0, 1 - progress * 8));
-        }
-
         // ── Scroll reveal ─────────────────────────────────────
         const revealObs = new IntersectionObserver(
             (entries) => {
@@ -730,11 +672,6 @@ const structuredData = {
         );
 
         function init() {
-            window.addEventListener("scroll", updateParallax, {
-                passive: true,
-            });
-            window.addEventListener("resize", updateParallax);
-            updateParallax();
             document
                 .querySelectorAll("[data-reveal]")
                 .forEach((el) => revealObs.observe(el));
@@ -742,8 +679,6 @@ const structuredData = {
 
         init();
         document.addEventListener("astro:page-load", () => {
-            window.removeEventListener("scroll", updateParallax);
-            window.removeEventListener("resize", updateParallax);
             init();
         });
     }
