@@ -52,6 +52,31 @@
         }
 
         let cancelled = false;
+        let intersected = false;
+        let observer: IntersectionObserver | null = null;
+
+        // Chart dibuat saat data masuk (halaman masih di atas), sehingga
+        // animasinya sebelum terlihat. Putar ulang animasi saat canvas
+        // masuk viewport.
+        const replay = () => {
+            if (!intersected || !chart) return;
+            observer?.disconnect();
+            observer = null;
+            chart.reset();
+            chart.update();
+        };
+
+        if (typeof IntersectionObserver !== "undefined") {
+            observer = new IntersectionObserver(
+                (entries) => {
+                    if (!entries.some((entry) => entry.isIntersecting)) return;
+                    intersected = true;
+                    replay();
+                },
+                { threshold: 0.2 },
+            );
+            observer.observe(el);
+        }
 
         void import("chart.js/auto").then(({ default: Chart }) => {
             if (cancelled) return;
@@ -139,10 +164,14 @@
             };
 
             chart = new Chart(ctx, config);
+            replay();
+        }).catch((error) => {
+            console.error("Gagal memuat Chart.js:", error);
         });
 
         return () => {
             cancelled = true;
+            observer?.disconnect();
             chart?.destroy();
             chart = null;
         };

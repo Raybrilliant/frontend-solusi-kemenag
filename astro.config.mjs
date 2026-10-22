@@ -36,6 +36,7 @@ export default defineConfig({
     optimizeDeps: {
       include: [
         "@tanstack/table-core",
+        "chart.js/auto",
         "@editorjs/editorjs",
         "@editorjs/paragraph",
         "@editorjs/header",
