@@ -84,6 +84,13 @@ async function validateToken(
 export const onRequest = defineMiddleware(async (context, next) => {
   const { url, cookies, redirect, request } = context;
 
+  // Halaman prerendered dirender saat build, bukan saat request. Tanpa guard
+  // ini, redirect kanonikalisasi di bawah ikut ter-bake ke file statis dan
+  // halaman menjadi stub redirect (lihat dist/client/ppid/profil/index.html).
+  if (context.isPrerendered) {
+    return next();
+  }
+
   // Kanonikalisasi URL untuk konsolidasi sinyal SEO (hanya untuk GET/HEAD,
   // agar permintaan API/POST tidak terkena redirect):
   // 1. Host www → domain utama (keduanya di-whitelist dan keduanya bisa melayani konten).
@@ -228,6 +235,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
       "/admin/survei",
       "/admin/profil",
       "/admin/permohonan-ppid",
+      "/admin/informasi-berkala",
+      "/admin/sop",
       "/admin/pengumuman",
       "/api/admin/auth/logout",
       "/api/admin/testimoni",

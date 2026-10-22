@@ -51,6 +51,16 @@ const contentItems = [
         label: "Permohonan PPID",
     },
     {
+        href: "/admin/informasi-berkala",
+        icon: "mdi:folder-multiple-outline",
+        label: "Informasi Berkala PPID",
+    },
+    {
+        href: "/admin/sop",
+        icon: "mdi:clipboard-check-outline",
+        label: "SOP PPID",
+    },
+    {
         href: "/admin/pengumuman",
         icon: "mdi:bullhorn-outline",
         label: "Pengumuman",
@@ -64,6 +74,8 @@ const humasItems = contentItems.filter((item) =>
         "/admin/survei",
         "/admin/testimoni",
         "/admin/permohonan-ppid",
+        "/admin/informasi-berkala",
+        "/admin/sop",
         "/admin/pengumuman",
     ].includes(item.href),
 );
