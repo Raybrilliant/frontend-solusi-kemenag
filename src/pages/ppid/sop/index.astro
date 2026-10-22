@@ -1,0 +1,443 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { Icon } from "astro-icon/components";
+import { sopGroups, type SopGrup, type SopItem } from "../../../lib/ppid-sop";
+
+const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
+
+type SopView = SopItem & { fileUrl?: string | null };
+type SopGrupView = Omit<SopGrup, "items"> & { items: SopView[] };
+
+type SopApiRow = {
+    grup: string;
+    nomor: string;
+    label: string;
+    judul: string;
+    desc: string;
+    icon: string;
+    penjelasan: string;
+    waktu: string;
+    output: string;
+    dasar: string[];
+    langkah: { judul: string; desc: string }[];
+    fileUrl: string | null;
+    aktif: boolean;
+    urutan: number;
+};
+
+// Data dari backend; fallback ke data statis bila backend tidak tersedia.
+let grupTampil: SopGrupView[] = sopGroups;
+try {
+    const res = await fetch(`${BACKEND_URL}/api/v1/sop`);
+    if (res.ok) {
+        const json = (await res.json()) as {
+            success: boolean;
+            data: SopApiRow[];
+        };
+        if (json.success && json.data.length > 0) {
+            grupTampil = sopGroups.map((grup) => ({
+                ...grup,
+                items: json.data
+                    .filter((row) => row.grup === grup.id && row.aktif)
+                    .sort((a, b) => a.urutan - b.urutan)
+                    .map((row) => ({
+                        id: `sop-${row.nomor.toLowerCase()}`,
+                        nomor: row.nomor,
+                        label: row.label,
+                        judul: row.judul,
+                        desc: row.desc,
+                        icon: row.icon,
+                        penjelasan: row.penjelasan,
+                        waktu: row.waktu,
+                        output: row.output,
+                        dasar: row.dasar,
+                        langkah: row.langkah,
+                        fileUrl: row.fileUrl,
+                    })),
+            }));
+        }
+    }
+} catch {
+    // Backend tidak tersedia → pakai data statis
+}
+
+const pageUrl = `${Astro.url.origin}/ppid/sop`;
+const semuaSop = grupTampil.flatMap((grup) => grup.items);
+const structuredData = [
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+            {
+                "@type": "ListItem",
+                position: 1,
+                name: "Beranda",
+                item: `${Astro.url.origin}`,
+            },
+            {
+                "@type": "ListItem",
+                position: 2,
+                name: "PPID",
+                item: `${Astro.url.origin}/ppid`,
+            },
+            {
+                "@type": "ListItem",
+                position: 3,
+                name: "Standar Operasional Prosedur",
+                item: pageUrl,
+            },
+        ],
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: "Standar Operasional Prosedur PPID Kemenag Kota Probolinggo",
+        description:
+            "Kumpulan SOP pengelolaan informasi publik dan layanan PPID Kantor Kementerian Agama Kota Probolinggo.",
+        url: pageUrl,
+        itemListElement: semuaSop.map((item, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: item.judul,
+            description: item.desc,
+        })),
+    },
+];
+---
+
+<style>
+    [data-anim="down"] {
+        animation: fadeDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+    }
+    [data-anim="up"] {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+    }
+
+    @keyframes fadeDown {
+        from {
+            opacity: 0;
+            transform: translateY(-12px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    @keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    [data-reveal] {
+        opacity: 0;
+        transform: translateY(24px);
+        transition:
+            opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+            transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    [data-reveal="up"] {
+        transform: translateY(24px);
+    }
+    [data-reveal].revealed {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    [data-delay="1"] {
+        transition-delay: 0.08s;
+    }
+    [data-delay="2"] {
+        transition-delay: 0.16s;
+    }
+    [data-delay="3"] {
+        transition-delay: 0.24s;
+    }
+    [data-delay="4"] {
+        transition-delay: 0.32s;
+    }
+
+    .section-anchor {
+        scroll-margin-top: 5rem;
+    }
+</style>
+
+<BaseLayout
+    title="SOP PPID"
+    description="Standar Operasional Prosedur (SOP) pengelolaan informasi publik dan layanan PPID Kemenag Kota Probolinggo."
+    ogDescription="7 SOP Informasi Publik dan SOP Layanan PPID Kemenag Kota Probolinggo berdasarkan UU Keterbukaan Informasi Publik."
+    structuredData={structuredData}
+>
+    <!-- ── Page header ────────────────────────────── -->
+    <div id="page-head" data-anim="down" class="pt-8 pb-6">
+        <a
+            href="/ppid"
+            class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink/35 hover:text-green transition-colors mb-4"
+        >
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path>
+            </svg>
+            PPID
+        </a>
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-1 h-7 bg-green shrink-0"></div>
+            <h1 class="text-4xl font-extrabold uppercase tracking-tight text-ink">
+                SOP
+            </h1>
+        </div>
+        <p class="text-sm text-ink/45 mt-1 ml-4 max-w-2xl leading-relaxed">
+            Standar Operasional Prosedur pengelolaan informasi publik dan
+            layanan PPID Kantor Kementerian Agama Kota Probolinggo.
+        </p>
+    </div>
+
+    <!-- ── Note dasar hukum ───────────────────────── -->
+    <div
+        data-anim="up"
+        class="flex items-start gap-3 border border-ink/8 bg-ink/[0.02] px-4 py-3 mb-8 text-xs text-ink/50 leading-relaxed"
+    >
+        <Icon
+            name="mdi:book-open-variant"
+            class="w-4 h-4 shrink-0 text-ink/30 mt-0.5"
+        />
+        <p>
+            SOP ini disusun sebagai bentuk akuntabilitas penyelenggaraan
+            pelayanan informasi sesuai{" "}
+            <strong class="text-ink/70">
+                UU No. 14 Tahun 2008 tentang Keterbukaan Informasi Publik
+            </strong>{" "}
+            dan Permen PANRB No. 81 Tahun 2012 tentang Tata Cara Pembentukan,
+            Pengelolaan, dan Pengarsipan Dokumentasi Informasi Publik.
+        </p>
+    </div>
+
+    <!-- ── Daftar isi ─────────────────────────────── -->
+    <nav
+        data-anim="up"
+        aria-label="Daftar SOP"
+        class="border border-ink/10 bg-cream p-5 sm:p-6 mb-14 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-8"
+    >
+        {grupTampil.map((grup) => (
+            <div>
+                <p class="text-[10px] font-black uppercase tracking-wider text-green mb-2.5">
+                    {grup.label}
+                </p>
+                <ul class="space-y-1.5">
+                    {grup.items.map((item) => (
+                        <li>
+                            <a
+                                href={`#${item.id}`}
+                                class="text-xs text-ink/55 hover:text-green transition-colors leading-snug block"
+                            >
+                                {item.nomor} · {item.label}
+                            </a>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        ))}
+    </nav>
+
+    <!-- ── Grup & item SOP ────────────────────────── -->
+    {grupTampil.map((grup) => (
+        <section id={grup.id} class="section-anchor mb-4">
+            <div class="mb-6">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-1 h-7 bg-green shrink-0" />
+                    <h2 class="text-2xl sm:text-3xl font-extrabold uppercase tracking-tight text-ink">
+                        {grup.label}
+                    </h2>
+                </div>
+                <p class="text-sm text-ink/45 ml-4 max-w-2xl leading-relaxed">
+                    {grup.desc}
+                </p>
+            </div>
+
+            <div class="border-t border-ink/8">
+                {grup.items.map((item) => (
+                    <article
+                        id={item.id}
+                        class="section-anchor py-10 border-b border-ink/8"
+                    >
+                        <!-- Item header -->
+                        <div
+                            data-reveal="up"
+                            class="flex items-start gap-4 mb-5"
+                        >
+                            <div class="w-11 h-11 shrink-0 bg-ink/5 border border-ink/10 flex items-center justify-center">
+                                <Icon
+                                    name={item.icon}
+                                    class="w-[22px] h-[22px] text-green/70"
+                                />
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-[10px] font-black uppercase tracking-[0.18em] text-green mb-1">
+                                    SOP {item.nomor}
+                                </p>
+                                <h3 class="text-base sm:text-lg font-extrabold uppercase tracking-tight text-ink leading-snug">
+                                    {item.judul}
+                                </h3>
+                                <p class="text-xs text-ink/40 mt-1">
+                                    {item.desc}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Meta: waktu & output -->
+                        <div
+                            data-reveal="up"
+                            data-delay="1"
+                            class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5"
+                        >
+                            <div class="flex items-start gap-3 border border-ink/10 bg-cream p-4">
+                                <Icon
+                                    name="mdi:timer-outline"
+                                    class="w-5 h-5 text-green shrink-0 mt-0.5"
+                                />
+                                <div>
+                                    <p class="text-[10px] text-ink/35 font-semibold uppercase tracking-wider mb-1">
+                                        Jangka Waktu
+                                    </p>
+                                    <p class="text-xs text-ink/70 leading-relaxed">
+                                        {item.waktu}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3 border border-ink/10 bg-cream p-4">
+                                <Icon
+                                    name="mdi:package-variant-closed"
+                                    class="w-5 h-5 text-green shrink-0 mt-0.5"
+                                />
+                                <div>
+                                    <p class="text-[10px] text-ink/35 font-semibold uppercase tracking-wider mb-1">
+                                        Output Layanan
+                                    </p>
+                                    <p class="text-xs text-ink/70 leading-relaxed">
+                                        {item.output}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {item.fileUrl && (
+                            <a
+                                href={item.fileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="inline-flex items-center gap-2 bg-ink text-cream text-xs font-bold uppercase tracking-wider px-4 py-2.5 mb-5 hover:bg-green transition-colors"
+                            >
+                                <Icon
+                                    name="mdi:file-download-outline"
+                                    class="w-4 h-4"
+                                />
+                                Unduh Dokumen SOP (PDF)
+                            </a>
+                        )}
+
+                        <p
+                            data-reveal="up"
+                            data-delay="2"
+                            class="text-sm text-ink/60 leading-relaxed mb-6 max-w-3xl"
+                        >
+                            {item.penjelasan}
+                        </p>
+
+                        <!-- Langkah-langkah -->
+                        <div data-reveal="up" data-delay="3" class="max-w-3xl">
+                            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-ink/35 mb-3">
+                                Langkah Prosedur
+                            </p>
+                            <ol class="space-y-3 list-none">
+                                {item.langkah.map((langkah, li) => (
+                                    <li class="flex items-start gap-3">
+                                        <span class="shrink-0 w-8 pt-0.5 text-[11px] font-black text-green/70 select-none tabular-nums">
+                                            {String(li + 1).padStart(2, "0")}
+                                        </span>
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-bold text-ink leading-snug">
+                                                {langkah.judul}
+                                            </p>
+                                            <p class="text-xs text-ink/50 leading-relaxed mt-0.5">
+                                                {langkah.desc}
+                                            </p>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ol>
+
+                            {item.dasar.length > 0 && (
+                                <div class="mt-5 border-l-2 border-green/25 pl-4">
+                                    <p class="text-[10px] font-black uppercase tracking-[0.18em] text-ink/35 mb-1.5">
+                                        Dasar Hukum
+                                    </p>
+                                    <ul class="space-y-1">
+                                        {item.dasar.map((dasar) => (
+                                            <li class="text-xs text-ink/50 leading-relaxed">
+                                                {dasar}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+                    </article>
+                ))}
+            </div>
+        </section>
+    ))}
+
+    <!-- ── CTA formulir ───────────────────────────── -->
+    <section
+        data-reveal="up"
+        class="mt-12 mb-14 border border-ink/10 bg-cream p-6 sm:p-8"
+    >
+        <div class="flex flex-col sm:flex-row sm:items-center gap-5">
+            <div class="flex-1">
+                <h2 class="text-lg sm:text-xl font-extrabold uppercase tracking-tight text-ink">
+                    Ajukan Permohonan Informasi
+                </h2>
+                <p class="text-sm text-ink/50 mt-1 leading-relaxed">
+                    Permohonan informasi dapat diajukan melalui formulir daring
+                    berikut atau datang langsung ke kantor sesuai SOP layanan di
+                    atas.
+                </p>
+            </div>
+            <a
+                href="/ppid#form-permohonan"
+                class="shrink-0 inline-flex items-center gap-2 bg-green text-white text-xs font-bold uppercase tracking-wider px-5 py-3 hover:brightness-110 transition-[filter]"
+            >
+                Formulir Permohonan
+                <svg
+                    viewBox="0 0 24 24"
+                    width="14"
+                    height="14"
+                    fill="currentColor"
+                >
+                    <path d="M6.4 18L5 16.6 14.6 7H6V5h12v12h-2V8.4z" />
+                </svg>
+            </a>
+        </div>
+    </section>
+</BaseLayout>
+
+<script>
+    {
+        const obs = new IntersectionObserver(
+            (entries) =>
+                entries.forEach((e) => {
+                    if (e.isIntersecting) {
+                        e.target.classList.add("revealed");
+                        obs.unobserve(e.target);
+                    }
+                }),
+            { threshold: 0.1, rootMargin: "0px 0px -30px 0px" },
+        );
+        document
+            .querySelectorAll("[data-reveal]")
+            .forEach((el) => obs.observe(el));
+    }
+</script>
