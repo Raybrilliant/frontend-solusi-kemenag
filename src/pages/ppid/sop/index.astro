@@ -215,6 +215,27 @@ const structuredData = [
         </p>
     </div>
 
+    <!-- ── Pencarian SOP ──────────────────────────── -->
+    <div data-anim="up" class="relative mb-4">
+        <Icon
+            name="mdi:magnify"
+            class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ink/30 pointer-events-none"
+        />
+        <input
+            id="sop-search"
+            type="search"
+            placeholder="Cari SOP — nomor, judul, atau uraian..."
+            autocomplete="off"
+            aria-label="Cari SOP"
+            class="w-full border border-ink/15 bg-white pl-11 pr-4 py-3.5 text-sm text-ink placeholder:text-ink/30 focus:outline-none focus:border-green/60 transition-colors"
+        />
+    </div>
+    <p
+        id="sop-search-info"
+        class="hidden mb-6 text-xs text-ink/45"
+        aria-live="polite"
+    ></p>
+
     <!-- ── Daftar isi ─────────────────────────────── -->
     <nav
         data-anim="up"
@@ -228,7 +249,10 @@ const structuredData = [
                 </p>
                 <ul class="space-y-1.5">
                     {grup.items.map((item) => (
-                        <li>
+                        <li
+                            data-sop-li
+                            data-sop-text={`${item.nomor} ${item.label} ${item.judul} ${item.desc}`.toLowerCase()}
+                        >
                             <a
                                 href={`#${item.id}`}
                                 class="text-xs text-ink/55 hover:text-green transition-colors leading-snug block"
@@ -244,7 +268,7 @@ const structuredData = [
 
     <!-- ── Grup & item SOP ────────────────────────── -->
     {grupTampil.map((grup) => (
-        <section id={grup.id} class="section-anchor mb-4">
+        <section id={grup.id} data-sop-section class="section-anchor mb-4">
             <div class="mb-6">
                 <div class="flex items-center gap-3 mb-2">
                     <div class="w-1 h-7 bg-green shrink-0" />
@@ -261,6 +285,8 @@ const structuredData = [
                 {grup.items.map((item) => (
                     <article
                         id={item.id}
+                        data-sop-item
+                        data-sop-text={`${item.nomor} ${item.label} ${item.judul} ${item.desc}`.toLowerCase()}
                         class="section-anchor py-10 border-b border-ink/8"
                     >
                         <!-- Item header -->
@@ -390,6 +416,20 @@ const structuredData = [
         </section>
     ))}
 
+    <!-- ── Empty state pencarian ──────────────────── -->
+    <div id="sop-empty" class="hidden py-20 text-center">
+        <Icon
+            name="mdi:file-search-outline"
+            class="w-10 h-10 text-ink/20 mx-auto mb-3"
+        />
+        <p class="text-sm font-bold uppercase tracking-wide text-ink/60">
+            Tidak ada SOP yang cocok
+        </p>
+        <p class="text-xs text-ink/40 mt-1">
+            Coba kata kunci lain, mis. nama layanan atau nomor SOP.
+        </p>
+    </div>
+
     <!-- ── CTA formulir ───────────────────────────── -->
     <section
         data-reveal="up"
@@ -439,5 +479,60 @@ const structuredData = [
         document
             .querySelectorAll("[data-reveal]")
             .forEach((el) => obs.observe(el));
+    }
+
+    // ── Pencarian SOP: filter kartu, daftar isi, dan grup ────
+    {
+        const input = document.getElementById(
+            "sop-search",
+        ) as HTMLInputElement | null;
+        const info = document.getElementById("sop-search-info");
+        const empty = document.getElementById("sop-empty");
+        if (input && info && empty) {
+            const items = [...document.querySelectorAll("[data-sop-item]")];
+            const links = [...document.querySelectorAll("[data-sop-li]")];
+            const sections = [
+                ...document.querySelectorAll("[data-sop-section]"),
+            ];
+
+            const terapkan = () => {
+                const q = input.value.trim().toLowerCase();
+
+                if (!q) {
+                    items.forEach((el) => el.classList.remove("hidden"));
+                    links.forEach((el) => el.classList.remove("hidden"));
+                    sections.forEach((el) => el.classList.remove("hidden"));
+                    info.classList.add("hidden");
+                    empty.classList.add("hidden");
+                    return;
+                }
+
+                let cocok = 0;
+                items.forEach((el) => {
+                    const tampil = el.dataset.sopText?.includes(q) ?? false;
+                    el.classList.toggle("hidden", !tampil);
+                    if (tampil) cocok++;
+                });
+                links.forEach((el) => {
+                    el.classList.toggle(
+                        "hidden",
+                        !(el.dataset.sopText?.includes(q) ?? false),
+                    );
+                });
+                // Sembunyikan grup yang seluruh itemnya tidak cocok.
+                sections.forEach((sec) => {
+                    const ada =
+                        sec.querySelectorAll("[data-sop-item]:not(.hidden)")
+                            .length > 0;
+                    sec.classList.toggle("hidden", !ada);
+                });
+
+                info.textContent = `${cocok} SOP ditemukan untuk "${input.value.trim()}"`;
+                info.classList.remove("hidden");
+                empty.classList.toggle("hidden", cocok > 0);
+            };
+
+            input.addEventListener("input", terapkan);
+        }
     }
 </script>
