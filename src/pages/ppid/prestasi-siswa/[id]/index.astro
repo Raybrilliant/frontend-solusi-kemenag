@@ -44,7 +44,8 @@ function normalizeWinner(item: any) {
         image:
             toUploadProxyUrl(
                 firstFilled(item?.foto, item?.photo, item?.image, item?.avatar),
-            ) || firstFilled(item?.foto, item?.photo, item?.image, item?.avatar),
+            ) ||
+            firstFilled(item?.foto, item?.photo, item?.image, item?.avatar),
     };
 }
 
@@ -55,14 +56,15 @@ function normalizePrestasi(raw: any) {
 
     return {
         id: raw?.id ?? raw?._id ?? raw?.slug ?? id,
-        title: firstFilled(
-            raw?.judul,
-            raw?.title,
-            raw?.namaPrestasi,
-            raw?.namaLomba,
-            raw?.lomba,
-            raw?.prestasi,
-        ) || "Prestasi Siswa",
+        title:
+            firstFilled(
+                raw?.judul,
+                raw?.title,
+                raw?.namaPrestasi,
+                raw?.namaLomba,
+                raw?.lomba,
+                raw?.prestasi,
+            ) || "Prestasi Siswa",
         prestasi: firstFilled(
             raw?.prestasi,
             raw?.achievement,
@@ -83,7 +85,11 @@ function normalizePrestasi(raw: any) {
             raw?.organizer,
             raw?.instansi,
         ),
-        madrasah: firstFilled(raw?.madrasah, raw?.schoolName, raw?.namaMadrasah),
+        madrasah: firstFilled(
+            raw?.madrasah,
+            raw?.schoolName,
+            raw?.namaMadrasah,
+        ),
         lokasi: firstFilled(raw?.lokasi, raw?.location, raw?.tempat),
         image:
             toUploadProxyUrl(
@@ -126,7 +132,7 @@ if (!prestasi) {
 
 if (notFound) Astro.response.status = 404;
 
-const pageUrl = `${Astro.url.origin}/portal/prestasi-siswa/${id}`;
+const pageUrl = `${Astro.url.origin}/ppid/prestasi-siswa/${id}`;
 const ogImage = prestasi?.image
     ? prestasi.image.startsWith("http")
         ? prestasi.image
@@ -141,14 +147,14 @@ const structuredData = prestasi
                   {
                       "@type": "ListItem",
                       position: 1,
-                      name: "Portal",
-                      item: `${Astro.url.origin}/portal`,
+                      name: "PPID",
+                      item: `${Astro.url.origin}/ppid`,
                   },
                   {
                       "@type": "ListItem",
                       position: 2,
                       name: "Prestasi Siswa",
-                      item: `${Astro.url.origin}/portal/prestasi-siswa`,
+                      item: `${Astro.url.origin}/ppid/prestasi-siswa`,
                   },
                   {
                       "@type": "ListItem",
@@ -257,38 +263,38 @@ const structuredData = prestasi
             );
     }
     .detail-photo {
-            transition:
-                transform 0.45s ease,
-                filter 0.45s ease;
-            filter: grayscale(1) saturate(0.85)
-                drop-shadow(0 18px 30px rgba(15, 107, 68, 0.12));
-        }
-        .hero-visual:hover .detail-photo {
-            transform: scale(1.03);
-            filter: grayscale(0) saturate(1.02)
-                drop-shadow(0 20px 34px rgba(15, 107, 68, 0.14));
-        }
-        .winner-photo {
-            transition:
-                transform 0.35s ease,
-                filter 0.35s ease;
-            filter: grayscale(1) saturate(0.85);
-        }
-        .winner-card {
-            transition:
-                transform 0.22s ease,
-                box-shadow 0.22s ease,
-                border-color 0.22s ease;
-        }
-        .winner-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.08);
-            border-color: rgba(15, 107, 68, 0.18);
-        }
-        .winner-card:hover .winner-photo {
-            transform: scale(1.04);
-            filter: grayscale(0) saturate(1.03);
-        }
+        transition:
+            transform 0.45s ease,
+            filter 0.45s ease;
+        filter: grayscale(1) saturate(0.85)
+            drop-shadow(0 18px 30px rgba(15, 107, 68, 0.12));
+    }
+    .hero-visual:hover .detail-photo {
+        transform: scale(1.03);
+        filter: grayscale(0) saturate(1.02)
+            drop-shadow(0 20px 34px rgba(15, 107, 68, 0.14));
+    }
+    .winner-photo {
+        transition:
+            transform 0.35s ease,
+            filter 0.35s ease;
+        filter: grayscale(1) saturate(0.85);
+    }
+    .winner-card {
+        transition:
+            transform 0.22s ease,
+            box-shadow 0.22s ease,
+            border-color 0.22s ease;
+    }
+    .winner-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.08);
+        border-color: rgba(15, 107, 68, 0.18);
+    }
+    .winner-card:hover .winner-photo {
+        transform: scale(1.04);
+        filter: grayscale(0) saturate(1.03);
+    }
 </style>
 
 <BaseLayout
@@ -322,7 +328,7 @@ const structuredData = prestasi
                 diakses tidak valid.
             </p>
             <a
-                href="/portal/prestasi-siswa"
+                href="/ppid/prestasi-siswa"
                 class="inline-flex items-center gap-2 bg-green text-white px-5 py-3 text-sm font-bold uppercase hover:bg-green/90 transition-colors"
             >
                 Kembali ke daftar prestasi
@@ -340,7 +346,7 @@ const structuredData = prestasi
                 Data prestasi siswa belum tersedia untuk ditampilkan.
             </p>
             <a
-                href="/portal/prestasi-siswa"
+                href="/ppid/prestasi-siswa"
                 class="inline-flex items-center gap-2 bg-green text-white px-5 py-3 text-sm font-bold uppercase hover:bg-green/90 transition-colors"
             >
                 Kembali ke daftar prestasi
@@ -350,7 +356,7 @@ const structuredData = prestasi
         <>
             <section data-anim="down" class="pt-8 pb-6">
                 <a
-                    href="/portal/prestasi-siswa"
+                    href="/ppid/prestasi-siswa"
                     class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink/35 hover:text-green transition-colors mb-4"
                 >
                     <Icon name="mdi:arrow-left" class="w-3.5 h-3.5" />
@@ -407,7 +413,9 @@ const structuredData = prestasi
                                         <p class="text-[11px] uppercase tracking-wider font-bold text-ink/35 mb-1">
                                             Tahun
                                         </p>
-                                        <p class="font-semibold text-ink">{prestasi.tahun}</p>
+                                        <p class="font-semibold text-ink">
+                                            {prestasi.tahun}
+                                        </p>
                                     </div>
                                 )}
                                 {prestasi.tingkat && (
@@ -415,7 +423,9 @@ const structuredData = prestasi
                                         <p class="text-[11px] uppercase tracking-wider font-bold text-ink/35 mb-1">
                                             Tingkat
                                         </p>
-                                        <p class="font-semibold text-ink">{prestasi.tingkat}</p>
+                                        <p class="font-semibold text-ink">
+                                            {prestasi.tingkat}
+                                        </p>
                                     </div>
                                 )}
                                 {prestasi.madrasah && (
@@ -423,7 +433,9 @@ const structuredData = prestasi
                                         <p class="text-[11px] uppercase tracking-wider font-bold text-ink/35 mb-1">
                                             Madrasah
                                         </p>
-                                        <p class="font-semibold text-ink">{prestasi.madrasah}</p>
+                                        <p class="font-semibold text-ink">
+                                            {prestasi.madrasah}
+                                        </p>
                                     </div>
                                 )}
                                 {prestasi.penyelenggara && (
@@ -431,7 +443,9 @@ const structuredData = prestasi
                                         <p class="text-[11px] uppercase tracking-wider font-bold text-ink/35 mb-1">
                                             Penyelenggara
                                         </p>
-                                        <p class="font-semibold text-ink">{prestasi.penyelenggara}</p>
+                                        <p class="font-semibold text-ink">
+                                            {prestasi.penyelenggara}
+                                        </p>
                                     </div>
                                 )}
                                 {prestasi.lokasi && (
@@ -439,7 +453,9 @@ const structuredData = prestasi
                                         <p class="text-[11px] uppercase tracking-wider font-bold text-ink/35 mb-1">
                                             Lokasi
                                         </p>
-                                        <p class="font-semibold text-ink">{prestasi.lokasi}</p>
+                                        <p class="font-semibold text-ink">
+                                            {prestasi.lokasi}
+                                        </p>
                                     </div>
                                 )}
                             </div>
@@ -486,21 +502,27 @@ const structuredData = prestasi
                             <p class="text-[11px] uppercase tracking-wider font-bold text-ink/35 mb-1">
                                 Judul Lomba / Prestasi
                             </p>
-                            <p class="font-semibold text-ink">{prestasi.title}</p>
+                            <p class="font-semibold text-ink">
+                                {prestasi.title}
+                            </p>
                         </div>
                         {prestasi.prestasi && (
                             <div>
                                 <p class="text-[11px] uppercase tracking-wider font-bold text-ink/35 mb-1">
                                     Capaian
                                 </p>
-                                <p class="font-semibold text-ink">{prestasi.prestasi}</p>
+                                <p class="font-semibold text-ink">
+                                    {prestasi.prestasi}
+                                </p>
                             </div>
                         )}
                         <div>
                             <p class="text-[11px] uppercase tracking-wider font-bold text-ink/35 mb-1">
                                 Jumlah Pemenang
                             </p>
-                            <p class="font-semibold text-ink">{prestasi.winners.length} siswa</p>
+                            <p class="font-semibold text-ink">
+                                {prestasi.winners.length} siswa
+                            </p>
                         </div>
                     </div>
                 </aside>
@@ -529,7 +551,7 @@ const structuredData = prestasi
                         {prestasi.winners.map((winner, index) => (
                             <article
                                 data-reveal="up"
-                                data-delay={String(((index % 4) + 1))}
+                                data-delay={String((index % 4) + 1)}
                                 class="winner-card border border-black/8 bg-white/75 overflow-hidden"
                             >
                                 <div class="grid grid-cols-[120px_minmax(0,1fr)] min-h-[160px]">
@@ -565,7 +587,9 @@ const structuredData = prestasi
                                                     <p class="text-[11px] uppercase tracking-wider font-bold text-green/70 mb-1">
                                                         Prestasi
                                                     </p>
-                                                    <p class="font-semibold text-ink">{winner.achievement}</p>
+                                                    <p class="font-semibold text-ink">
+                                                        {winner.achievement}
+                                                    </p>
                                                 </div>
                                             )}
                                             {winner.className && (
@@ -573,7 +597,9 @@ const structuredData = prestasi
                                                     <p class="text-[11px] uppercase tracking-wider font-bold text-ink/35 mb-1">
                                                         Kelas
                                                     </p>
-                                                    <p class="font-semibold text-ink">{winner.className}</p>
+                                                    <p class="font-semibold text-ink">
+                                                        {winner.className}
+                                                    </p>
                                                 </div>
                                             )}
                                             {winner.schoolName && (

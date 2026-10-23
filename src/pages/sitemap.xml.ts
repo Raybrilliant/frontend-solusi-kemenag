@@ -25,10 +25,10 @@ export const GET: APIRoute = async () => {
     "/",
     "/portal",
     "/portal/berita",
-    "/portal/kua",
-    "/portal/madrasah",
-    "/portal/agen-perubahan",
-    "/portal/prestasi-siswa",
+    "/ppid/kua",
+    "/ppid/madrasah",
+    "/ppid/agen-perubahan",
+    "/ppid/prestasi-siswa",
     "/ppid",
     "/ppid/profil",
     "/ppid/regulasi",
@@ -75,7 +75,7 @@ export const GET: APIRoute = async () => {
         if (!item?.id) continue;
         const lastmod =
           item.updatedAt ?? item.updated_at ?? item.createdAt ?? undefined;
-        urls.set(absoluteUrl(`/portal/prestasi-siswa/${item.id}`), lastmod);
+        urls.set(absoluteUrl(`/ppid/prestasi-siswa/${item.id}`), lastmod);
       }
     }
 
@@ -83,7 +83,7 @@ export const GET: APIRoute = async () => {
       const agenJson = await agenRes.json();
       for (const item of agenJson?.data ?? []) {
         if (!item?.id) continue;
-        urls.set(absoluteUrl(`/portal/agen-perubahan/${item.id}`), undefined);
+        urls.set(absoluteUrl(`/ppid/agen-perubahan/${item.id}`), undefined);
       }
     }
   } catch {

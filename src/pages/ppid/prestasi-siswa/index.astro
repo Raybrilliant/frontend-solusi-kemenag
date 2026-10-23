@@ -116,7 +116,7 @@ try {
 
 const hasMore = pagination.totalPages > 1;
 
-const pageUrl = `${Astro.url.origin}/portal/prestasi-siswa`;
+const pageUrl = `${Astro.url.origin}/ppid/prestasi-siswa`;
 const firstImage = prestasiList[0]?.image;
 const ogImage = firstImage
     ? firstImage.startsWith("http")
@@ -254,11 +254,11 @@ const structuredData = {
 >
     <section data-anim="down" class="pt-8 pb-6">
         <a
-            href="/portal"
+            href="/ppid"
             class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink/35 hover:text-green transition-colors mb-4"
         >
             <Icon name="mdi:arrow-left" class="w-3.5 h-3.5" />
-            Beranda
+            PPID
         </a>
 
         <div class="flex items-center gap-3 mb-2">
@@ -295,7 +295,7 @@ const structuredData = {
             >
                 {prestasiList.map((item, index) => (
                     <a
-                        href={`/portal/prestasi-siswa/${item.id}`}
+                        href={`/ppid/prestasi-siswa/${item.id}`}
                         data-reveal="up"
                         data-delay={String((index % 6) + 1)}
                         class="achievement-card group border border-black/8 bg-white/70 overflow-hidden flex flex-col h-full"
@@ -667,7 +667,7 @@ const structuredData = {
 
             function buildCard(item, index) {
                 const node = template.content.firstElementChild.cloneNode(true);
-                node.href = "/portal/prestasi-siswa/" + item.id;
+                node.href = "/ppid/prestasi-siswa/" + item.id;
                 node.dataset.delay = String((index % 6) + 1);
 
                 const field = (name) =>
