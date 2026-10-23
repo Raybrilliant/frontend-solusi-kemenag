@@ -642,6 +642,7 @@ const structuredData = [
         document.querySelectorAll("[data-toc-chip]").forEach((a) => {
             chips.set(a.getAttribute("data-toc-chip"), a);
         });
+        const chipsContainer = document.getElementById("toc-chips");
         if (chips.size > 0) {
             const spy = new IntersectionObserver(
                 (entries) => {
@@ -651,11 +652,19 @@ const structuredData = [
                         if (!chip) return;
                         chips.forEach((c) => c.classList.remove("toc-active"));
                         chip.classList.add("toc-active");
-                        chip.scrollIntoView({
-                            behavior: "smooth",
-                            inline: "center",
-                            block: "nearest",
-                        });
+                        // Scroll kontainer chip secara manual — scrollIntoView
+                        // membatalkan smooth anchor scroll yang sedang berjalan
+                        // sehingga halaman ter-stop sebelum sampai ke tujuan.
+                        if (chipsContainer) {
+                            const target =
+                                chip.offsetLeft -
+                                chipsContainer.clientWidth / 2 +
+                                chip.clientWidth / 2;
+                            chipsContainer.scrollTo({
+                                left: Math.max(0, target),
+                                behavior: "smooth",
+                            });
+                        }
                     });
                 },
                 { rootMargin: "-25% 0px -70% 0px" },
