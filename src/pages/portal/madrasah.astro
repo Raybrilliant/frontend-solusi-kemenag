@@ -1,34 +1,38 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 
-const madrasah = [
-    // {
-    //     jenjang: "MI",
-    //     label: "Madrasah Ibtidaiyah Negeri",
-    //     nama: "MIN 1 Kota Probolinggo",
-    //     npsn: "60714972",
-    //     akreditasi: "A",
-    //     alamat: "Jl. Mawar No. 27, Kelurahan Triwung Kidul, Kecamatan Kademangan",
-    //     kodePos: "67213",
-    //     website: "(0335) 426318",
-    //     kepala: "Hj. Umi Salamah, S.Pd.I, M.Pd",
-    //     siswa: 420,
-    //     guru: 28,
-    //     warna: "bg-green/10 border-green/20 text-green",
-    //     aksenWarna: "bg-green",
-    // },
+Astro.response.headers.set(
+    "Cache-Control",
+    "public, max-age=300, stale-while-revalidate=600",
+);
+
+type Madrasah = {
+    jenjang: string;
+    label: string;
+    nama: string;
+    nsm: string;
+    akreditasi: string;
+    alamat: string;
+    website: string;
+    kepala: string;
+    siswa: number;
+    guru: number;
+    rombel: number;
+    warna: string;
+    aksenWarna: string;
+};
+
+// Konten yang tidak ada di sheet (website & gaya visual) sekaligus fallback
+// bila Google Sheets tidak dapat diakses.
+const madrasahStatis: Omit<
+    Madrasah,
+    "nsm" | "akreditasi" | "alamat" | "kepala" | "siswa" | "guru" | "rombel"
+>[] = [
     {
         jenjang: "MTs",
         label: "Madrasah Tsanawiyah Negeri",
         nama: "MTsN Kota Probolinggo",
-        nsm: "-",
-        akreditasi: "A",
-        alamat: "Jl. Citarum No. 09, Curahgrinting, Kec. Kanigaran",
-        kodePos: "67212",
         website: "mtsnkotaprobolinggo.sch.id",
-        kepala: "Abd. Manaf S.Pd.I",
-        siswa: 0,
-        guru: 0,
         warna: "bg-green/10 border-green/20 text-green",
         aksenWarna: "bg-green",
     },
@@ -36,14 +40,7 @@ const madrasah = [
         jenjang: "MA",
         label: "Madrasah Aliyah Negeri",
         nama: "MAN 1 Kota Probolinggo",
-        nsm: "131135740001",
-        akreditasi: "A",
-        alamat: "Jl. Jeruk No.07, Jrebeng Kidul, Kec. Wonoasih ",
-        kodePos: "67233",
         website: "man1kotaprobolinggo-m1kp.sch.id",
-        kepala: "Drs. Mohammad Alfan Makmur, M.M.",
-        siswa: 273,
-        guru: 56,
         warna: "bg-ink/8 border-ink/15 text-ink",
         aksenWarna: "bg-ink",
     },
@@ -51,23 +48,102 @@ const madrasah = [
         jenjang: "MA",
         label: "Madrasah Aliyah Negeri",
         nama: "MAN 2 Kota Probolinggo",
-        nsm: "131135740002",
-        akreditasi: "A",
-        alamat: "Jl. Soekarno Hatta No. 255, Curahgrinting, Kec. Kanigaran",
-        kodePos: "67212",
         website: "man2kotaprobolinggo.sch.id",
-        kepala: "Abd. Ghofur, S.Ag.",
-        siswa: 1171,
-        guru: 61,
         warna: "bg-ink/8 border-ink/15 text-ink",
         aksenWarna: "bg-ink",
     },
 ];
 
+// Dataset "Lembaga Madrasah" yang sama dengan halaman /ppid/statistik.
+const MADRASAH_CSV_URL =
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vS8NxHN7O3OCWAVj8SL3EIytT0GYlj_x7-Anj2HJgo0-m9z2Hub1Vue3td1Q6Hr-HTd2ZpfJ6tfy1Ta/pub?gid=486907344&single=true&output=csv";
+
+// Pemetaan nama di sheet (huruf besar) ke nama tampilan.
+const CARI_NAMA: Record<string, string> = {
+    "MTSN KOTA PROBOLINGGO": "MTsN Kota Probolinggo",
+    "MAN 1 KOTA PROBOLINGGO": "MAN 1 Kota Probolinggo",
+    "MAN 2 KOTA PROBOLINGGO": "MAN 2 Kota Probolinggo",
+};
+
+// Parse satu baris CSV (dukung field ber-kutip yang mengandung koma).
+function parseCsvLine(line: string): string[] {
+    const out: string[] = [];
+    let cur = "";
+    let inQuote = false;
+    for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (inQuote) {
+            if (ch === '"') {
+                if (line[i + 1] === '"') {
+                    cur += '"';
+                    i++;
+                } else {
+                    inQuote = false;
+                }
+            } else {
+                cur += ch;
+            }
+        } else if (ch === '"') {
+            inQuote = true;
+        } else if (ch === ",") {
+            out.push(cur);
+            cur = "";
+        } else {
+            cur += ch;
+        }
+    }
+    out.push(cur);
+    return out;
+}
+
+// Ambil data dari sheet; field kosong di sheet tampil apa adanya (-/0).
+const madrasah: Madrasah[] = madrasahStatis.map((m) => ({
+    ...m,
+    nsm: "-",
+    akreditasi: "-",
+    alamat: "-",
+    kepala: "-",
+    siswa: 0,
+    guru: 0,
+    rombel: 0,
+}));
+try {
+    const res = await fetch(MADRASAH_CSV_URL);
+    if (res.ok) {
+        const csv = await res.text();
+        // Baris 1: judul, 2: tanggal update, 3: header — data mulai baris 4.
+        const dataRows = csv
+            .split(/\r?\n/)
+            .slice(3)
+            .filter((l) => l.trim());
+        for (const line of dataRows) {
+            const cols = parseCsvLine(line);
+            const target = CARI_NAMA[(cols[2] ?? "").trim().toUpperCase()];
+            if (!target || (cols[4] ?? "").trim() !== "Negeri") continue;
+            const d = madrasah.find((m) => m.nama === target);
+            if (!d) continue;
+            const alamat = [cols[5], cols[6], cols[7]]
+                .map((s) => s?.trim())
+                .filter(Boolean)
+                .join(", ");
+            d.nsm = (cols[1] ?? "").trim() || "-";
+            d.akreditasi = (cols[8] ?? "").trim() || "-";
+            d.alamat = alamat || "-";
+            d.kepala = (cols[9] ?? "").trim() || "-";
+            d.siswa = Number((cols[13] ?? "").trim()) || 0;
+            d.guru = Number((cols[14] ?? "").trim()) || 0;
+            d.rombel = Number((cols[15] ?? "").trim()) || 0;
+        }
+    }
+} catch {
+    // Sheets tidak tersedia → data statis (nilai default)
+}
+
 const summaryStats = [
     { label: "Total Madrasah", value: madrasah.length },
     { label: "Siswa", value: madrasah.reduce((acc, m) => acc + m.siswa, 0) },
     { label: "Guru", value: madrasah.reduce((acc, m) => acc + m.guru, 0) },
+    { label: "Rombel", value: madrasah.reduce((acc, m) => acc + m.rombel, 0) },
 ];
 
 const pageUrl = `${Astro.url.origin}/portal/madrasah`;
@@ -76,15 +152,26 @@ const structuredData = [
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
         itemListElement: [
-            { "@type": "ListItem", position: 1, name: "Portal", item: `${Astro.url.origin}/portal` },
-            { "@type": "ListItem", position: 2, name: "Madrasah", item: pageUrl },
+            {
+                "@type": "ListItem",
+                position: 1,
+                name: "Portal",
+                item: `${Astro.url.origin}/portal`,
+            },
+            {
+                "@type": "ListItem",
+                position: 2,
+                name: "Madrasah",
+                item: pageUrl,
+            },
         ],
     },
     {
         "@context": "https://schema.org",
         "@type": "CollectionPage",
         name: "Informasi Madrasah Kemenag Kota Probolinggo",
-        description: "Daftar madrasah negeri di bawah naungan Kementerian Agama Kota Probolinggo.",
+        description:
+            "Daftar madrasah negeri di bawah naungan Kementerian Agama Kota Probolinggo.",
         url: pageUrl,
     },
     {
@@ -98,7 +185,12 @@ const structuredData = [
                 "@type": "School",
                 name: item.nama,
                 address: item.alamat,
-                url: item.website && item.website !== "-" ? (item.website.startsWith("http") ? item.website : `https://${item.website}`) : undefined,
+                url:
+                    item.website && item.website !== "-"
+                        ? item.website.startsWith("http")
+                            ? item.website
+                            : `https://${item.website}`
+                        : undefined,
             },
         })),
     },
@@ -106,28 +198,56 @@ const structuredData = [
 ---
 
 <style>
-    [data-anim="down"] { animation: fadeDown 0.5s cubic-bezier(0.16,1,0.3,1) 0.05s both; }
-    [data-anim="up"]   { animation: fadeUp  0.6s cubic-bezier(0.16,1,0.3,1) 0.15s both; }
+    [data-anim="down"] {
+        animation: fadeDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+    }
+    [data-anim="up"] {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+    }
 
     @keyframes fadeDown {
-        from { opacity: 0; transform: translateY(-12px); }
-        to   { opacity: 1; transform: translateY(0); }
+        from {
+            opacity: 0;
+            transform: translateY(-12px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
     @keyframes fadeUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to   { opacity: 1; transform: translateY(0); }
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     [data-reveal] {
         opacity: 0;
-        transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1),
-                    transform 0.6s cubic-bezier(0.16,1,0.3,1);
+        transition:
+            opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+            transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    [data-reveal="up"] { transform: translateY(24px); }
-    [data-reveal].revealed { opacity: 1; transform: none; }
-    [data-delay="1"] { transition-delay: 0.08s; }
-    [data-delay="2"] { transition-delay: 0.16s; }
-    [data-delay="3"] { transition-delay: 0.24s; }
+    [data-reveal="up"] {
+        transform: translateY(24px);
+    }
+    [data-reveal].revealed {
+        opacity: 1;
+        transform: none;
+    }
+    [data-delay="1"] {
+        transition-delay: 0.08s;
+    }
+    [data-delay="2"] {
+        transition-delay: 0.16s;
+    }
+    [data-delay="3"] {
+        transition-delay: 0.24s;
+    }
 </style>
 
 <BaseLayout
@@ -136,13 +256,14 @@ const structuredData = [
     ogDescription="Temukan informasi madrasah negeri di Kota Probolinggo, termasuk alamat, akreditasi, kepala madrasah, dan website."
     structuredData={structuredData}
 >
-
     <!-- ── Page header ────────────────────────────────── -->
     <div data-anim="down" class="pt-8 pb-6">
-        <a href="/portal"
-           class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink/35 hover:text-green transition-colors mb-4">
+        <a
+            href="/portal"
+            class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink/35 hover:text-green transition-colors mb-4"
+        >
             <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
-                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
             </svg>
             Portal
         </a>
@@ -158,11 +279,15 @@ const structuredData = [
     </div>
 
     <!-- ── Summary stats ──────────────────────────────── -->
-    <div data-anim="up" class="grid grid-cols-3 gap-3 mb-12">
-        {summaryStats.map(s => (
+    <div data-anim="up" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-12">
+        {summaryStats.map((s) => (
             <div class="border border-ink/10 bg-cream p-4 text-center">
-                <p class="text-2xl sm:text-3xl font-black text-ink mb-0.5">{s.value}</p>
-                <p class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-ink/40">{s.label}</p>
+                <p class="text-2xl sm:text-3xl font-black text-ink mb-0.5">
+                    {s.value}
+                </p>
+                <p class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-ink/40">
+                    {s.label}
+                </p>
             </div>
         ))}
     </div>
@@ -170,67 +295,114 @@ const structuredData = [
     <!-- ── Madrasah cards ─────────────────────────────── -->
     <div class="space-y-5 pb-10">
         {madrasah.map((m, i) => (
-            <div data-reveal="up" data-delay={String(i + 1)}
-                 class="border border-ink/10 bg-cream overflow-hidden">
-
+            <div
+                data-reveal="up"
+                data-delay={String(i + 1)}
+                class="border border-ink/10 bg-cream overflow-hidden"
+            >
                 <!-- Top accent bar -->
                 <div class={`h-1 w-full ${m.aksenWarna}`}></div>
 
                 <div class="p-6 sm:p-7">
                     <div class="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
-
                         <!-- Jenjang badge -->
-                        <div class={`w-16 h-16 shrink-0 border flex flex-col items-center justify-center ${m.warna}`}>
-                            <span class="text-lg font-black leading-none">{m.jenjang}</span>
-                            <span class="text-[9px] font-bold uppercase tracking-wide opacity-60 mt-0.5">Negeri</span>
+                        <div
+                            class={`w-16 h-16 shrink-0 border flex flex-col items-center justify-center ${m.warna}`}
+                        >
+                            <span class="text-lg font-black leading-none">
+                                {m.jenjang}
+                            </span>
+                            <span class="text-[9px] font-bold uppercase tracking-wide opacity-60 mt-0.5">
+                                Negeri
+                            </span>
                         </div>
 
                         <!-- Main info -->
                         <div class="flex-1 min-w-0">
                             <div class="flex flex-wrap items-center gap-2 mb-1">
-                                <h2 class="text-lg sm:text-xl font-extrabold text-ink">{m.nama}</h2>
+                                <h2 class="text-lg sm:text-xl font-extrabold text-ink">
+                                    {m.nama}
+                                </h2>
                                 <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 bg-green text-white">
                                     Akreditasi {m.akreditasi}
                                 </span>
                             </div>
-                            <p class="text-xs text-ink/40 font-medium mb-3">{m.label}</p>
+                            <p class="text-xs text-ink/40 font-medium mb-3">
+                                {m.label}
+                            </p>
 
                             <!-- Detail grid -->
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
                                 <div class="flex items-start gap-2">
-                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"
-                                         class="shrink-0 text-green/60 mt-0.5">
-                                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                        width="14"
+                                        height="14"
+                                        fill="currentColor"
+                                        class="shrink-0 text-green/60 mt-0.5"
+                                    >
+                                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
                                     </svg>
-                                    <span class="text-xs text-ink/60 leading-relaxed">{m.alamat}, {m.kodePos}</span>
+                                    <span class="text-xs text-ink/60 leading-relaxed">
+                                        {m.alamat}
+                                    </span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"
-                                         class="shrink-0 text-green/60">
-                                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                        width="14"
+                                        height="14"
+                                        fill="currentColor"
+                                        class="shrink-0 text-green/60"
+                                    >
+                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
                                     </svg>
                                     {m.website && m.website !== "-" ? (
-                                        <a href={m.website.startsWith("http") ? m.website : `https://${m.website}`} target="_blank" rel="noopener noreferrer"
-                                           class="text-xs text-ink/60 hover:text-green transition-colors underline underline-offset-2 decoration-ink/20 hover:decoration-green">
+                                        <a
+                                            href={
+                                                m.website.startsWith("http")
+                                                    ? m.website
+                                                    : `https://${m.website}`
+                                            }
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="text-xs text-ink/60 hover:text-green transition-colors underline underline-offset-2 decoration-ink/20 hover:decoration-green"
+                                        >
                                             {m.website}
                                         </a>
                                     ) : (
-                                        <span class="text-xs text-ink/40 italic">Tidak tersedia</span>
+                                        <span class="text-xs text-ink/40 italic">
+                                            Tidak tersedia
+                                        </span>
                                     )}
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"
-                                         class="shrink-0 text-green/60">
-                                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                        width="14"
+                                        height="14"
+                                        fill="currentColor"
+                                        class="shrink-0 text-green/60"
+                                    >
+                                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                                     </svg>
-                                    <span class="text-xs text-ink/60">{m.kepala}</span>
+                                    <span class="text-xs text-ink/60">
+                                        {m.kepala}
+                                    </span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"
-                                         class="shrink-0 text-green/60">
-                                        <path d="M14 6l-1-2H5v17h2v-7h5l1 2h7V6h-6zm4 8h-4l-1-2H7V6h5l1 2h5v6z"/>
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                        width="14"
+                                        height="14"
+                                        fill="currentColor"
+                                        class="shrink-0 text-green/60"
+                                    >
+                                        <path d="M14 6l-1-2H5v17h2v-7h5l1 2h7V6h-6zm4 8h-4l-1-2H7V6h5l1 2h5v6z" />
                                     </svg>
-                                    <span class="text-xs text-ink/60">NSM: {m.nsm}</span>
+                                    <span class="text-xs text-ink/60">
+                                        NSM: {m.nsm}
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -238,12 +410,28 @@ const structuredData = [
                         <!-- Stats mini -->
                         <div class="flex sm:flex-col gap-4 sm:gap-2 sm:items-end shrink-0">
                             <div class="text-right">
-                                <p class="text-xl font-black text-ink">{m.siswa.toLocaleString("id-ID")}</p>
-                                <p class="text-[10px] font-bold uppercase tracking-wider text-ink/35">Siswa</p>
+                                <p class="text-xl font-black text-ink">
+                                    {m.siswa.toLocaleString("id-ID")}
+                                </p>
+                                <p class="text-[10px] font-bold uppercase tracking-wider text-ink/35">
+                                    Siswa
+                                </p>
                             </div>
                             <div class="text-right">
-                                <p class="text-xl font-black text-ink">{m.guru}</p>
-                                <p class="text-[10px] font-bold uppercase tracking-wider text-ink/35">Guru</p>
+                                <p class="text-xl font-black text-ink">
+                                    {m.guru}
+                                </p>
+                                <p class="text-[10px] font-bold uppercase tracking-wider text-ink/35">
+                                    Guru
+                                </p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xl font-black text-ink">
+                                    {m.rombel}
+                                </p>
+                                <p class="text-[10px] font-bold uppercase tracking-wider text-ink/35">
+                                    Rombel
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -254,27 +442,37 @@ const structuredData = [
 
     <!-- ── Catatan ─────────────────────────────────────── -->
     <div class="border border-ink/8 bg-ink/3 p-4 flex items-start gap-3 mb-10">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"
-             class="shrink-0 text-ink/30 mt-0.5">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+        <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="currentColor"
+            class="shrink-0 text-ink/30 mt-0.5"
+        >
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
         </svg>
         <p class="text-xs text-ink/50 leading-relaxed">
-            Data jumlah siswa dan guru merupakan data estimasi. Untuk informasi terkini dan
-            madrasah swasta di Kota Probolinggo, silakan hubungi Seksi Pendidikan Islam
-            Kemenag Kota Probolinggo.
+            Data jumlah siswa dan guru merupakan data estimasi. Untuk informasi
+            terkini dan madrasah swasta di Kota Probolinggo, silakan hubungi
+            Seksi Pendidikan Islam Kemenag Kota Probolinggo.
         </p>
     </div>
-
 </BaseLayout>
 
 <script>
-{
-    const obs = new IntersectionObserver(
-        entries => entries.forEach(e => {
-            if (e.isIntersecting) { e.target.classList.add("revealed"); obs.unobserve(e.target); }
-        }),
-        { threshold: 0.08, rootMargin: "0px 0px -20px 0px" }
-    );
-    document.querySelectorAll("[data-reveal]").forEach(el => obs.observe(el));
-}
+    {
+        const obs = new IntersectionObserver(
+            (entries) =>
+                entries.forEach((e) => {
+                    if (e.isIntersecting) {
+                        e.target.classList.add("revealed");
+                        obs.unobserve(e.target);
+                    }
+                }),
+            { threshold: 0.08, rootMargin: "0px 0px -20px 0px" },
+        );
+        document
+            .querySelectorAll("[data-reveal]")
+            .forEach((el) => obs.observe(el));
+    }
 </script>
