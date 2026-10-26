@@ -263,6 +263,26 @@ export const informasiBerkala: InformasiBerkalaGrup[] = [
                 infoPublikasi: "Dipublikasikan setiap semester/tahun",
                 dokumen: [],
             },
+            {
+                id: "laporan-tahunan-ppid",
+                label: "Laporan Tahunan PPID",
+                desc: "Laporan pelaksanaan tugas PPID setiap tahun.",
+                icon: "mdi:file-chart-outline",
+                penjelasan:
+                    "Laporan pelaksanaan tugas Pejabat Pengelola Informasi dan Dokumentasi (PPID) selama satu tahun, memuat rekapitulasi permohonan informasi yang diterima dan diselesaikan, jumlah permohonan yang dikabulkan dan ditolak, serta kendala pengelolaan informasi dan dokumentasi — sesuai kewajiban pelaporan berdasarkan UU Nomor 14 Tahun 2008 tentang Keterbukaan Informasi Publik.",
+                infoPublikasi: "Dipublikasikan setiap akhir tahun",
+                dokumen: [],
+            },
+            {
+                id: "laporan-monev-pp",
+                label: "Laporan Monitoring dan Evaluasi Pelayanan Publik",
+                desc: "Laporan hasil monitoring dan evaluasi penyelenggaraan pelayanan publik.",
+                icon: "mdi:clipboard-check-outline",
+                penjelasan:
+                    "Laporan hasil monitoring dan evaluasi penyelenggaraan pelayanan publik Kementerian Agama Kota Probolinggo, mencakup evaluasi standar pelayanan, pengaduan masyarakat, dan rekomendasi perbaikan kualitas layanan.",
+                infoPublikasi: "Dipublikasikan setiap akhir tahun",
+                dokumen: [],
+            },
         ],
     },
     {

@@ -1,11 +1,10 @@
 ---
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import { Icon } from "astro-icon/components";
+import ItemBerkala from "../../../components/ppid/ItemBerkala.astro";
 import {
     informasiBerkala,
-    alamatKantor,
     type InformasiBerkalaGrup,
-    type InformasiBerkalaItem,
 } from "../../../lib/ppid-informasi-berkala";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
@@ -65,12 +64,6 @@ try {
 } catch {
     // Backend tidak tersedia → pakai data statis
 }
-
-const butuhEmptyState = (item: InformasiBerkalaItem) =>
-    item.dokumen.length === 0 &&
-    !item.profilLink &&
-    !item.tautanEksternal?.length &&
-    item.id !== "alamat-kantor";
 
 const semuaItem = grupTampil.flatMap((g) => g.items);
 
@@ -185,13 +178,6 @@ const structuredData = [
 
     .section-anchor {
         scroll-margin-top: 5rem;
-    }
-
-    .doc-item {
-        transition: background-color 0.15s ease;
-    }
-    .doc-item:hover {
-        background-color: rgba(15, 107, 68, 0.04);
     }
 
     #toc-sticky nav {
@@ -331,257 +317,7 @@ const structuredData = [
 
             <div class="border-t border-ink/8">
                 {grup.items.map((item) => (
-                    <article
-                        id={item.id}
-                        class="section-anchor py-10 border-b border-ink/8"
-                    >
-                        <!-- Item header -->
-                        <div class="flex items-start gap-4 mb-4">
-                            <div class="w-11 h-11 shrink-0 bg-ink/5 border border-ink/10 flex items-center justify-center">
-                                <Icon
-                                    name={item.icon}
-                                    class="w-[22px] h-[22px] text-green/70"
-                                />
-                            </div>
-                            <div class="min-w-0">
-                                <h3 class="text-base sm:text-lg font-extrabold uppercase tracking-tight text-ink leading-snug">
-                                    {item.label}
-                                </h3>
-                                <p class="text-xs text-ink/40 mt-1">
-                                    {item.desc}
-                                </p>
-                            </div>
-                        </div>
-
-                        {item.infoPublikasi && (
-                            <div class="inline-flex items-center gap-2 mb-4 text-[10px] font-black uppercase tracking-wider text-ink/45 border border-ink/10 bg-cream px-3 py-1.5">
-                                <Icon
-                                    name="mdi:calendar-clock"
-                                    class="w-3.5 h-3.5 text-green shrink-0"
-                                />
-                                {item.infoPublikasi}
-                            </div>
-                        )}
-
-                        <p class="text-sm text-ink/60 leading-relaxed mb-5 max-w-3xl">
-                            {item.penjelasan}
-                        </p>
-
-                        <!-- Alamat Kantor Lengkap -->
-                        {item.id === "alamat-kantor" && (
-                            <div class="max-w-3xl">
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                                    <div class="flex items-start gap-3 border border-ink/10 bg-cream p-4 sm:col-span-2">
-                                        <Icon
-                                            name="mdi:map-marker"
-                                            class="w-5 h-5 text-green shrink-0 mt-0.5"
-                                        />
-                                        <div>
-                                            <p class="text-[10px] text-ink/35 font-semibold uppercase tracking-wider mb-1">
-                                                Alamat
-                                            </p>
-                                            <p class="text-sm text-ink/70 leading-relaxed">
-                                                {alamatKantor.nama}
-                                                <br />
-                                                {alamatKantor.alamat}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-start gap-3 border border-ink/10 bg-cream p-4">
-                                        <Icon
-                                            name="mdi:phone"
-                                            class="w-5 h-5 text-green shrink-0 mt-0.5"
-                                        />
-                                        <div>
-                                            <p class="text-[10px] text-ink/35 font-semibold uppercase tracking-wider mb-1">
-                                                WhatsApp
-                                            </p>
-                                            <a
-                                                href={alamatKantor.whatsappUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                class="text-sm text-green hover:underline"
-                                            >
-                                                {alamatKantor.whatsapp}
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-start gap-3 border border-ink/10 bg-cream p-4">
-                                        <Icon
-                                            name="mdi:email-outline"
-                                            class="w-5 h-5 text-green shrink-0 mt-0.5"
-                                        />
-                                        <div>
-                                            <p class="text-[10px] text-ink/35 font-semibold uppercase tracking-wider mb-1">
-                                                Email
-                                            </p>
-                                            <p class="text-sm text-ink/70 break-all">
-                                                {alamatKantor.email}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-start gap-3 border border-ink/10 bg-cream p-4 sm:col-span-2">
-                                        <Icon
-                                            name="mdi:clock-outline"
-                                            class="w-5 h-5 text-green shrink-0 mt-0.5"
-                                        />
-                                        <div>
-                                            <p class="text-[10px] text-ink/35 font-semibold uppercase tracking-wider mb-1">
-                                                Jam Pelayanan
-                                            </p>
-                                            <p class="text-sm text-ink/70">
-                                                {alamatKantor.jamLayanan}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <a
-                                    href={alamatKantor.mapsUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    class="group inline-flex items-center gap-2 px-4 py-2.5 text-[11px] font-black uppercase tracking-wider bg-ink text-cream hover:bg-green transition-colors"
-                                >
-                                    Buka di Google Maps
-                                    <Icon
-                                        name="mdi:open-in-new"
-                                        class="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform"
-                                    />
-                                </a>
-                            </div>
-                        )}
-
-                        {/* Tautan ke halaman profil */}
-                        {item.profilLink && (
-                            <a
-                                href={item.profilLink}
-                                class="group inline-flex items-center gap-2 px-4 py-2.5 text-[11px] font-black uppercase tracking-wider border border-ink/15 text-ink/60 hover:border-green hover:text-green transition-colors"
-                            >
-                                {item.profilLinkLabel ?? "Selengkapnya"}
-                                <Icon
-                                    name="mdi:arrow-right"
-                                    class="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform"
-                                />
-                            </a>
-                        )}
-
-                        {/* Tautan eksternal resmi */}
-                        {item.tautanEksternal?.map((t) => (
-                            <a
-                                href={t.href}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="group flex items-start gap-4 border border-ink/10 bg-cream p-5 mb-3 max-w-3xl hover:border-green transition-colors"
-                            >
-                                <div class="w-10 h-10 shrink-0 bg-ink/5 border border-ink/10 flex items-center justify-center group-hover:bg-green group-hover:border-green transition-colors">
-                                    <Icon
-                                        name="mdi:open-in-new"
-                                        class="w-5 h-5 text-ink/40 group-hover:text-white transition-colors"
-                                    />
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-bold text-ink group-hover:text-green transition-colors mb-0.5">
-                                        {t.label}
-                                    </p>
-                                    <p class="text-xs text-ink/50 leading-relaxed">
-                                        {t.desc}
-                                    </p>
-                                </div>
-                                <Icon
-                                    name="mdi:arrow-right"
-                                    class="w-4 h-4 shrink-0 text-ink/20 group-hover:text-green transition-colors mt-1 group-hover:translate-x-0.5 transition-transform"
-                                />
-                            </a>
-                        ))}
-
-                        {/* Daftar dokumen */}
-                        {item.dokumen.length > 0 && (
-                            <div class="flex flex-col divide-y divide-ink/6 border-t border-ink/6 max-w-3xl">
-                                {item.dokumen.map((d) =>
-                                    d.fileUrl ? (
-                                        <a
-                                            href={d.fileUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            class="doc-item group flex items-center gap-4 py-4 px-3 -mx-3"
-                                        >
-                                            <div class="w-10 h-10 shrink-0 bg-ink/5 border border-ink/10 flex items-center justify-center">
-                                                <Icon
-                                                    name="mdi:file-download-outline"
-                                                    class="w-5 h-5 text-ink/40 group-hover:text-green transition-colors"
-                                                />
-                                            </div>
-                                            <div class="flex-1 min-w-0">
-                                                <p class="text-sm font-bold text-ink group-hover:text-green transition-colors leading-snug">
-                                                    {d.judul}
-                                                </p>
-                                                <p class="text-[11px] text-ink/40 uppercase tracking-wider font-semibold mt-0.5">
-                                                    {[d.tahun, d.periode]
-                                                        .filter(Boolean)
-                                                        .join(" • ")}
-                                                </p>
-                                            </div>
-                                            {d.format && (
-                                                <span class="shrink-0 text-[10px] font-black uppercase tracking-wider bg-ink/8 text-ink/50 px-2 py-1">
-                                                    {d.format}
-                                                </span>
-                                            )}
-                                            <Icon
-                                                name="mdi:download"
-                                                class="w-4 h-4 shrink-0 text-ink/20 group-hover:text-green transition-colors"
-                                            />
-                                        </a>
-                                    ) : (
-                                        <div class="flex items-center gap-4 py-4 px-3 -mx-3">
-                                            <div class="w-10 h-10 shrink-0 bg-ink/5 border border-ink/10 flex items-center justify-center">
-                                                <Icon
-                                                    name="mdi:file-multiple-outline"
-                                                    class="w-5 h-5 text-ink/30"
-                                                />
-                                            </div>
-                                            <div class="flex-1 min-w-0">
-                                                <p class="text-sm font-bold text-ink/70 leading-snug">
-                                                    {d.judul}
-                                                </p>
-                                                <p class="text-[11px] text-ink/40 uppercase tracking-wider font-semibold mt-0.5">
-                                                    {[d.tahun, d.periode]
-                                                        .filter(Boolean)
-                                                        .join(" • ")}
-                                                </p>
-                                            </div>
-                                            <span class="shrink-0 text-[10px] font-black uppercase tracking-wider bg-yellow/20 text-ink/60 px-2 py-1">
-                                                Segera
-                                            </span>
-                                        </div>
-                                    ),
-                                )}
-                            </div>
-                        )}
-
-                        {/* Kosong: belum ada dokumen */}
-                        {butuhEmptyState(item) && (
-                            <div class="border border-dashed border-ink/15 bg-cream/60 p-5 flex flex-col sm:flex-row sm:items-center gap-4 max-w-3xl">
-                                <Icon
-                                    name="mdi:information-outline"
-                                    class="w-6 h-6 text-ink/20 shrink-0"
-                                />
-                                <p class="flex-1 text-xs text-ink/50 leading-relaxed">
-                                    Belum ada dokumen yang dipublikasikan. Untuk
-                                    permintaan segera, silakan ajukan melalui
-                                    form permohonan informasi PPID.
-                                </p>
-                                <a
-                                    href="/ppid#form-permohonan"
-                                    class="group shrink-0 inline-flex items-center gap-1.5 px-4 py-2 text-[11px] font-black uppercase tracking-wider bg-ink text-cream hover:bg-green transition-colors"
-                                >
-                                    Ajukan Permohonan
-                                    <Icon
-                                        name="mdi:arrow-right"
-                                        class="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform"
-                                    />
-                                </a>
-                            </div>
-                        )}
-                    </article>
+                    <ItemBerkala item={item} />
                 ))}
             </div>
         </section>
