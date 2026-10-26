@@ -2,6 +2,7 @@
 import { Icon } from "astro-icon/components";
 import {
     alamatKantor,
+    type DokumenBerkala,
     type InformasiBerkalaItem,
 } from "../../lib/ppid-informasi-berkala";
 
@@ -16,24 +17,39 @@ const butuhEmptyState =
     !item.profilLink &&
     !item.tautanEksternal?.length &&
     item.id !== "alamat-kantor";
+
+// Tahun eksplisit, atau parse dari judul (mis. "… Semester 1 Tahun 2026")
+const detectTahun = (d: DokumenBerkala): number | null => {
+    if (d.tahun) return d.tahun;
+    const m = d.judul.match(/20\d{2}/);
+    return m ? Number(m[0]) : null;
+};
+
+const grupDokumen: { tahun: number | null; items: DokumenBerkala[] }[] = [];
+for (const d of item.dokumen) {
+    const tahun = detectTahun(d);
+    let grup = grupDokumen.find((g) => g.tahun === tahun);
+    if (!grup) {
+        grup = { tahun, items: [] };
+        grupDokumen.push(grup);
+    }
+    grup.items.push(d);
+}
+// Tahun terbaru di atas; dokumen tanpa tahun di paling bawah
+grupDokumen.sort((a, b) => (b.tahun ?? 0) - (a.tahun ?? 0));
 ---
 
 <article id={item.id} class="section-anchor py-10 border-b border-ink/8">
     <!-- Item header -->
     <div class="flex items-start gap-4 mb-4">
         <div class="w-11 h-11 shrink-0 bg-ink/5 border border-ink/10 flex items-center justify-center">
-            <Icon
-                name={item.icon}
-                class="w-[22px] h-[22px] text-green/70"
-            />
+            <Icon name={item.icon} class="w-[22px] h-[22px] text-green/70" />
         </div>
         <div class="min-w-0">
             <h3 class="text-base sm:text-lg font-extrabold uppercase tracking-tight text-ink leading-snug">
                 {item.label}
             </h3>
-            <p class="text-xs text-ink/40 mt-1">
-                {item.desc}
-            </p>
+            <p class="text-xs text-ink/40 mt-1">{item.desc}</p>
         </div>
     </div>
 
@@ -166,9 +182,7 @@ const butuhEmptyState =
                 <p class="text-sm font-bold text-ink group-hover:text-green transition-colors mb-0.5">
                     {t.label}
                 </p>
-                <p class="text-xs text-ink/50 leading-relaxed">
-                    {t.desc}
-                </p>
+                <p class="text-xs text-ink/50 leading-relaxed">{t.desc}</p>
             </div>
             <Icon
                 name="mdi:arrow-right"
@@ -177,69 +191,83 @@ const butuhEmptyState =
         </a>
     ))}
 
-    {/* Daftar dokumen */}
-    {item.dokumen.length > 0 && (
-        <div class="flex flex-col divide-y divide-ink/6 border-t border-ink/6 max-w-3xl">
-            {item.dokumen.map((d) =>
-                d.fileUrl ? (
-                    <a
-                        href={d.fileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="doc-item group flex items-center gap-4 py-4 px-3 -mx-3"
-                    >
-                        <div class="w-10 h-10 shrink-0 bg-ink/5 border border-ink/10 flex items-center justify-center">
+    {/* Daftar dokumen — dikelompokkan per tahun (accordion) */}
+    {grupDokumen.map((grup) => (
+        <details class="group/acc border border-ink/10 bg-cream mb-2 max-w-3xl">
+            <summary class="flex items-center gap-2.5 px-4 py-3 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
+                <Icon
+                    name="mdi:chevron-down"
+                    class="w-4 h-4 text-ink/40 group-open/acc:rotate-180 transition-transform"
+                />
+                <span class="text-[11px] font-black uppercase tracking-wider text-ink/70">
+                    {grup.tahun ? `Tahun ${grup.tahun}` : "Tanpa Tahun"}
+                </span>
+                <span class="text-[10px] font-semibold text-ink/35">
+                    {grup.items.length} dokumen
+                </span>
+            </summary>
+            <div class="border-t border-ink/8 flex flex-col divide-y divide-ink/6 px-2 pb-2">
+                {grup.items.map((d) =>
+                    d.fileUrl ? (
+                        <a
+                            href={d.fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="doc-item group flex items-center gap-4 py-4 px-3 -mx-3"
+                        >
+                            <div class="w-10 h-10 shrink-0 bg-ink/5 border border-ink/10 flex items-center justify-center">
+                                <Icon
+                                    name="mdi:file-download-outline"
+                                    class="w-5 h-5 text-ink/40 group-hover:text-green transition-colors"
+                                />
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-bold text-ink group-hover:text-green transition-colors leading-snug">
+                                    {d.judul}
+                                </p>
+                                <p class="text-[11px] text-ink/40 uppercase tracking-wider font-semibold mt-0.5">
+                                    {[d.tahun, d.periode]
+                                        .filter(Boolean)
+                                        .join(" • ")}
+                                </p>
+                            </div>
+                            {d.format && (
+                                <span class="shrink-0 text-[10px] font-black uppercase tracking-wider bg-ink/8 text-ink/50 px-2 py-1">
+                                    {d.format}
+                                </span>
+                            )}
                             <Icon
-                                name="mdi:file-download-outline"
-                                class="w-5 h-5 text-ink/40 group-hover:text-green transition-colors"
+                                name="mdi:download"
+                                class="w-4 h-4 shrink-0 text-ink/20 group-hover:text-green transition-colors"
                             />
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-bold text-ink group-hover:text-green transition-colors leading-snug">
-                                {d.judul}
-                            </p>
-                            <p class="text-[11px] text-ink/40 uppercase tracking-wider font-semibold mt-0.5">
-                                {[d.tahun, d.periode]
-                                    .filter(Boolean)
-                                    .join(" • ")}
-                            </p>
-                        </div>
-                        {d.format && (
-                            <span class="shrink-0 text-[10px] font-black uppercase tracking-wider bg-ink/8 text-ink/50 px-2 py-1">
-                                {d.format}
+                        </a>
+                    ) : (
+                        <div class="flex items-center gap-4 py-4 px-3 -mx-3">
+                            <div class="w-10 h-10 shrink-0 bg-ink/5 border border-ink/10 flex items-center justify-center">
+                                <Icon
+                                    name="mdi:file-multiple-outline"
+                                    class="w-5 h-5 text-ink/30"
+                                />
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-bold text-ink/70 leading-snug">
+                                    {d.judul}
+                                </p>
+                                <p class="text-[11px] text-ink/40 uppercase tracking-wider font-semibold mt-0.5">
+                                    {[d.tahun, d.periode]
+                                        .filter(Boolean)
+                                        .join(" • ")}
+                                </p>
+                            </div>
+                            <span class="shrink-0 text-[10px] font-black uppercase tracking-wider bg-yellow/20 text-ink/60 px-2 py-1">
+                                Segera
                             </span>
-                        )}
-                        <Icon
-                            name="mdi:download"
-                            class="w-4 h-4 shrink-0 text-ink/20 group-hover:text-green transition-colors"
-                        />
-                    </a>
-                ) : (
-                    <div class="flex items-center gap-4 py-4 px-3 -mx-3">
-                        <div class="w-10 h-10 shrink-0 bg-ink/5 border border-ink/10 flex items-center justify-center">
-                            <Icon
-                                name="mdi:file-multiple-outline"
-                                class="w-5 h-5 text-ink/30"
-                            />
                         </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-bold text-ink/70 leading-snug">
-                                {d.judul}
-                            </p>
-                            <p class="text-[11px] text-ink/40 uppercase tracking-wider font-semibold mt-0.5">
-                                {[d.tahun, d.periode]
-                                    .filter(Boolean)
-                                    .join(" • ")}
-                            </p>
-                        </div>
-                        <span class="shrink-0 text-[10px] font-black uppercase tracking-wider bg-yellow/20 text-ink/60 px-2 py-1">
-                            Segera
-                        </span>
-                    </div>
-                ),
-            )}
-        </div>
-    )}
+                    ),
+                )}
+            </div>
+        </details>
+    ))}
 
     {/* Kosong: belum ada dokumen */}
     {butuhEmptyState && (
@@ -249,9 +277,8 @@ const butuhEmptyState =
                 class="w-6 h-6 text-ink/20 shrink-0"
             />
             <p class="flex-1 text-xs text-ink/50 leading-relaxed">
-                Belum ada dokumen yang dipublikasikan. Untuk
-                permintaan segera, silakan ajukan melalui
-                form permohonan informasi PPID.
+                Belum ada dokumen yang dipublikasikan. Untuk permintaan segera,
+                silakan ajukan melalui form permohonan informasi PPID.
             </p>
             <a
                 href="/ppid#form-permohonan"
