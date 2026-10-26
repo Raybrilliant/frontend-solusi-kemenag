@@ -18,6 +18,7 @@
         apiUrl = "/api/admin/permohonan",
         detailBase = "/admin/permohonan",
         userKecamatan = "",
+        allowManual = false,
     } = $props();
 
     let data = $state<any[]>([]);
@@ -28,6 +29,8 @@
     let limit = $state(20);
     let pagination = $state({ page: 1, limit: 20, total: 0, totalPages: 1 });
     let page = $state(1);
+    // Naikkan untuk memicu reload daftar (mis. setelah input manual berhasil)
+    let refreshKey = $state(0);
 
     // Stats dari dashboard (fetch sekali)
     let dashboardStats = $state({
@@ -76,6 +79,7 @@
         const tab = activeTab;
         const q = searchTerm;
         const p = page;
+        refreshKey;
         clearTimeout(_debounce);
         _debounce = setTimeout(
             () => {
@@ -159,6 +163,84 @@
     function closeExportModal() {
         if (exporting) return;
         showExport = false;
+    }
+
+    // ── Modal Input Manual (permohonan PPID via surat) ───────
+    let showManual = $state(false);
+    let manualSubmitting = $state(false);
+    let manualError = $state("");
+    let mNama = $state("");
+    let mJenis = $state("");
+    let mTanggal = $state("");
+    let mPhone = $state("");
+    let mStatus = $state("Diterima");
+    let mKeterangan = $state("");
+    let mSelesai = $state("");
+
+    function todayLocal() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    }
+
+    function openManualModal() {
+        manualError = "";
+        mNama = "";
+        mJenis = "";
+        mPhone = "";
+        mStatus = "Diterima";
+        mKeterangan = "";
+        mSelesai = "";
+        mTanggal = todayLocal();
+        showManual = true;
+    }
+    function closeManualModal() {
+        if (manualSubmitting) return;
+        showManual = false;
+    }
+
+    async function submitManual() {
+        manualError = "";
+        if (mNama.trim().length < 2) {
+            manualError = "Nama pemohon wajib diisi.";
+            return;
+        }
+        if (mJenis.trim().length < 3) {
+            manualError = "Jenis data yang diminta wajib diisi.";
+            return;
+        }
+        if (!mTanggal) {
+            manualError = "Tanggal permohonan wajib diisi.";
+            return;
+        }
+        manualSubmitting = true;
+        try {
+            const res = await fetch(`${apiUrl}/manual`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    namaPemohon: mNama.trim(),
+                    jenisData: mJenis.trim(),
+                    tanggalPermohonan: mTanggal,
+                    status: mStatus,
+                    applicantPhone: mPhone.trim() || undefined,
+                    keterangan: mKeterangan.trim() || undefined,
+                    ...(mStatus === "Selesai" && mSelesai
+                        ? { tanggalDiselesaikan: mSelesai }
+                        : {}),
+                }),
+            });
+            const json = await res.json().catch(() => null);
+            if (!res.ok || json?.success === false) {
+                manualError = json?.message ?? "Gagal menyimpan permohonan.";
+                return;
+            }
+            showManual = false;
+            refreshKey++;
+        } catch {
+            manualError = "Gagal terhubung ke server.";
+        } finally {
+            manualSubmitting = false;
+        }
     }
 
     function completionMinutes(r: any) {
@@ -463,6 +545,14 @@
             bind:value={searchTerm}
             class="border bg-white/50 border-black/10 rounded py-2 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors"
         />
+        {#if allowManual}
+            <button
+                onclick={openManualModal}
+                class="flex items-center gap-2 px-4 py-2 border border-green text-green text-sm font-semibold hover:bg-green hover:text-white transition-colors cursor-pointer"
+            >
+                <Icon icon="mdi:plus" class="w-4 h-4" /> Tambah Manual
+            </button>
+        {/if}
         <button
             onclick={openExportModal}
             class="flex items-center gap-2 px-4 py-2 bg-green text-white text-sm font-semibold transition-colors cursor-pointer"
@@ -642,6 +732,7 @@
 <svelte:window
     onkeydown={(e) => {
         if (e.key === "Escape" && showExport) closeExportModal();
+        if (e.key === "Escape" && showManual) closeManualModal();
     }}
 />
 
@@ -754,6 +845,201 @@
                     {:else}
                         <Icon icon="mdi:download" class="w-4 h-4" />
                         Export XLSX
+                    {/if}
+                </button>
+            </div>
+        </div>
+    </div>
+{/if}
+
+<!-- ── Modal Input Manual (permohonan PPID via surat) ── -->
+{#if showManual}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_interactive_supports_focus -->
+    <div
+        use:portal
+        class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+        onclick={(e) => e.target === e.currentTarget && closeManualModal()}
+        role="dialog"
+        aria-modal="true"
+    >
+        <div class="bg-white w-full max-w-md shadow-2xl export-modal-in max-h-[90vh] overflow-y-auto">
+            <!-- Header -->
+            <div
+                class="flex items-center justify-between px-5 py-4 border-b border-black/8 sticky top-0 bg-white"
+            >
+                <div>
+                    <h3 class="text-sm font-bold uppercase tracking-wide">
+                        Tambah Permohonan Manual
+                    </h3>
+                    <p class="text-[11px] text-ink/40 mt-0.5">
+                        Untuk permohonan data PPID yang masuk via surat, bukan
+                        portal
+                    </p>
+                </div>
+                <button
+                    onclick={closeManualModal}
+                    class="text-ink/40 hover:text-ink transition p-1"
+                    aria-label="Tutup"
+                >
+                    <Icon icon="mdi:close" class="w-4 h-4" />
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="px-5 py-5 space-y-4">
+                <div>
+                    <label
+                        for="manual-nama"
+                        class="text-[10px] font-bold uppercase tracking-widest text-ink/40 mb-1.5 block"
+                    >
+                        Nama Pemohon <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                        id="manual-nama"
+                        type="text"
+                        bind:value={mNama}
+                        maxlength="200"
+                        placeholder="mis. Kanwil Kemenag Provinsi Jatim"
+                        class="w-full border border-black/10 bg-white/50 rounded py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors"
+                    />
+                </div>
+
+                <div>
+                    <label
+                        for="manual-jenis"
+                        class="text-[10px] font-bold uppercase tracking-widest text-ink/40 mb-1.5 block"
+                    >
+                        Jenis Data yang Diminta <span class="text-red-500">*</span>
+                    </label>
+                    <textarea
+                        id="manual-jenis"
+                        bind:value={mJenis}
+                        maxlength="150"
+                        rows="3"
+                        placeholder="Ringkasan data yang diminta dalam surat"
+                        class="w-full border border-black/10 bg-white/50 rounded py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors resize-none"
+                    ></textarea>
+                    <p class="text-[11px] text-ink/40 mt-1">
+                        {150 - mJenis.length} karakter tersisa
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label
+                            for="manual-tanggal"
+                            class="text-[10px] font-bold uppercase tracking-widest text-ink/40 mb-1.5 block"
+                        >
+                            Tanggal Permohonan <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                            id="manual-tanggal"
+                            type="date"
+                            bind:value={mTanggal}
+                            class="w-full border border-black/10 bg-white/50 rounded py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors"
+                        />
+                    </div>
+                    <div>
+                        <label
+                            for="manual-status"
+                            class="text-[10px] font-bold uppercase tracking-widest text-ink/40 mb-1.5 block"
+                        >
+                            Status
+                        </label>
+                        <select
+                            id="manual-status"
+                            bind:value={mStatus}
+                            class="w-full border border-black/10 bg-white/50 rounded py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors"
+                        >
+                            <option>Diterima</option>
+                            <option>Diproses</option>
+                            <option>Selesai</option>
+                            <option>Ditolak</option>
+                        </select>
+                    </div>
+                </div>
+
+                {#if mStatus === "Selesai"}
+                    <div>
+                        <label
+                            for="manual-selesai"
+                            class="text-[10px] font-bold uppercase tracking-widest text-ink/40 mb-1.5 block"
+                        >
+                            Tanggal Diselesaikan
+                        </label>
+                        <input
+                            id="manual-selesai"
+                            type="date"
+                            bind:value={mSelesai}
+                            class="w-full border border-black/10 bg-white/50 rounded py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors"
+                        />
+                        <p class="text-[11px] text-ink/40 mt-1">
+                            Kosongkan untuk memakai hari ini.
+                        </p>
+                    </div>
+                {/if}
+
+                <div>
+                    <label
+                        for="manual-phone"
+                        class="text-[10px] font-bold uppercase tracking-widest text-ink/40 mb-1.5 block"
+                    >
+                        No. WhatsApp (opsional)
+                    </label>
+                    <input
+                        id="manual-phone"
+                        type="text"
+                        bind:value={mPhone}
+                        maxlength="30"
+                        placeholder="Kosongkan jika tidak ada"
+                        class="w-full border border-black/10 bg-white/50 rounded py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors"
+                    />
+                </div>
+
+                <div>
+                    <label
+                        for="manual-keterangan"
+                        class="text-[10px] font-bold uppercase tracking-widest text-ink/40 mb-1.5 block"
+                    >
+                        Keterangan (opsional)
+                    </label>
+                    <textarea
+                        id="manual-keterangan"
+                        bind:value={mKeterangan}
+                        rows="2"
+                        placeholder="mis. nomor surat, disposisi, alasan penolakan"
+                        class="w-full border border-black/10 bg-white/50 rounded py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-1 transition-colors resize-none"
+                    ></textarea>
+                </div>
+
+                {#if manualError}
+                    <p class="text-xs text-red-500">{manualError}</p>
+                {/if}
+            </div>
+
+            <!-- Footer -->
+            <div
+                class="border-t border-black/8 px-5 py-4 flex gap-3 sticky bottom-0 bg-white"
+            >
+                <button
+                    onclick={closeManualModal}
+                    class="flex-1 border border-black/10 text-sm font-semibold py-2.5 hover:bg-black/5 transition cursor-pointer"
+                >
+                    Batal
+                </button>
+                <button
+                    onclick={submitManual}
+                    disabled={manualSubmitting}
+                    class="flex-1 bg-green text-white text-sm font-semibold py-2.5 hover:bg-green/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                >
+                    {#if manualSubmitting}
+                        <Icon icon="mdi:loading" class="w-4 h-4 animate-spin" />
+                        Menyimpan...
+                    {:else}
+                        <Icon icon="mdi:check" class="w-4 h-4" />
+                        Simpan
                     {/if}
                 </button>
             </div>
