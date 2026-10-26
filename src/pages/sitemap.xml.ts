@@ -33,6 +33,7 @@ export const GET: APIRoute = async () => {
     "/ppid/profil",
     "/ppid/regulasi",
     "/ppid/statistik",
+    "/ppid/kalender-kegiatan",
     "/information",
     "/pengaduan",
     "/zona-integritas",

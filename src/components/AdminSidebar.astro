@@ -56,6 +56,11 @@ const contentItems = [
         label: "SOP PPID",
     },
     {
+        href: "/admin/kalender",
+        icon: "mdi:calendar-month-outline",
+        label: "Kalender Kegiatan PPID",
+    },
+    {
         href: "/admin/pengumuman",
         icon: "mdi:bullhorn-outline",
         label: "Pengumuman",
@@ -70,6 +75,7 @@ const humasItems = contentItems.filter((item) =>
         "/admin/permohonan-ppid",
         "/admin/informasi-berkala",
         "/admin/sop",
+        "/admin/kalender",
         "/admin/pengumuman",
     ].includes(item.href),
 );

@@ -1,0 +1,295 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { Icon } from "astro-icon/components";
+import KalenderBulanan from "../../../components/Svelte/KalenderBulanan.svelte";
+import {
+    kalenderKategori,
+    nilaiKolom,
+    type KalenderKegiatan,
+} from "../../../lib/ppid-kalender";
+
+const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
+
+type KalenderApiRow = KalenderKegiatan;
+
+// Data dari backend; kosong (dengan empty-state) bila backend tidak tersedia.
+let perKategori: Record<string, KalenderKegiatan[]> = {};
+let fetchError = false;
+try {
+    const res = await fetch(`${BACKEND_URL}/api/v1/kalender`);
+    if (res.ok) {
+        const json = (await res.json()) as {
+            success: boolean;
+            data: KalenderApiRow[];
+        };
+        if (json.success) {
+            perKategori = Object.fromEntries(
+                kalenderKategori.map((k) => [
+                    k.id,
+                    json.data
+                        .filter((row) => row.kategori === k.id)
+                        .sort((a, b) => a.urutan - b.urutan || a.id - b.id),
+                ]),
+            );
+        }
+    } else {
+        fetchError = true;
+    }
+} catch {
+    fetchError = true;
+}
+
+const totalEntri = Object.values(perKategori).reduce(
+    (acc, rows) => acc + rows.length,
+    0,
+);
+const semuaEntri = kalenderKategori.flatMap((k) => perKategori[k.id] ?? []);
+
+const pageUrl = `${Astro.url.origin}/ppid/kalender-kegiatan`;
+const structuredData = [
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+            {
+                "@type": "ListItem",
+                position: 1,
+                name: "Beranda",
+                item: `${Astro.url.origin}`,
+            },
+            {
+                "@type": "ListItem",
+                position: 2,
+                name: "PPID",
+                item: `${Astro.url.origin}/ppid`,
+            },
+            {
+                "@type": "ListItem",
+                position: 3,
+                name: "Kalender Kegiatan",
+                item: pageUrl,
+            },
+        ],
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "Dataset",
+        name: "Kalender Kegiatan PPID Kemenag Kota Probolinggo",
+        description:
+            "Kalender kegiatan PPID Kemenag Kota Probolinggo: perencanaan, keuangan & kinerja, layanan keagamaan, pendidikan, agenda rutin, dan agenda tanggal tertentu.",
+        url: pageUrl,
+        creator: {
+            "@type": "GovernmentOrganization",
+            name: "Kantor Kementerian Agama Kota Probolinggo",
+            url: Astro.url.origin,
+        },
+        inLanguage: "id-ID",
+        isAccessibleForFree: true,
+    },
+];
+---
+
+<style>
+    [data-anim="down"] {
+        animation: fadeDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+    }
+    [data-anim="up"] {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+    }
+
+    @keyframes fadeDown {
+        from {
+            opacity: 0;
+            transform: translateY(-12px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    @keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<BaseLayout
+    title="Kalender Kegiatan PPID"
+    description="Kalender kegiatan PPID Kemenag Kota Probolinggo: perencanaan, keuangan & kinerja, layanan keagamaan, pendidikan, dan agenda rutin."
+    ogDescription="Jadwal kegiatan PPID Kantor Kementerian Agama Kota Probolinggo sepanjang tahun."
+    structuredData={structuredData}
+>
+    <!-- ── Page header ────────────────────────────── -->
+    <div data-anim="down" class="pt-8 pb-6">
+        <a
+            href="/ppid"
+            class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink/35 hover:text-green transition-colors mb-4"
+        >
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path>
+            </svg>
+            PPID
+        </a>
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-1 h-7 bg-green shrink-0"></div>
+            <h1 class="text-4xl font-extrabold uppercase tracking-tight text-ink">
+                Kalender Kegiatan
+            </h1>
+        </div>
+        <p class="text-sm text-ink/45 mt-1 ml-4 max-w-2xl leading-relaxed">
+            Jadwal kegiatan PPID Kantor Kementerian Agama Kota Probolinggo
+            sepanjang tahun — perencanaan, keuangan & kinerja, layanan
+            keagamaan, pendidikan, dan agenda rutin.
+        </p>
+    </div>
+
+    <!-- ── Note ───────────────────────────────────── -->
+    <div
+        data-anim="up"
+        class="flex items-start gap-3 border border-ink/8 bg-ink/[0.02] px-4 py-3 mb-8 text-xs text-ink/50 leading-relaxed"
+    >
+        <Icon
+            name="mdi:calendar-month-outline"
+            class="w-4 h-4 shrink-0 text-ink/30 mt-0.5"
+        />
+        <p>
+            Kalender ini memuat periode kegiatan, uraian kegiatan, satker atau
+            penanggung jawab, serta dokumen/keluaran yang dihasilkan. Diperbarui
+            secara berkala oleh PPID.
+        </p>
+    </div>
+
+    <!-- ── Kalender bulanan (fokus utama) ─────────── -->
+    {!fetchError && totalEntri > 0 && (
+        <section data-anim="up" class="mb-14">
+            <div class="mb-5">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-1 h-7 bg-green shrink-0" />
+                    <h2 class="text-2xl sm:text-3xl font-extrabold uppercase tracking-tight text-ink">
+                        Kalender Kegiatan
+                    </h2>
+                </div>
+                <p class="text-sm text-ink/45 ml-4 max-w-2xl leading-relaxed">
+                    Poin berwarna menandakan tanggal dengan kegiatan terjadwal.
+                    Klik tanggal untuk melihat rinciannya, atau gunakan navigasi
+                    bulan untuk menjelajah periode lain.
+                </p>
+            </div>
+            <KalenderBulanan items={semuaEntri} client:load />
+        </section>
+    )}
+
+    <!-- ── Detail lengkap per kategori ─────────────── -->
+    {fetchError || totalEntri === 0 ? (
+        <div
+            data-anim="up"
+            class="border border-ink/10 bg-cream px-6 py-16 text-center"
+        >
+            <Icon
+                name="mdi:calendar-blank-outline"
+                class="w-10 h-10 mx-auto text-ink/20 mb-4"
+            />
+            <p class="text-sm font-semibold text-ink/60 mb-1">
+                {fetchError
+                    ? "Data kalender tidak dapat dimuat."
+                    : "Belum ada entri kalender kegiatan."}
+            </p>
+            <p class="text-xs text-ink/40">
+                Silakan coba muat ulang halaman atau hubungi PPID untuk
+                informasi lebih lanjut.
+            </p>
+        </div>
+    ) : (
+        <div data-anim="up">
+            <div class="mb-6">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-1 h-7 bg-green shrink-0" />
+                    <h2 class="text-2xl sm:text-3xl font-extrabold uppercase tracking-tight text-ink">
+                        Detail Lengkap per Kategori
+                    </h2>
+                </div>
+                <p class="text-sm text-ink/45 ml-4 max-w-2xl leading-relaxed">
+                    Rincian seluruh kegiatan beserta satker/penanggung jawab dan
+                    dokumen keluarannya.
+                </p>
+            </div>
+            {kalenderKategori.map((kategori) => {
+                const rows = perKategori[kategori.id] ?? [];
+                if (rows.length === 0) return null;
+                return (
+                    <section class="mb-12">
+                        <div class="mb-5">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-1 h-7 bg-green shrink-0" />
+                                <h3 class="text-xl sm:text-2xl font-extrabold uppercase tracking-tight text-ink">
+                                    {kategori.label}
+                                </h3>
+                            </div>
+                            <p class="text-sm text-ink/45 ml-4 max-w-2xl leading-relaxed">
+                                {kategori.desc}
+                            </p>
+                        </div>
+
+                        <div class="border border-ink/10 bg-white overflow-x-auto">
+                            <table class="w-full text-sm min-w-[640px]">
+                                <thead>
+                                    <tr class="bg-ink/4 border-b border-ink/10">
+                                        {kategori.kolom.map((kolom) => (
+                                            <th
+                                                class={`text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-ink/50 ${kolom.id === "periode" ? "w-48" : ""}`}
+                                            >
+                                                {kolom.label}
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {rows.map((row, i) => (
+                                        <tr
+                                            class={`border-b border-ink/5 last:border-b-0 ${i % 2 === 1 ? "bg-ink/[0.015]" : ""}`}
+                                        >
+                                            {kategori.kolom.map((kolom) => (
+                                                <td class="px-4 py-3 align-top text-ink/70 leading-relaxed">
+                                                    {kolom.id === "periode" ? (
+                                                        <span class="font-semibold text-ink whitespace-nowrap">
+                                                            {nilaiKolom(
+                                                                row,
+                                                                kolom.id,
+                                                            )}
+                                                        </span>
+                                                    ) : (
+                                                        nilaiKolom(
+                                                            row,
+                                                            kolom.id,
+                                                        )
+                                                    )}
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                );
+            })}
+        </div>
+    )}
+
+    <!-- ── CTA kembali ────────────────────────────── -->
+    <div data-anim="up" class="mt-4 mb-10">
+        <a
+            href="/ppid"
+            class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-ink/50 hover:text-green transition-colors"
+        >
+            <Icon name="mdi:arrow-left" class="w-4 h-4" />
+            Kembali ke PPID
+        </a>
+    </div>
+</BaseLayout>
