@@ -1,0 +1,213 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { toUploadProxyUrl } from "../../../lib/upload-url";
+
+const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
+
+type DokumenDikecualikan = {
+    id: number;
+    judul: string;
+    deskripsi: string | null;
+    url: string | null;
+};
+
+let dokumen: DokumenDikecualikan[] = [];
+try {
+    const res = await fetch(`${BACKEND_URL}/api/v1/informasi-dikecualikan`);
+    if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+            dokumen = (json.data ?? []).map((d: any) => ({
+                id: Number(d.id),
+                judul: String(d.judul ?? ""),
+                deskripsi: d.deskripsi ? String(d.deskripsi) : null,
+                url: d.url ? String(d.url) : null,
+            }));
+        }
+    }
+} catch {}
+
+// Tautan eksternal (mis. Google Drive) dibuka langsung; PDF lokal lewat proxy upload.
+function docUrl(url: string): string {
+    const isExternal = /^https?:\/\//i.test(url);
+    return isExternal ? url : toUploadProxyUrl(url);
+}
+
+const isExternal = (url: string): boolean => /^https?:\/\//i.test(url);
+---
+
+<BaseLayout
+    title="Informasi Dikecualikan PPID"
+    description="Daftar informasi publik yang dikecualikan sesuai UU Keterbukaan Informasi Publik beserta dasar pengecualiannya — PPID Kementerian Agama Kota Probolinggo."
+    ogDescription="Informasi yang dikecualikan berdasarkan UU KIP — PPID Kemenag Kota Probolinggo."
+>
+    <!-- ── Page header ────────────────────────────── -->
+    <div id="page-head" data-anim="down" class="pt-8 pb-6">
+        <a
+            href="/ppid"
+            class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink/35 hover:text-green transition-colors mb-4"
+        >
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+            </svg>
+            PPID
+        </a>
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-1 h-7 bg-green shrink-0"></div>
+            <h1 class="text-4xl font-extrabold uppercase tracking-tight text-ink">
+                Informasi Dikecualikan
+            </h1>
+        </div>
+        <p class="text-sm text-ink/45 mt-1 ml-4 max-w-2xl">
+            Informasi yang dikecualikan berdasarkan UU Nomor 14 Tahun 2008
+            tentang Keterbukaan Informasi Publik dan peraturan terkait. Dokumen
+            berikut memuat daftar beserta keterangannya.
+        </p>
+    </div>
+
+    <!-- ── Daftar dokumen ─────────────────────────── -->
+    {dokumen.length === 0 ? (
+        <div
+            data-reveal="up"
+            class="border border-ink/10 bg-cream p-10 text-center mb-10"
+        >
+            <p class="text-sm text-ink/45">
+                Belum ada dokumen informasi dikecualikan yang dipublikasikan.
+            </p>
+        </div>
+    ) : (
+        <div class="grid grid-cols-1 gap-3 pb-10">
+            {dokumen.map((d, i) => (
+                <article
+                    data-reveal="up"
+                    data-delay={String((i % 4) + 1)}
+                    class="border border-ink/10 bg-cream p-5 flex items-start gap-4 hover:border-green transition-colors"
+                >
+                    <div class="w-10 h-10 shrink-0 bg-ink/5 border border-ink/10 flex items-center justify-center">
+                        <svg
+                            viewBox="0 0 24 24"
+                            width="20"
+                            height="20"
+                            fill="currentColor"
+                            class="text-green/70"
+                        >
+                            {d.url && isExternal(d.url)
+                                ? '<path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>'
+                                : '<path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>'}
+                        </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h2 class="text-sm font-bold text-ink leading-snug">
+                            {d.judul}
+                        </h2>
+                        {d.deskripsi && (
+                            <p class="text-xs text-ink/50 leading-relaxed mt-1">
+                                {d.deskripsi}
+                            </p>
+                        )}
+                        {d.url && (
+                            <a
+                                href={docUrl(d.url)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="mt-2 inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-green hover:underline"
+                            >
+                                {isExternal(d.url)
+                                    ? "Buka Tautan"
+                                    : "Unduh PDF"}
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    width="12"
+                                    height="12"
+                                    fill="currentColor"
+                                >
+                                    <path d="M6.4 18L5 16.6 14.6 7H6V5h12v12h-2V8.4z" />
+                                </svg>
+                            </a>
+                        )}
+                    </div>
+                </article>
+            ))}
+        </div>
+    )}
+
+    <!-- ── Kembali ────────────────────────────────── -->
+    <div data-anim="down" class="pb-12">
+        <a
+            href="/ppid"
+            class="group inline-flex items-center gap-2 px-5 py-3 text-[11px] font-black uppercase tracking-wider border border-ink/15 text-ink/60 hover:border-green hover:text-green transition-colors"
+        >
+            <svg
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                fill="currentColor"
+                class="group-hover:-translate-x-0.5 transition-transform"
+            >
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+            </svg>
+            Kembali ke Halaman PPID
+        </a>
+    </div>
+</BaseLayout>
+
+<style>
+    [data-anim="down"] {
+        animation: fadeDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+    }
+
+    @keyframes fadeDown {
+        from {
+            opacity: 0;
+            transform: translateY(-12px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    [data-reveal] {
+        opacity: 0;
+        transition:
+            opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+            transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    [data-reveal="up"] {
+        transform: translateY(24px);
+    }
+    [data-reveal].revealed {
+        opacity: 1;
+        transform: none;
+    }
+    [data-delay="1"] {
+        transition-delay: 0.06s;
+    }
+    [data-delay="2"] {
+        transition-delay: 0.12s;
+    }
+    [data-delay="3"] {
+        transition-delay: 0.18s;
+    }
+    [data-delay="4"] {
+        transition-delay: 0.24s;
+    }
+</style>
+
+<script>
+    {
+        const obs = new IntersectionObserver(
+            (entries) =>
+                entries.forEach((e) => {
+                    if (e.isIntersecting) {
+                        e.target.classList.add("revealed");
+                        obs.unobserve(e.target);
+                    }
+                }),
+            { threshold: 0.1, rootMargin: "0px 0px -30px 0px" },
+        );
+        document
+            .querySelectorAll("[data-reveal]")
+            .forEach((el) => obs.observe(el));
+    }
+</script>
