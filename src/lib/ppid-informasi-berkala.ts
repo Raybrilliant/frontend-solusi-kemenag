@@ -78,7 +78,7 @@ export const informasiBerkala: InformasiBerkalaGrup[] = [
                 desc: "Tugas pokok dan fungsi kantor beserta pejabat strukturalnya.",
                 icon: "mdi:clipboard-text-outline",
                 penjelasan:
-                    "Kantor Kementerian Agama Kota Probolinggo melaksanakan urusan pemerintahan di bidang agama di wilayah Kota Probolinggo, meliputi bimbingan masyarakat beragama, pendidikan agama dan keagamaan (madrasah, diniyah, dan pesantren), pelayanan keagamaan (nikah, haji, dan umrah), ketahanan akidah, serta jaminan perlindungan umat beragama.",
+                    "Kantor Kementerian Agama Kota Probolinggo melaksanakan urusan pemerintahan di bidang agama di wilayah Kota Probolinggo, meliputi bimbingan masyarakat beragama, pendidikan agama dan keagamaan, pelayanan keagamaan, ketahanan akidah, serta jaminan perlindungan umat beragama.",
                 profilLink: "/ppid/profil#struktur-organisasi",
                 profilLinkLabel:
                     "Lihat rincian tugas dan fungsi pejabat struktural",
@@ -93,15 +93,6 @@ export const informasiBerkala: InformasiBerkalaGrup[] = [
                     "Berawal sebagai Departemen Agama Kota Madya Probolinggo yang masih menyatu dengan Departemen Agama Kabupaten Probolinggo, kantor mengalami pemekaran wilayah pada tahun 1981, berubah nama menjadi Kementerian Agama pada tahun 2010, hingga berlokasi di kantor sendiri di Jl. Mastrip No 323 yang diresmikan pada 6 Januari 1986.",
                 profilLink: "/ppid/profil#sejarah",
                 profilLinkLabel: "Baca sejarah lengkap & daftar Kepala Kantor",
-                dokumen: [],
-            },
-            {
-                id: "tujuan",
-                label: "Tujuan",
-                desc: "Tujuan penyelenggaraan urusan agama di Kota Probolinggo.",
-                icon: "mdi:flag-variant-outline",
-                penjelasan:
-                    "Penyelenggaraan tugas dan fungsi diarahkan untuk mewujudkan masyarakat yang rukun melalui harmonisasi kerukunan umat beragama, maslahat melalui pelayanan keagamaan yang bermanfaat dan mudah diakses, serta cerdas melalui peningkatan mutu pendidikan agama dan keagamaan yang berkualitas.",
                 dokumen: [],
             },
             {
