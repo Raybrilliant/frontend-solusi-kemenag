@@ -1,0 +1,347 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+
+const sarpras = [
+    {
+        src: "/sarpras/meja-pelayanan.webp",
+        caption: "Meja Pelayanan PPID",
+    },
+    {
+        src: "/sarpras/meja-pelayanan-2.webp",
+        caption: "Meja Pelayanan PPID",
+    },
+    {
+        src: "/sarpras/ruang-tunggu.webp",
+        caption: "Ruang Tunggu",
+    },
+    {
+        src: "/sarpras/runag-tunggu.webp",
+        caption: "Ruang Tunggu",
+    },
+    {
+        src: "/sarpras/pojok-baca.webp",
+        caption: "Pojok Baca",
+    },
+    {
+        src: "/sarpras/pojok-baca-2.webp",
+        caption: "Pojok Baca",
+    },
+    {
+        src: "/sarpras/pojok-prestasi.webp",
+        caption: "Pojok Prestasi",
+    },
+    {
+        src: "/sarpras/ruang-konsultasi.webp",
+        caption: "Ruang Konsultasi",
+    },
+    {
+        src: "/sarpras/runag-konsultasi.webp",
+        caption: "Ruang Konsultasi",
+    },
+    {
+        src: "/sarpras/ruang-kesehatan.webp",
+        caption: "Ruang Kesehatan",
+    },
+    {
+        src: "/sarpras/ruang-kesehatan-2.webp",
+        caption: "Ruang Kesehatan",
+    },
+    {
+        src: "/sarpras/snack-dan-minum-gratis.webp",
+        caption: "Snack dan Minuman Gratis",
+    },
+    {
+        src: "/sarpras/snack-gratis.webp",
+        caption: "Snack dan Minuman Gratis",
+    },
+    {
+        src: "/sarpras/snack-gratis-2.webp",
+        caption: "Snack dan Minuman Gratis",
+    },
+    {
+        src: "/sarpras/papan-informasi.webp",
+        caption: "Papan Informasi",
+    },
+    {
+        src: "/sarpras/papan-informasi-2.webp",
+        caption: "Papan Informasi",
+    },
+    {
+        src: "/sarpras/papan-informasi-televisi.webp",
+        caption: "Papan Informasi Televisi",
+    },
+    {
+        src: "/sarpras/papan-informas-televisi-2.webp",
+        caption: "Papan Informasi Televisi",
+    },
+    {
+        src: "/sarpras/display-mushaf.webp",
+        caption: "Display Mushaf",
+    },
+    {
+        src: "/sarpras/musholla.webp",
+        caption: "Musholla",
+    },
+    {
+        src: "/sarpras/tempat-wudhu.webp",
+        caption: "Tempat Wudhu",
+    },
+    {
+        src: "/sarpras/toilet.webp",
+        caption: "Toilet",
+    },
+    {
+        src: "/sarpras/ruang-audio.webp",
+        caption: "Ruang Audio",
+    },
+    {
+        src: "/sarpras/ruang-meeting.webp",
+        caption: "Ruang Meeting",
+    },
+    {
+        src: "/sarpras/aula.webp",
+        caption: "Aula",
+    },
+    {
+        src: "/sarpras/tempat-parkir-pegawai.webp",
+        caption: "Tempat Parkir Pegawai",
+    },
+];
+---
+
+<BaseLayout
+    title="Sarana & Prasarana PPID"
+    description="Sarana dan prasarana pelayanan PPID Kementerian Agama Kota Probolinggo: meja pelayanan, ruang tunggu, pojok baca, ruang konsultasi, dan ruang kesehatan."
+    ogDescription="Dokumentasi sarana dan prasarana pelayanan PPID Kemenag Kota Probolinggo."
+>
+    <!-- ── Page header ────────────────────────────── -->
+    <div id="page-head" data-anim="down" class="pt-8 pb-6">
+        <a
+            href="/ppid"
+            class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink/35 hover:text-green transition-colors mb-4"
+        >
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+            </svg>
+            PPID
+        </a>
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-1 h-7 bg-green shrink-0"></div>
+            <h1 class="text-4xl font-extrabold uppercase tracking-tight text-ink">
+                Sarana &amp; Prasarana
+            </h1>
+        </div>
+        <p class="text-sm text-ink/45 mt-1 ml-4 max-w-2xl">
+            Dokumentasi sarana dan prasarana penunjang pelayanan informasi
+            publik di Kantor Kementerian Agama Kota Probolinggo.
+        </p>
+    </div>
+
+    <!-- ── Galeri foto ────────────────────────── -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-10">
+        {sarpras.map((s, i) => (
+            <figure
+                data-reveal="up"
+                data-delay={String((i % 4) + 1)}
+                class="border border-ink/10 bg-cream overflow-hidden hover:border-green transition-colors"
+            >
+                <button
+                    type="button"
+                    data-lightbox
+                    data-caption={s.caption}
+                    aria-label={`Perbesar foto: ${s.caption}`}
+                    class="block w-full aspect-4/3 overflow-hidden bg-ink/5 cursor-zoom-in"
+                >
+                    <img
+                        src={s.src}
+                        alt={s.caption}
+                        loading="lazy"
+                        class="w-full h-full object-cover hover:scale-[1.03] transition-transform duration-300"
+                    />
+                </button>
+                <figcaption class="flex items-center gap-2.5 px-4 py-3 text-xs font-bold uppercase tracking-wide text-ink/70">
+                    <span class="w-1 h-3.5 bg-green shrink-0"></span>
+                    {s.caption}
+                </figcaption>
+            </figure>
+        ))}
+    </div>
+
+    <!-- ── Lightbox modal ─────────────────────────── -->
+    <div
+        id="lightbox"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Foto sarana dan prasarana"
+        class="fixed inset-0 z-50 hidden items-center justify-center p-4 sm:p-8"
+    >
+        <div
+            id="lightbox-backdrop"
+            class="absolute inset-0 bg-ink/85 backdrop-blur-sm"
+        ></div>
+        <figure class="lightbox-card relative z-10 w-full max-w-4xl">
+            <img
+                id="lightbox-img"
+                src=""
+                alt=""
+                class="w-full max-h-[75vh] object-contain bg-ink border border-ink/20"
+            />
+            <figcaption class="flex items-center gap-2.5 mt-3 px-1 text-xs font-bold uppercase tracking-wide text-cream/80">
+                <span class="w-1 h-3.5 bg-green shrink-0"></span>
+                <span id="lightbox-caption"></span>
+            </figcaption>
+        </figure>
+        <button
+            type="button"
+            id="lightbox-close"
+            aria-label="Tutup"
+            class="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center bg-cream/10 text-cream border border-cream/25 hover:bg-cream hover:text-ink transition-colors"
+        >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                <path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+            </svg>
+        </button>
+    </div>
+
+    <!-- ── CTA kembali ────────────────────────────── -->
+    <div data-reveal="up" class="pb-8">
+        <a
+            href="/ppid"
+            class="group inline-flex items-center gap-2 px-5 py-3 text-[11px] font-black uppercase tracking-wider border border-ink/15 text-ink/60 hover:border-green hover:text-green transition-colors"
+        >
+            <svg
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                fill="currentColor"
+                class="group-hover:-translate-x-0.5 transition-transform"
+            >
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+            </svg>
+            Kembali ke Halaman PPID
+        </a>
+    </div>
+</BaseLayout>
+
+<style>
+    [data-anim="down"] {
+        animation: fadeDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+    }
+
+    @keyframes fadeDown {
+        from {
+            opacity: 0;
+            transform: translateY(-12px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    [data-reveal] {
+        opacity: 0;
+        transition:
+            opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+            transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    [data-reveal="up"] {
+        transform: translateY(24px);
+    }
+    [data-reveal].revealed {
+        opacity: 1;
+        transform: none;
+    }
+    [data-delay="1"] {
+        transition-delay: 0.06s;
+    }
+    [data-delay="2"] {
+        transition-delay: 0.12s;
+    }
+    [data-delay="3"] {
+        transition-delay: 0.18s;
+    }
+    [data-delay="4"] {
+        transition-delay: 0.24s;
+    }
+
+    /* Lightbox */
+    #lightbox:not(.hidden) .lightbox-card {
+        animation: zoomIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    @keyframes zoomIn {
+        from {
+            opacity: 0;
+            transform: scale(0.96);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+</style>
+
+<script>
+    {
+        const obs = new IntersectionObserver(
+            (entries) =>
+                entries.forEach((e) => {
+                    if (e.isIntersecting) {
+                        e.target.classList.add("revealed");
+                        obs.unobserve(e.target);
+                    }
+                }),
+            { threshold: 0.1, rootMargin: "0px 0px -30px 0px" },
+        );
+        document
+            .querySelectorAll("[data-reveal]")
+            .forEach((el) => obs.observe(el));
+
+        // Lightbox: klik foto → modal besar + caption
+        const lightbox = document.getElementById("lightbox");
+        const lightboxImg = document.getElementById(
+            "lightbox-img",
+        ) as HTMLImageElement | null;
+        const lightboxCaption = document.getElementById("lightbox-caption");
+        if (lightbox && lightboxImg && lightboxCaption) {
+            const openLightbox = (btn: Element) => {
+                const img = btn.querySelector<HTMLImageElement>("img");
+                if (!img) return;
+                lightboxImg.src = img.src;
+                lightboxImg.alt = img.alt;
+                lightboxCaption.textContent =
+                    btn.getAttribute("data-caption") ?? "";
+                lightbox.classList.remove("hidden");
+                lightbox.classList.add("flex");
+                document.body.style.overflow = "hidden";
+            };
+            const closeLightbox = () => {
+                lightbox.classList.add("hidden");
+                lightbox.classList.remove("flex");
+                lightboxImg.src = "";
+                document.body.style.overflow = "";
+            };
+
+            document
+                .querySelectorAll("[data-lightbox]")
+                .forEach((btn) =>
+                    btn.addEventListener("click", () => openLightbox(btn)),
+                );
+            document
+                .getElementById("lightbox-close")
+                ?.addEventListener("click", closeLightbox);
+            document
+                .getElementById("lightbox-backdrop")
+                ?.addEventListener("click", closeLightbox);
+            document.addEventListener("keydown", (e) => {
+                if (
+                    e.key === "Escape" &&
+                    !lightbox.classList.contains("hidden")
+                ) {
+                    closeLightbox();
+                }
+            });
+        }
+    }
+</script>
