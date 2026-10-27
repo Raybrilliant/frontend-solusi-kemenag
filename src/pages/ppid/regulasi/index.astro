@@ -38,6 +38,8 @@ const TYPE_ORDER = [
     "KEPDIRJEN",
     "SE",
     "SKB",
+    "KEPKANKA",
+    "SEKANKA",
 ];
 
 const TYPE_FULL: Record<string, string> = {
@@ -53,6 +55,8 @@ const TYPE_FULL: Record<string, string> = {
     KEPDIRJEN: "Keputusan Direktur Jenderal",
     SE: "Surat Edaran",
     SKB: "Surat Keputusan Bersama",
+    KEPKANKA: "Keputusan Kepala Kantor",
+    SEKANKA: "Surat Edaran Kepala Kantor",
 };
 
 function typeBadgeClass(type: string): string {
@@ -73,6 +77,8 @@ function typeBadgeClass(type: string): string {
             return "bg-green/70 text-white";
         case "KEPDIRJEN":
             return "bg-green/60 text-white";
+        case "KEPKANKA":
+            return "bg-green/50 text-white";
         default:
             return "bg-ink/15 text-ink";
     }

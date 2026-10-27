@@ -35,7 +35,7 @@
 
   // Urutan hierarki peraturan perundang-undangan (UU 12/2011 & KMA terkait):
   // Kepdirjen (Keputusan Dirjen) berada di bawah Perdirjen, sebelum Surat Edaran.
-  const JENIS_LIST = ["UU", "PERPU", "PP", "PERPRES", "INPRES", "PERMEN", "PMA", "KMA", "PERDIRJEN", "KEPDIRJEN", "SE", "SKB"];
+  const JENIS_LIST = ["UU", "PERPU", "PP", "PERPRES", "INPRES", "PERMEN", "PMA", "KMA", "PERDIRJEN", "KEPDIRJEN", "SE", "SKB", "KEPKANKA", "SEKANKA"];
 
   const JENIS_COLORS = {
     UU:        'bg-pink-100 text-pink-700',
@@ -50,6 +50,8 @@
     KEPDIRJEN: 'bg-blue-100 text-blue-700',
     SE:        'bg-violet-100 text-violet-700',
     SKB:       'bg-cyan-100 text-cyan-700',
+    KEPKANKA:  'bg-emerald-100 text-emerald-700',
+    SEKANKA:   'bg-fuchsia-100 text-fuchsia-700',
     Lainnya:   'bg-ink/5 text-ink/50',
   };
 
