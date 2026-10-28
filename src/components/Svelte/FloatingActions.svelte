@@ -14,13 +14,30 @@
     let contactOpen = $state(false);
     let fontSize = $state(0); // -2 … +4
     let darkMode = $state(false);
+    let contrast = $state(false); // high contrast
     let readable = $state(false); // spacing + font
+    let underlineLinks = $state(false);
+    let bigCursor = $state(false);
+    let readingGuide = $state(false);
     let noMotion = $state(false);
     let speaking = $state(false);
     let colorBlind = $state("none"); // none | protanopia | deuteranopia | tritanopia | mono
+    let guideEl = $state(null);
 
     // ── apply helpers ──────────────────────────────────────
     const html = () => document.documentElement;
+
+    // url() filter refs are ignored on the root element in Gecko, and a
+    // filter on <body> makes it the containing block for position:fixed —
+    // so fixed UI is portaled to <html> to stay viewport-pinned.
+    function portal(node) {
+        document.documentElement.appendChild(node);
+        return {
+            destroy() {
+                node.remove();
+            },
+        };
+    }
 
     function save(key, val) {
         localStorage.setItem("a11y-" + key, String(val));
@@ -30,9 +47,32 @@
         html().style.fontSize = `${BASE_SIZE + step}px`;
         save("font", step);
     }
+    function applyFilters() {
+        html().style.filter = darkMode
+            ? "invert(0.9) hue-rotate(180deg)"
+            : "";
+        document.body.style.filter =
+            colorBlind !== "none" ? `url(#cb-${colorBlind})` : "";
+    }
     function applyDark(on) {
         html().classList.toggle("a11y-dark", on);
         save("dark", on ? "1" : "0");
+    }
+    function applyContrast(on) {
+        html().classList.toggle("a11y-contrast", on);
+        save("contrast", on ? "1" : "0");
+    }
+    function applyLinks(on) {
+        html().classList.toggle("a11y-links", on);
+        save("links", on ? "1" : "0");
+    }
+    function applyCursor(on) {
+        html().classList.toggle("a11y-cursor", on);
+        save("cursor", on ? "1" : "0");
+    }
+    function applyGuide(on) {
+        html().classList.toggle("a11y-guide", on);
+        save("guide", on ? "1" : "0");
     }
     function applyReadable(on) {
         html().classList.toggle("a11y-readable", on);
@@ -43,9 +83,8 @@
         save("motion", on ? "1" : "0");
     }
     function applyColorBlind(mode) {
-        document.documentElement.style.filter =
-            mode === "none" ? "" : `url(#cb-${mode})`;
         save("cb", mode);
+        applyFilters();
     }
 
     // ── actions ────────────────────────────────────────────
@@ -68,7 +107,12 @@
 
     function toggleDark() {
         darkMode = !darkMode;
+        if (darkMode && contrast) {
+            contrast = false;
+            applyContrast(false);
+        }
         applyDark(darkMode);
+        applyFilters();
     }
     function toggleReadable() {
         readable = !readable;
@@ -77,6 +121,53 @@
     function toggleNoMotion() {
         noMotion = !noMotion;
         applyNoMotion(noMotion);
+    }
+    function toggleContrast() {
+        contrast = !contrast;
+        if (contrast && darkMode) {
+            darkMode = false;
+            applyDark(false);
+        }
+        applyContrast(contrast);
+        applyFilters();
+    }
+    function toggleLinks() {
+        underlineLinks = !underlineLinks;
+        applyLinks(underlineLinks);
+    }
+    function toggleCursor() {
+        bigCursor = !bigCursor;
+        applyCursor(bigCursor);
+    }
+    function toggleGuide() {
+        readingGuide = !readingGuide;
+        applyGuide(readingGuide);
+    }
+    function onMousemove(e) {
+        if (!readingGuide || !guideEl) return;
+        guideEl.style.top = `${e.clientY - 30}px`;
+    }
+    function resetAll() {
+        fontSize = 0;
+        applyFontSize(0);
+        darkMode = false;
+        applyDark(false);
+        contrast = false;
+        applyContrast(false);
+        readable = false;
+        applyReadable(false);
+        underlineLinks = false;
+        applyLinks(false);
+        bigCursor = false;
+        applyCursor(false);
+        readingGuide = false;
+        applyGuide(false);
+        noMotion = false;
+        applyNoMotion(false);
+        colorBlind = "none";
+        applyFilters();
+        window.speechSynthesis?.cancel();
+        speaking = false;
     }
 
     function setColorBlind(mode) {
@@ -112,7 +203,11 @@
     $effect(() => {
         const f = parseInt(localStorage.getItem("a11y-font") ?? "0", 10);
         const d = localStorage.getItem("a11y-dark") === "1";
+        const c = localStorage.getItem("a11y-contrast") === "1" && !d;
         const r = localStorage.getItem("a11y-readable") === "1";
+        const l = localStorage.getItem("a11y-links") === "1";
+        const cu = localStorage.getItem("a11y-cursor") === "1";
+        const g = localStorage.getItem("a11y-guide") === "1";
         const m = localStorage.getItem("a11y-motion") === "1";
         const cb = localStorage.getItem("a11y-cb") ?? "none";
 
@@ -120,12 +215,23 @@
         if (f) applyFontSize(f);
         darkMode = d;
         if (d) applyDark(true);
+        contrast = c;
+        if (c) applyContrast(true);
         readable = r;
         if (r) applyReadable(true);
+        underlineLinks = l;
+        if (l) applyLinks(true);
+        bigCursor = cu;
+        if (cu) applyCursor(true);
+        readingGuide = g;
+        if (g) applyGuide(true);
         noMotion = m;
         if (m) applyNoMotion(true);
         colorBlind = cb;
-        if (cb !== "none") applyColorBlind(cb);
+        html().style.filter = d
+            ? "invert(0.9) hue-rotate(180deg)"
+            : "";
+        document.body.style.filter = cb !== "none" ? `url(#cb-${cb})` : "";
 
         return () => {
             window.speechSynthesis?.cancel();
@@ -190,9 +296,18 @@
     </defs>
 </svg>
 
-<svelte:window onkeydown={onKeydown} />
+<svelte:window onkeydown={onKeydown} onmousemove={onMousemove} />
 
-<div class="floating-wrap">
+{#if readingGuide}
+    <div
+        class="reading-guide"
+        bind:this={guideEl}
+        use:portal
+        style="top: 40vh"
+    ></div>
+{/if}
+
+<div class="floating-wrap" use:portal>
     <!-- Panel -->
     {#if a11yOpen}
         <div class="a11y-panel" role="dialog" aria-label="Panel Aksesibilitas">
@@ -277,12 +392,28 @@
 
             <div class="divider"></div>
 
-            <!-- 3. Keterbacaan -->
+            <!-- 3. Kontras Tinggi -->
+            <section class="ps">
+                <p class="sl">Kontras Tinggi</p>
+                <button
+                    onclick={toggleContrast}
+                    class="tog-btn {contrast ? 'on' : ''}"
+                    aria-pressed={contrast}
+                >
+                    <Icon icon="mdi:contrast-circle" width="13" height="13" />
+                    {contrast ? "Nonaktifkan" : "Aktifkan"} Kontras
+                </button>
+            </section>
+
+            <div class="divider"></div>
+
+            <!-- 4. Keterbacaan -->
             <section class="ps">
                 <p class="sl">Keterbacaan</p>
                 <button
                     onclick={toggleReadable}
                     class="tog-btn {readable ? 'on' : ''}"
+                    aria-pressed={readable}
                 >
                     <Icon
                         icon="mdi:book-open-page-variant"
@@ -291,16 +422,60 @@
                     />
                     {readable ? "Nonaktifkan" : "Aktifkan"} Spasi & Font
                 </button>
+                <button
+                    onclick={toggleLinks}
+                    class="tog-btn {underlineLinks ? 'on' : ''}"
+                    aria-pressed={underlineLinks}
+                >
+                    <Icon icon="mdi:format-underline" width="13" height="13" />
+                    {underlineLinks ? "Nonaktifkan" : "Aktifkan"} Garis Bawah
+                    Tautan
+                </button>
             </section>
 
             <div class="divider"></div>
 
-            <!-- 4. Kurangi Animasi -->
+            <!-- 5. Panduan Baca -->
+            <section class="ps">
+                <p class="sl">Panduan Baca</p>
+                <button
+                    onclick={toggleGuide}
+                    class="tog-btn {readingGuide ? 'on' : ''}"
+                    aria-pressed={readingGuide}
+                >
+                    <Icon icon="mdi:ruler" width="13" height="13" />
+                    {readingGuide ? "Nonaktifkan" : "Aktifkan"} Garis Bantu
+                </button>
+            </section>
+
+            <div class="divider"></div>
+
+            <!-- 6. Kursor Besar -->
+            <section class="ps">
+                <p class="sl">Kursor Besar</p>
+                <button
+                    onclick={toggleCursor}
+                    class="tog-btn {bigCursor ? 'on' : ''}"
+                    aria-pressed={bigCursor}
+                >
+                    <Icon
+                        icon="mdi:cursor-default-outline"
+                        width="13"
+                        height="13"
+                    />
+                    {bigCursor ? "Nonaktifkan" : "Aktifkan"} Kursor Besar
+                </button>
+            </section>
+
+            <div class="divider"></div>
+
+            <!-- 7. Kurangi Animasi -->
             <section class="ps">
                 <p class="sl">Kurangi Animasi</p>
                 <button
                     onclick={toggleNoMotion}
                     class="tog-btn {noMotion ? 'on' : ''}"
+                    aria-pressed={noMotion}
                 >
                     <Icon
                         icon="mdi:pause-circle-outline"
@@ -313,12 +488,13 @@
 
             <div class="divider"></div>
 
-            <!-- 5. Baca Teks -->
+            <!-- 8. Baca Teks -->
             <section class="ps">
                 <p class="sl">Baca Teks</p>
                 <button
                     onclick={toggleSpeak}
                     class="tog-btn speak {speaking ? 'on speaking' : ''}"
+                    aria-pressed={speaking}
                 >
                     {#if speaking}
                         <Icon icon="mdi:stop" width="13" height="13" />
@@ -332,22 +508,33 @@
 
             <div class="divider"></div>
 
-            <!-- 6. Buta Warna -->
+            <!-- 9. Buta Warna -->
             <section class="ps">
                 <p class="sl">Simulasi Buta Warna</p>
                 <div class="cb-grid">
-                    {#each CB_OPTS as opt}
+                    {#each CB_OPTS as opt (opt.id)}
                         <button
                             onclick={() => setColorBlind(opt.id)}
                             class="cb-btn {colorBlind === opt.id
                                 ? 'active'
-                                : ''}">{opt.label}</button
+                                : ''}"
+                            aria-pressed={colorBlind === opt.id}
+                            >{opt.label}</button
                         >
-                    {/each}
-                </div>
-            </section>
-        </div>
-    {/if}
+                        {/each}
+                    </div>
+                </section>
+
+                <div class="divider"></div>
+
+                <section class="ps">
+                    <button onclick={resetAll} class="reset-btn">
+                        <Icon icon="mdi:restore" width="13" height="13" />
+                        Reset Semua Pengaturan
+                    </button>
+                </section>
+            </div>
+        {/if}
 
     <!-- FAB: Accessibility -->
     <button
@@ -656,6 +843,9 @@
         border-color: #374151;
         background: #f9fafb;
     }
+    .tog-btn + .tog-btn {
+        margin-top: 5px;
+    }
     .tog-btn.on {
         background: #111827;
         border-color: #111827;
@@ -691,6 +881,39 @@
         color: white;
     }
 
+    /* Reading guide band */
+    .reading-guide {
+        position: fixed;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: rgba(255, 235, 59, 0.22);
+        border-top: 2px solid rgba(17, 24, 39, 0.6);
+        border-bottom: 2px solid rgba(17, 24, 39, 0.6);
+        pointer-events: none;
+        z-index: 9990;
+    }
+
+    /* Reset all */
+    .reset-btn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 7px 10px;
+        border: 1px solid #fecaca;
+        background: #fef2f2;
+        font-size: 11px;
+        font-weight: 700;
+        color: #b91c1c;
+        cursor: pointer;
+        transition: all 0.13s;
+    }
+    .reset-btn:hover {
+        background: #fee2e2;
+    }
+
     /* ── Animations ── */
     @keyframes fabIn {
         from {
@@ -714,9 +937,6 @@
     }
 
     /* ── Global overrides ── */
-    :global(.a11y-dark) {
-        filter: invert(0.9) hue-rotate(180deg);
-    }
     :global(.a11y-dark img),
     :global(.a11y-dark video),
     :global(.a11y-dark [style*="background-image"]) {
@@ -743,5 +963,28 @@
         animation-iteration-count: 1 !important;
         transition-duration: 0.001ms !important;
         scroll-behavior: auto !important;
+    }
+
+    :global(.a11y-links a) {
+        text-decoration: underline !important;
+    }
+
+    :global(.a11y-cursor),
+    :global(.a11y-cursor *) {
+        cursor: url('data:image/svg+xml;utf8,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2232%22%20height=%2232%22%20viewBox=%220%200%2032%2032%22%3E%3Cpath%20d=%22M4%202%20L4%2027%20L10.5%2021%20L14.5%2030%20L19%2028%20L15%2019%20L24%2019%20Z%22%20fill=%22white%22%20stroke=%22black%22%20stroke-width=%222%22/%3E%3C/svg%3E') 4 2, auto !important;
+    }
+
+    :global(.a11y-contrast) {
+        background: #000 !important;
+    }
+    :global(.a11y-contrast *:not(img):not(video):not(svg):not(path):not(iframe):not(canvas):not(picture):not(source)) {
+        background-color: #000 !important;
+        color: #ffe600 !important;
+        border-color: #ffe600 !important;
+        text-shadow: none !important;
+        box-shadow: none !important;
+    }
+    :global(.a11y-contrast a) {
+        color: #53d3ff !important;
     }
 </style>
