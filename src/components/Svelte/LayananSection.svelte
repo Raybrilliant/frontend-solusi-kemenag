@@ -145,16 +145,13 @@
                                 style="color:#0F6B44"
                             />
                         {:else}
-                            <svg
-                                viewBox="0 0 24 24"
+                            <Icon
+                                icon="mdi:application-brackets-outline"
                                 width="36"
                                 height="36"
-                                fill="currentColor"
                                 class="mb-2 md:mb-3 md:w-13 md:h-13"
                                 style="color:#0F6B44"
-                            >
-                                {@html service.iconBody}
-                            </svg>
+                            />
                         {/if}
                         <h4
                             class="text-[10px] md:text-sm font-semibold mb-1 md:mb-2 opacity-50"
@@ -217,15 +214,12 @@
                                 style="color:#0F6B44"
                             />
                         {:else}
-                            <svg
-                                viewBox="0 0 24 24"
+                            <Icon
+                                icon="mdi:application-brackets-outline"
                                 width="22"
                                 height="22"
-                                fill="currentColor"
                                 style="color:#0F6B44"
-                            >
-                                {@html service.iconBody}
-                            </svg>
+                            />
                         {/if}
                     </div>
                     <div class="flex-1 py-3 md:py-4 min-w-0">
@@ -307,14 +301,11 @@
                             height="20"
                         />
                     {:else}
-                        <svg
-                            viewBox="0 0 24 24"
+                        <Icon
+                            icon="mdi:application-brackets-outline"
                             width="20"
                             height="20"
-                            fill="currentColor"
-                        >
-                            {@html activeService.iconBody}
-                        </svg>
+                        />
                     {/if}
                 </div>
                 <div class="flex-1 min-w-0">
@@ -381,14 +372,11 @@
                                     height="16"
                                 />
                             {:else}
-                                <svg
-                                    viewBox="0 0 24 24"
+                                <Icon
+                                    icon="mdi:application-brackets-outline"
                                     width="16"
                                     height="16"
-                                    fill="currentColor"
-                                >
-                                    {@html sub.iconBody}
-                                </svg>
+                                />
                             {/if}
                         </div>
                         <div class="flex-1 min-w-0">

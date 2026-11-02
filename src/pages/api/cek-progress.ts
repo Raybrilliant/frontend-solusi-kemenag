@@ -1,10 +1,14 @@
 import type { APIRoute } from "astro";
+import { enforceRateLimit } from "../../lib/rate-limit";
 import { transformTrackResponse, transformPengaduanTrackResponse } from "../../lib/track-transform";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ url, request }) => {
   try {
+    const limited = enforceRateLimit(request, "lookup:track", 60, 15 * 60_000);
+    if (limited) return limited;
+
     const kode = url.searchParams.get("kode")?.trim();
     if (!kode) {
       return new Response(

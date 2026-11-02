@@ -96,15 +96,28 @@ function formatViews(n: number) {
 
 const relatedCategoryColor = categoryColor;
 
-// EditorJS block → HTML
+import { escapeHtml, sanitizeRichText } from "../../../lib/html-sanitize";
+
+// EditorJS block → HTML (semua nilai eksternal di-escape/diserialize dulu)
+function safeMediaUrl(raw: unknown): string {
+    const u = String(raw ?? "").trim();
+    if (u.startsWith("/") || /^https?:\/\//i.test(u)) return escapeHtml(u);
+    return "";
+}
+
+function safeEmbedUrl(raw: unknown): string {
+    const u = String(raw ?? "").trim();
+    return /^https:\/\//i.test(u) ? escapeHtml(u) : "";
+}
+
 function renderBlock(block: any): string {
     const d = block.data ?? {};
     switch (block.type) {
         case "paragraph":
-            return `<p class="mb-5 text-ink/80 leading-[1.85] text-[15px]">${d.text ?? ""}</p>`;
+            return `<p class="mb-5 text-ink/80 leading-[1.85] text-[15px]">${sanitizeRichText(d.text)}</p>`;
 
         case "header": {
-            const l = d.level ?? 2;
+            const l = Math.min(6, Math.max(1, Number(d.level) || 2));
             const cls: Record<number, string> = {
                 1: "text-3xl font-extrabold mt-10 mb-4",
                 2: "text-2xl font-bold mt-8 mb-3",
@@ -113,12 +126,13 @@ function renderBlock(block: any): string {
                 5: "text-base font-semibold mt-4 mb-1",
                 6: "text-sm font-semibold mt-4 mb-1",
             };
-            return `<h${l} class="${cls[l] ?? cls[2]} text-ink">${d.text ?? ""}</h${l}>`;
+            return `<h${l} class="${cls[l]} text-ink">${sanitizeRichText(d.text)}</h${l}>`;
         }
 
         case "image": {
-            const src = d.file?.url ?? d.url ?? "";
-            const cap = d.caption ?? "";
+            const src = safeMediaUrl(d.file?.url ?? d.url);
+            if (!src) return "";
+            const cap = escapeHtml(d.caption);
             return `<figure class="my-7">
                 <img src="${src}" alt="${cap}" class="w-full object-cover" loading="lazy" />
                 ${cap ? `<figcaption class="text-xs text-ink/40 mt-2 text-center italic">${cap}</figcaption>` : ""}
@@ -133,7 +147,7 @@ function renderBlock(block: any): string {
                 .map((item: any) => {
                     const text =
                         typeof item === "string" ? item : (item?.content ?? "");
-                    return `<li class="mb-1.5">${text}</li>`;
+                    return `<li class="mb-1.5">${sanitizeRichText(text)}</li>`;
                 })
                 .join("");
             return `<${tag} class="${listCls} pl-6 mb-5 text-ink/80 text-[15px] space-y-1 leading-[1.75]">${items}</${tag}>`;
@@ -141,12 +155,12 @@ function renderBlock(block: any): string {
 
         case "quote":
             return `<blockquote class="border-l-4 border-green pl-6 my-7 text-ink/60 italic text-[15px] leading-relaxed">
-                <p class="mb-1">${d.text ?? ""}</p>
-                ${d.caption ? `<cite class="text-[12px] text-ink/35 not-italic">— ${d.caption}</cite>` : ""}
+                <p class="mb-1">${sanitizeRichText(d.text)}</p>
+                ${d.caption ? `<cite class="text-[12px] text-ink/35 not-italic">— ${escapeHtml(d.caption)}</cite>` : ""}
             </blockquote>`;
 
         case "code":
-            return `<pre class="bg-ink/5 border border-ink/8 rounded-none p-5 my-6 overflow-x-auto"><code class="text-[13px] font-mono text-ink/70">${d.code ?? ""}</code></pre>`;
+            return `<pre class="bg-ink/5 border border-ink/8 rounded-none p-5 my-6 overflow-x-auto"><code class="text-[13px] font-mono text-ink/70">${escapeHtml(d.code)}</code></pre>`;
 
         case "delimiter":
             return `<div class="flex items-center justify-center my-10 gap-3">
@@ -161,8 +175,8 @@ function renderBlock(block: any): string {
                     <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
                 </svg>
                 <div>
-                    ${d.title ? `<p class="font-bold text-ink text-[14px] mb-1">${d.title}</p>` : ""}
-                    <p class="text-[13px] text-ink/70">${d.message ?? ""}</p>
+                    ${d.title ? `<p class="font-bold text-ink text-[14px] mb-1">${sanitizeRichText(d.title)}</p>` : ""}
+                    <p class="text-[13px] text-ink/70">${sanitizeRichText(d.message)}</p>
                 </div>
             </div>`;
 
@@ -175,7 +189,7 @@ function renderBlock(block: any): string {
                     const cells = row
                         .map(
                             (cell: string) =>
-                                `<${tag} class="border border-ink/10 px-3 py-2 text-[13px]">${cell}</${tag}>`,
+                                `<${tag} class="border border-ink/10 px-3 py-2 text-[13px]">${sanitizeRichText(cell)}</${tag}>`,
                         )
                         .join("");
                     return `<tr>${cells}</tr>`;
@@ -185,7 +199,7 @@ function renderBlock(block: any): string {
         }
 
         case "embed": {
-            const src = d.embed ?? d.source ?? "";
+            const src = safeEmbedUrl(d.embed ?? d.source);
             if (!src) return "";
             return `<div class="my-7 aspect-video">
                 <iframe src="${src}" class="w-full h-full border-0" allowfullscreen loading="lazy"></iframe>

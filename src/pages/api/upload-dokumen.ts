@@ -1,9 +1,13 @@
 import type { APIRoute } from "astro";
+import { enforceRateLimit } from "../../lib/rate-limit";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
+    const limited = enforceRateLimit(request, "submit:upload", 30, 15 * 60_000);
+    if (limited) return limited;
+
     const formData = await request.formData();
     const token = cookies.get("auth_token")?.value;
 

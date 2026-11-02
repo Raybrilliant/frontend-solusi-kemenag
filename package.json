@@ -37,12 +37,15 @@
     "chart.js": "^4.5.1",
     "editorjs-undo": "^2.0.28",
     "idn-area-data": "^4.0.1",
+    "sanitize-html": "^2.18.1",
     "svelte": "^5.55.9",
     "tailwindcss": "^4.3.0",
-    "typescript": "^6.0.3",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "@iconify-json/mdi": "^1.2.3"
+    "@astrojs/check": "^0.9.12",
+    "@iconify-json/mdi": "^1.2.3",
+    "@types/sanitize-html": "^2.16.2",
+    "typescript": "5.9.3"
   }
 }

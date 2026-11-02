@@ -50,21 +50,18 @@ async function validateToken(
       headers,
       signal: AbortSignal.timeout(5000),
     });
-    const data = await res.json();
-
-    // Backend returns { success: true, user: {...} }
-    // BUT might also return validation errors if user object is incomplete
-    // Check: success === true AND no errors array AND user exists
-    if (data.success === true && !data.errors && data.user) {
-      return { valid: true, user: data.user };
+    // Fail-closed: respons non-200 (termasuk bentuk error validasi apapun)
+    // tidak dianggap sesi valid.
+    if (!res.ok) {
+      console.warn(
+        `[middleware] Token validation failed: HTTP ${res.status}`,
+      );
+      return { valid: false };
     }
 
-    // Handle ElysiaJS validation response (has "errors" array)
-    if (data.found?.user) {
-      console.warn(
-        "[middleware] Backend returned validation error, using found user data",
-      );
-      return { valid: true, user: data.found.user };
+    const data = await res.json();
+    if (data?.success === true && !data.errors && data.user) {
+      return { valid: true, user: data.user };
     }
 
     console.warn(
@@ -93,12 +90,21 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // Kanonikalisasi URL untuk konsolidasi sinyal SEO (hanya untuk GET/HEAD,
   // agar permintaan API/POST tidak terkena redirect):
-  // 1. Host www → domain utama (keduanya di-whitelist dan keduanya bisa melayani konten).
+  // 1. Host www → domain utama, hanya untuk host pada allowlist (mencegah
+  //    open redirect via header Host yang dipalsukan).
   // 2. Trailing slash dihapus (kecuali root) agar sesuai format tautan internal
   //    dan canonical yang dinormalisasi di BaseLayout.
   if (request.method === "GET" || request.method === "HEAD") {
-    const host = request.headers.get("host") ?? "";
-    if (host.toLowerCase().startsWith("www.")) {
+    const host = (request.headers.get("host") ?? "").toLowerCase();
+    const CANONICAL_HOSTS = [
+      "kemenagkotaprobolinggo.id",
+      "www.kemenagkotaprobolinggo.id",
+    ];
+
+    if (
+      host.startsWith("www.") &&
+      CANONICAL_HOSTS.includes(host)
+    ) {
       const target = new URL(request.url);
       target.host = host.slice(4);
       return redirect(target.href, 301);

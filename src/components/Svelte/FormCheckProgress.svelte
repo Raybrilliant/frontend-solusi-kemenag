@@ -410,7 +410,7 @@
                             {item.serviceTitle}
                         </h4>
                         <p class="text-xs text-gray-500 mt-0.5">
-                            {item.applicantName} • {formatTanggal(item.submittedAt)}
+                            {formatTanggal(item.submittedAt)}
                         </p>
                     </div>
                     <span
@@ -674,18 +674,20 @@
                 {/if}
 
                 <!-- Deskripsi lengkap -->
-                <div class="mt-4 p-4 bg-gray-50 border border-gray-100">
-                    <p
-                        class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2"
-                    >
-                        Isi Pengaduan
-                    </p>
-                    <p
-                        class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap"
-                    >
-                        {data.description}
-                    </p>
-                </div>
+                {#if data.description}
+                    <div class="mt-4 p-4 bg-gray-50 border border-gray-100">
+                        <p
+                            class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2"
+                        >
+                            Isi Pengaduan
+                        </p>
+                        <p
+                            class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap"
+                        >
+                            {data.description}
+                        </p>
+                    </div>
+                {/if}
             </div>
 
             <!-- Meta row -->
@@ -790,9 +792,11 @@
                     <h3 class="text-base md:text-lg font-bold leading-snug">
                         {data.title}
                     </h3>
-                    <p class="text-xs md:text-sm text-gray-500 mt-0.5">
-                        {data.description}
-                    </p>
+                    {#if data.description}
+                        <p class="text-xs md:text-sm text-gray-500 mt-0.5">
+                            {data.description}
+                        </p>
+                    {/if}
                 </div>
                 <!-- Status badge -->
                 <div class="flex flex-col items-end gap-1.5 shrink-0">

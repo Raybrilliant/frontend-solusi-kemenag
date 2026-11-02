@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { enforceRateLimit } from "../../lib/rate-limit";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
@@ -15,6 +16,9 @@ async function safeJson(res: Response): Promise<unknown> {
 // Public: POST /api/v1/pengaduan/ — no auth required
 export const POST: APIRoute = async ({ request }) => {
   try {
+    const limited = enforceRateLimit(request, "submit:pengaduan", 5, 15 * 60_000);
+    if (limited) return limited;
+
     const body = await request.json();
     const res = await fetch(`${BACKEND_URL}/api/v1/pengaduan/`, {
       method: "POST",

@@ -42,6 +42,15 @@ const structuredDataItems = Array.isArray(structuredData)
     : structuredData
       ? [structuredData]
       : [];
+
+// Netralkan karakter yang bisa keluar dari konteks <script> ("<", U+2028,
+// U+2029) agar JSON-LD tidak dapat dibobol dari isi data.
+function safeJsonLd(item: unknown): string {
+    return JSON.stringify(item)
+        .replace(/</g, "\\u003c")
+        .replace(/\u2028/g, "\\u2028")
+        .replace(/\u2029/g, "\\u2029");
+}
 ---
 
 <html lang="id" class="scroll-smooth">
@@ -90,10 +99,7 @@ const structuredDataItems = Array.isArray(structuredData)
         <meta name="twitter:image:alt" content={resolvedOgTitle} />
 
         {structuredDataItems.map((item) => (
-            <script
-                type="application/ld+json"
-                set:html={JSON.stringify(item)}
-            />
+            <script type="application/ld+json" set:html={safeJsonLd(item)} />
         ))}
     </head>
     <body class="px-4 sm:px-8 md:px-14 lg:px-20 bg-cream">

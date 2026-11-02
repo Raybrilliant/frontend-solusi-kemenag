@@ -69,7 +69,7 @@ export function transformPengaduanTrackResponse(raw: any): any {
       id: d.id,
       kode: d.id,
       title: d.tipe ?? "Pengaduan",
-      description: d.deskripsi ?? "-",
+      description: null,
       status: d.status,
       startTime: d.processedAt ?? null,
       receivedTime: d.createdAt ?? null,
@@ -108,7 +108,8 @@ export async function transformTrackResponse(raw: any): Promise<any> {
       id: d.id,
       kode: d.id,
       title: d.serviceTitle,
-      description: d.applicantName,
+      // Nama pemohon tidak lagi diekspos pada pelacakan publik.
+      description: null,
       status: d.status,
       startTime: d.processedAt ?? null,
       receivedTime: d.submittedAt ?? null,

@@ -29,7 +29,14 @@
             if (json.success && json.token) {
                 // Cookie sudah di-set oleh server — beri sedikit waktu lalu redirect
                 const params = new URLSearchParams(window.location.search);
-                const redirectTo = params.get("redirect") ?? "/admin";
+                const target = params.get("redirect") ?? "/admin";
+                // Hanya izinkan path internal — cegah open redirect.
+                const redirectTo =
+                    target.startsWith("/") &&
+                    !target.startsWith("//") &&
+                    !target.includes("://")
+                        ? target
+                        : "/admin";
                 // Gunakan setTimeout untuk memastikan cookie sudah diproses browser
                 setTimeout(() => {
                     window.location.href = redirectTo;

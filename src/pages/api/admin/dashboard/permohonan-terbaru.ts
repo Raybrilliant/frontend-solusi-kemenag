@@ -1,13 +1,15 @@
 import type { APIRoute } from "astro";
+import { getAdminAuthHeaders } from "../../../../lib/admin-api-proxy";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
-// Proxy: GET /api/v1/dashboard/permohonan-terbaru
-export const GET: APIRoute = async ({ url }) => {
+// Proxy (auth): GET /api/v1/dashboard/permohonan-terbaru
+export const GET: APIRoute = async ({ url, cookies, request }) => {
   try {
     const limit = url.searchParams.get("limit") ?? "5";
     const res = await fetch(
       `${BACKEND_URL}/api/v1/dashboard/permohonan-terbaru?limit=${limit}`,
+      { headers: getAdminAuthHeaders(cookies, request) },
     );
     const data = await res.json();
     return new Response(JSON.stringify(data), {

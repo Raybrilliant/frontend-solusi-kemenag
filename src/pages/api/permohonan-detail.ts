@@ -1,9 +1,13 @@
 import type { APIRoute } from "astro";
+import { enforceRateLimit } from "../../lib/rate-limit";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ url, request }) => {
   try {
+    const limited = enforceRateLimit(request, "lookup:detail", 30, 15 * 60_000);
+    if (limited) return limited;
+
     const id = url.searchParams.get("id")?.trim();
     if (!id) {
       return new Response(

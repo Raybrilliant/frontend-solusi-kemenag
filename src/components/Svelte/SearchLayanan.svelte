@@ -66,10 +66,21 @@
         grouped.reduce((n, g) => n + g.items.length, 0),
     );
 
+    function escapeHtml(v) {
+        return String(v ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#39;");
+    }
+
     function highlight(text, q) {
-        if (!q || q.length < 3) return text;
-        const safe = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        return String(text ?? "").replace(
+        // Teks di-escape dulu — {@html} hanya membungkus tag <mark> kita.
+        const safeText = escapeHtml(text);
+        if (!q || q.length < 3) return safeText;
+        const safe = escapeHtml(q).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        return safeText.replace(
             new RegExp(`(${safe})`, "gi"),
             '<mark style="background:#F6C744;padding:0 2px;font-style:normal">$1</mark>',
         );

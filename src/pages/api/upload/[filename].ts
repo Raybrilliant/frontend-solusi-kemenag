@@ -27,7 +27,13 @@ export const GET: APIRoute = async ({ params }) => {
       res.headers.get("Content-Type") ?? "application/octet-stream";
     const contentDisposition = res.headers.get("Content-Disposition");
 
-    const headers: Record<string, string> = { "Content-Type": contentType };
+    // Konten dikirim apa adanya dari storage internal — matikan sniffing
+    // dan blokir skrip/embed agar file upload tidak bisa dieksekusi di origin.
+    const headers: Record<string, string> = {
+      "Content-Type": contentType,
+      "X-Content-Type-Options": "nosniff",
+      "Content-Security-Policy": "default-src 'none'; object-src 'none'",
+    };
     if (contentDisposition) headers["Content-Disposition"] = contentDisposition;
 
     return new Response(res.body, { status: 200, headers });

@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { enforceRateLimit } from "../../../lib/rate-limit";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 
@@ -28,6 +29,9 @@ export const GET: APIRoute = async ({ url }) => {
 // Proxy publik: POST /api/v1/ppid/permohonan (pengajuan permohonan data PPID)
 export const POST: APIRoute = async ({ request }) => {
   try {
+    const limited = enforceRateLimit(request, "submit:ppid", 5, 15 * 60_000);
+    if (limited) return limited;
+
     const body = await request.json();
     const res = await fetch(`${BACKEND_URL}/api/v1/ppid/permohonan`, {
       method: "POST",

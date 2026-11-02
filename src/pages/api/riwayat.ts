@@ -43,7 +43,8 @@ export const GET: APIRoute = async ({ url }) => {
     const status = url.searchParams.get("status");
     const [res, iconMap] = await Promise.all([
       fetch(
-        `${BACKEND_URL}/api/v1/dashboard/permohonan-terbaru?limit=5${status ? `&status=${encodeURIComponent(status)}` : ""}`,
+        // Endpoint publik non-PII — nama pemohon tidak diikutkan.
+        `${BACKEND_URL}/api/v1/dashboard/riwayat-publik?limit=5${status ? `&status=${encodeURIComponent(status)}` : ""}`,
       ),
       getIconMap(),
     ]);
