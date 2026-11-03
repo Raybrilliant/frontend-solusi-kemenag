@@ -26,6 +26,7 @@ export async function getUserFromToken(
 
     const res = await fetch(`${BACKEND_URL}/api/v1/auth/me`, {
       headers,
+      signal: AbortSignal.timeout(5000),
     });
     const data = await res.json();
     if (data.success && data.user) return data.user as AuthUser;

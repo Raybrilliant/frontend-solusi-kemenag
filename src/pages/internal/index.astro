@@ -65,7 +65,52 @@ const userRole = Astro.locals.user?.role ?? "";
             </p>
         </div>
 
-        <!-- ── Svelte Component ──────────────────────── -->
+        <!-- ── Menu: Arsip Kemenag ─────────────────── -->
+        <div data-anim="content" class="max-w-5xl mx-auto mb-6">
+            <a
+                href="/internal/arsip"
+                class="group block bg-linear-to-br from-green/5 to-green/10 border border-green/20 rounded p-6 hover:border-green/50 hover:shadow-lg hover:shadow-green/5 hover:-translate-y-1 transition-all duration-300"
+            >
+                <div class="flex items-center gap-4">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-green/15 border border-green/25 flex items-center justify-center shrink-0 group-hover:bg-green/25 transition-colors"
+                    >
+                        <svg
+                            viewBox="0 0 24 24"
+                            class="w-6 h-6 text-green"
+                            fill="currentColor"
+                        >
+                            <path
+                                d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"
+                            />
+                        </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-bold text-ink text-lg">Arsip Kemenag</h3>
+                        <p class="text-sm text-ink/50 leading-relaxed">
+                            Cari surat & arsip digital dari Google Drive —
+                            lengkap dengan statistik dan filter lanjutan.
+                        </p>
+                    </div>
+                    <div
+                        class="flex items-center gap-1 text-green text-sm font-semibold shrink-0"
+                    >
+                        <span class="hidden sm:inline">Buka Arsip</span>
+                        <svg
+                            viewBox="0 0 24 24"
+                            class="w-4 h-4"
+                            fill="currentColor"
+                        >
+                            <path
+                                d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"
+                            />
+                        </svg>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- ── Svelte Component ──────────────────── -->
         <div data-anim="content">
             <InternalLayananForm client:load userRole={userRole} />
         </div>
