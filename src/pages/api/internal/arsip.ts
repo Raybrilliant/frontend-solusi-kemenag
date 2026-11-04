@@ -1,14 +1,15 @@
 import type { APIRoute, AstroCookies } from "astro";
 import { getUserFromToken } from "../../../lib/get-user";
 import {
-  clearListCache,
   DRIVE_FOLDER_ID,
+  getIndex,
   isDriveConfigured,
-  listArsipFiles,
+  refreshIndex,
+  searchDriveFiles,
   type DriveItem,
 } from "../../../lib/google-drive";
 
-const DEFAULT_LIMIT = 5;
+const DEFAULT_LIMIT = 8;
 const PAGE_SIZE = 20;
 
 // Endpoint /api/* dilewati middleware auth, jadi sesi divalidasi di sini (fail-closed).
@@ -41,9 +42,20 @@ function buildStats(items: DriveItem[]) {
   };
 }
 
-function matchesQuery(item: DriveItem, terms: string[]): boolean {
-  const name = item.name.toLowerCase();
-  return terms.every((t) => name.includes(t));
+function filterCacheItems(
+  items: DriveItem[],
+  format: string,
+  jenisSurat: string,
+  from: string,
+  to: string,
+): DriveItem[] {
+  return items.filter(
+    (item) =>
+      (!format || item.format === format) &&
+      (!jenisSurat || item.jenisSurat === jenisSurat) &&
+      (!from || (item.createdTime ?? "").slice(0, 10) >= from) &&
+      (!to || (item.createdTime ?? "").slice(0, 10) <= to),
+  );
 }
 
 export const GET: APIRoute = async ({ cookies, request, url }) => {
@@ -74,21 +86,51 @@ export const GET: APIRoute = async ({ cookies, request, url }) => {
   const to = params.get("to") ?? "";
   const showAll = params.get("all") === "1";
   const page = Math.max(1, Number(params.get("page")) || 1);
-  if (params.get("refresh") === "1") clearListCache();
+  const pageToken = params.get("page_token") ?? undefined;
 
   try {
-    const items = await listArsipFiles();
+    // refresh=1 → paksa crawl ulang index (bypass cache).
+    const index = params.get("refresh") === "1"
+      ? await refreshIndex()
+      : await getIndex();
 
-    const terms = q.split(/\s+/).filter(Boolean);
-    const filtered = items.filter(
-      (item) =>
-        (!terms.length || matchesQuery(item, terms)) &&
-        (!format || item.format === format) &&
-        (!jenisSurat || item.jenisSurat === jenisSurat) &&
-        (!from || (item.createdTime ?? "").slice(0, 10) >= from) &&
-        (!to || (item.createdTime ?? "").slice(0, 10) <= to),
-    );
+    const meta = {
+      success: true as const,
+      folderName: "Arsip Kemenag",
+      folderId: DRIVE_FOLDER_ID,
+      stats: buildStats(index.items),
+      showAll,
+      page,
+    };
 
+    // ── Live search: keyword diteruskan ke Drive API ───────────
+    // Search + pagination native (pageToken), hanya 1 halaman ditarik.
+    if (q) {
+      const folderId = jenisSurat
+        ? index.folders.find((f) => f.name === jenisSurat)?.id
+        : undefined;
+      const search = await searchDriveFiles({
+        terms: q.split(/\s+/),
+        folderId,
+        from,
+        to,
+        format,
+        pageSize: showAll ? PAGE_SIZE : DEFAULT_LIMIT,
+        pageToken,
+      });
+
+      return new Response(
+        JSON.stringify({
+          ...meta,
+          data: search.items,
+          nextPageToken: search.nextPageToken,
+        }),
+        { headers: { "Content-Type": "application/json" } },
+      );
+    }
+
+    // ── Cache path: filter & paginasi dari index ───────────────
+    const filtered = filterCacheItems(index.items, format, jenisSurat, from, to);
     let data: DriveItem[];
     let pageInfo: Record<string, number> = {};
 
@@ -96,27 +138,18 @@ export const GET: APIRoute = async ({ cookies, request, url }) => {
       const start = (page - 1) * PAGE_SIZE;
       data = filtered.slice(start, start + PAGE_SIZE);
       pageInfo = {
-        page,
         pageSize: PAGE_SIZE,
         totalPages: Math.max(1, Math.ceil(filtered.length / PAGE_SIZE)),
+        totalFiltered: filtered.length,
       };
     } else {
       data = filtered.slice(0, DEFAULT_LIMIT);
+      pageInfo = { totalFiltered: filtered.length };
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        folderName: "Arsip Kemenag",
-        folderId: DRIVE_FOLDER_ID,
-        stats: buildStats(items),
-        data,
-        totalFiltered: filtered.length,
-        showAll,
-        ...pageInfo,
-      }),
-      { headers: { "Content-Type": "application/json" } },
-    );
+    return new Response(JSON.stringify({ ...meta, data, ...pageInfo }), {
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (e) {
     return new Response(
       JSON.stringify({

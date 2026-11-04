@@ -12,6 +12,7 @@
     let toDate = $state("");
     let showAll = $state(false);
     let page = $state(1);
+    let pageTokens = $state([]);
     let showFilters = $state(false);
 
     let result = $state(null);
@@ -41,6 +42,12 @@
     const stats = $derived(result?.stats ?? null);
     const items = $derived(result?.data ?? []);
     const totalFiltered = $derived(result?.totalFiltered ?? 0);
+    const isLive = $derived(debouncedQ.trim() !== "");
+    const hasNextPage = $derived(
+        isLive
+            ? Boolean(result?.nextPageToken)
+            : (result?.totalPages ?? 1) > page,
+    );
     const hasQuery = $derived(
         debouncedQ.trim() !== "" || format || jenisSurat || fromDate || toDate,
     );
@@ -52,6 +59,7 @@
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
             debouncedQ = value;
+            resetPagination();
         }, 300);
         return () => clearTimeout(debounceTimer);
     });
@@ -85,7 +93,13 @@
         if (toDate) params.set("to", toDate);
         if (showAll) {
             params.set("all", "1");
-            params.set("page", String(page));
+            if (isLive) {
+                // Live search: paginasi native Drive via pageToken.
+                const token = pageTokens[page - 1];
+                if (token) params.set("page_token", token);
+            } else {
+                params.set("page", String(page));
+            }
         }
         return params;
     }
@@ -101,10 +115,15 @@
         doFetch(params);
     }
 
-    // ── Helpers ──────────────────────────────────────────
+    // ── Helpers ──────────────────────────────────────
+    function resetPagination() {
+        page = 1;
+        pageTokens = [];
+    }
+
     function setJenisSurat(value) {
         jenisSurat = jenisSurat === value ? "" : value;
-        page = 1;
+        resetPagination();
     }
 
     function clearAll() {
@@ -114,12 +133,26 @@
         fromDate = "";
         toDate = "";
         showAll = false;
-        page = 1;
+        resetPagination();
     }
 
     function toggleLihatSemua() {
         showAll = !showAll;
-        page = 1;
+        resetPagination();
+    }
+
+    function nextPage() {
+        if (isLive && result?.nextPageToken) {
+            pageTokens = [...pageTokens, result.nextPageToken];
+        }
+        page += 1;
+    }
+
+    function prevPage() {
+        if (isLive) {
+            pageTokens = pageTokens.slice(0, -1);
+        }
+        page -= 1;
     }
 
     function focusSearch(e) {
@@ -253,7 +286,7 @@
                         id="filter-jenis-surat"
                         onchange={(e) => {
                             jenisSurat = e.currentTarget.value;
-                            page = 1;
+                            resetPagination();
                         }}
                         class="w-full border border-ink/20 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:border-green"
                     >
@@ -275,7 +308,7 @@
                         id="filter-format"
                         onchange={(e) => {
                             format = e.currentTarget.value;
-                            page = 1;
+                            resetPagination();
                         }}
                         class="w-full border border-ink/20 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:border-green"
                     >
@@ -323,7 +356,7 @@
                             jenisSurat = "";
                             fromDate = "";
                             toDate = "";
-                            page = 1;
+                            resetPagination();
                         }}
                         class="justify-self-start lg:justify-self-end flex items-center gap-1 text-xs font-semibold text-red-500 hover:text-red-600 transition-colors"
                     >
@@ -410,16 +443,19 @@
         <div class="max-w-5xl mx-auto mt-10">
             <div class="flex items-center justify-between gap-3 mb-4">
                 {#if hasQuery}
-                    <p class="text-sm text-ink/50">
-                        ≈ <span class="font-bold text-ink">{totalFiltered}</span>
-                        hasil
-                        {#if debouncedQ.trim()}
-                            untuk
+                    {#if isLive}
+                        <p class="text-sm text-ink/50">
+                            Hasil untuk
                             <span class="font-semibold text-ink"
                                 >"{debouncedQ.trim()}"</span
                             >
-                        {/if}
-                    </p>
+                        </p>
+                    {:else}
+                        <p class="text-sm text-ink/50">
+                            ≈ <span class="font-bold text-ink">{totalFiltered}</span>
+                            hasil
+                        </p>
+                    {/if}
                 {:else}
                     <h2 class="text-lg font-bold text-ink">File Terbaru</h2>
                 {/if}
@@ -516,14 +552,14 @@
                     {/each}
                 </div>
 
-                {#if showAll && result?.totalPages > 1}
+                {#if showAll && (page > 1 || hasNextPage)}
                     <div
                         class="flex items-center justify-center gap-3 mt-8 text-sm"
                     >
                         <button
                             type="button"
                             disabled={page <= 1}
-                            onclick={() => (page -= 1)}
+                            onclick={prevPage}
                             class="flex items-center gap-1 font-semibold text-ink/60 hover:text-green disabled:opacity-30 disabled:pointer-events-none transition-colors"
                         >
                             <Icon icon="mdi:chevron-left" class="w-4 h-4" />
@@ -531,16 +567,18 @@
                         </button>
                         <span class="text-ink/50">
                             Halaman
-                            <span class="font-bold text-ink">{result.page}</span>
-                            dari
-                            <span class="font-bold text-ink"
-                                >{result.totalPages}</span
-                            >
+                            <span class="font-bold text-ink">{page}</span>
+                            {#if !isLive}
+                                dari
+                                <span class="font-bold text-ink"
+                                    >{result?.totalPages ?? 1}</span
+                                >
+                            {/if}
                         </span>
                         <button
                             type="button"
-                            disabled={page >= result.totalPages}
-                            onclick={() => (page += 1)}
+                            disabled={!hasNextPage}
+                            onclick={nextPage}
                             class="flex items-center gap-1 font-semibold text-ink/60 hover:text-green disabled:opacity-30 disabled:pointer-events-none transition-colors"
                         >
                             Berikutnya
