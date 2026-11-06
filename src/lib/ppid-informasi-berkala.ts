@@ -41,7 +41,7 @@ export const alamatKantor = {
     whatsapp: "+62 878-3810-0425",
     whatsappUrl: "https://wa.me/6287838100425",
     email: "kotaprobolinggo@kemenag.go.id",
-    jamLayanan: "Senin – Kamis 07.30 – 16.00 WIB, Jumat 07.00 – 16.30 WIB",
+    jamLayanan: "Senin – Kamis 07.30 – 16.00 WIB, Jumat 07.30 – 16.30 WIB",
     mapsUrl:
         "https://www.google.com/maps/search/?api=1&query=Kantor+Kementerian+Agama+Kota+Probolinggo",
 };

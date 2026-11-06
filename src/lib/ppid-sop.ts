@@ -336,7 +336,7 @@ export const sopGroups: SopGrup[] = [
                 output: "Tanda terima permohonan dan jawaban/penyampaian informasi",
                 dasar: [
                     "UU No. 14 Tahun 2008 tentang Keterbukaan Informasi Publik",
-                    "Jam layanan: Senin–Kamis 07.30–16.00 WIB, Jumat 07.00–16.30 WIB",
+                    "Jam layanan: Senin–Kamis 07.30–16.00 WIB, Jumat 07.30–16.30 WIB",
                 ],
                 langkah: [
                     {

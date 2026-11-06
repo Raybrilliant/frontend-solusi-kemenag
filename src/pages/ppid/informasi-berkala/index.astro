@@ -67,6 +67,12 @@ try {
 
 const semuaItem = grupTampil.flatMap((g) => g.items);
 
+// Total keseluruhan file yang dapat dilihat/diunduh (hanya dokumen ber-fileUrl)
+const totalDokumen = semuaItem.reduce(
+    (n, item) => n + item.dokumen.filter((d) => d.fileUrl).length,
+    0,
+);
+
 const pageUrl = `${Astro.url.origin}/ppid/informasi-berkala`;
 const structuredData = [
     {
@@ -241,6 +247,27 @@ const structuredData = [
             Informasi wajib umum yang disediakan dan diumumkan secara berkala
             sesuai UU Nomor 14 Tahun 2008 tentang Keterbukaan Informasi Publik.
         </p>
+        <div
+            data-anim="up"
+            class="mt-6 ml-4 inline-flex items-center gap-4 border border-ink/10 bg-cream px-5 py-4"
+        >
+            <Icon
+                name="mdi:file-download-outline"
+                class="w-9 h-9 text-green shrink-0"
+            />
+            <div>
+                <p
+                    class="text-5xl sm:text-6xl font-extrabold tracking-tight text-green leading-none"
+                >
+                    {totalDokumen}
+                </p>
+                <p
+                    class="mt-1.5 text-[10px] font-black uppercase tracking-wider text-ink/45"
+                >
+                    Total Dokumen — dapat dilihat &amp; diunduh
+                </p>
+            </div>
+        </div>
     </div>
 
     <!-- ── Sticky nav bar (muncul saat halaman di-scroll) ── -->

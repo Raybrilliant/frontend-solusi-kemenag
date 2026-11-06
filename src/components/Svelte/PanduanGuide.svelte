@@ -153,6 +153,8 @@
 
     // ── Daftar isi ──────────────────────────────────────────────
     const tocItems = [
+        { id: "jadwal-layanan", label: "Jadwal Layanan" },
+        { id: "biaya-layanan", label: "Biaya Layanan" },
         { id: "video-tutorial", label: "Video Panduan" },
         { id: "apa-itu-solusi", label: "Apa itu SOLUSI?" },
         { id: "syarat-layanan", label: "Syarat Layanan" },
@@ -642,8 +644,116 @@
 </div>
 
 <main class="max-w-6xl mx-auto px-4 pb-24 space-y-20 md:space-y-28">
+    <!-- ── Jadwal & Biaya Layanan (grid kiri-kanan) ───────────── -->
+    <div class="grid md:grid-cols-2 gap-10 md:gap-12 items-start mt-8 md:mt-0">
+        <!-- ── Jadwal Layanan ─────────────────────────────────── -->
+        <section id="jadwal-layanan" class="scroll-mt-28" use:reveal>
+        <div class="text-center max-w-2xl mx-auto mb-10">
+            <h2 class="text-3xl md:text-4xl font-bold mb-3">Jadwal Layanan</h2>
+            <p class="text-ink/65">
+                Permohonan dapat diajukan online kapan saja, sedangkan pemrosesan oleh petugas
+                berjalan pada jam kerja berikut.
+            </p>
+        </div>
+
+        <div class="max-w-3xl mx-auto">
+            <div class="bg-white border border-ink/8 shadow-sm overflow-hidden">
+                <div class="flex items-center gap-3 px-6 py-4 bg-green text-cream">
+                    <Icon icon="mdi:calendar-week" width="22" height="22" />
+                    <span class="font-bold uppercase tracking-wider text-sm">
+                        Jadwal Layanan Senin – Jumat
+                    </span>
+                </div>
+                <div class="divide-y divide-ink/6">
+                    <div class="flex items-center justify-between gap-4 px-6 py-5">
+                        <div class="flex items-center gap-3">
+                            <span
+                                class="w-10 h-10 bg-green/10 text-green flex items-center justify-center shrink-0"
+                            >
+                                <Icon icon="mdi:weather-sunny" width="20" height="20" />
+                            </span>
+                            <span class="font-semibold text-ink">Senin – Kamis</span>
+                        </div>
+                        <span
+                            class="inline-flex items-center gap-1.5 font-bold text-green whitespace-nowrap"
+                        >
+                            <Icon icon="mdi:clock-outline" width="16" height="16" />
+                            07.30 – 16.00 WIB
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between gap-4 px-6 py-5">
+                        <div class="flex items-center gap-3">
+                            <span
+                                class="w-10 h-10 bg-yellow/20 text-ink flex items-center justify-center shrink-0"
+                            >
+                                <Icon icon="mdi:weather-sunset" width="20" height="20" />
+                            </span>
+                            <span class="font-semibold text-ink">Jumat</span>
+                        </div>
+                        <span
+                            class="inline-flex items-center gap-1.5 font-bold text-green whitespace-nowrap"
+                        >
+                            <Icon icon="mdi:clock-outline" width="16" height="16" />
+                            07.30 – 16.30 WIB
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <p class="text-center text-xs text-ink/45 mt-4">
+                Pengajuan melalui aplikasi tetap dapat dilakukan di luar jam tersebut dan akan
+                diproses pada hari kerja berikutnya.
+            </p>
+        </div>
+    </section>
+
+    <!-- ── Biaya Layanan ────────────────────────────────────────── -->
+    <section id="biaya-layanan" class="scroll-mt-28" use:reveal>
+        <div class="text-center max-w-2xl mx-auto mb-10">
+            <h2 class="text-3xl md:text-4xl font-bold mb-3">Biaya Layanan</h2>
+            <p class="text-ink/65">
+                Seluruh layanan di aplikasi SOLUSI tidak dipungut biaya apa pun.
+            </p>
+        </div>
+
+        <div class="max-w-3xl mx-auto">
+            <div
+                class="relative overflow-hidden bg-gradient-to-br from-red-600 to-red-800 text-cream shadow-xl p-8 md:p-10 text-center"
+            >
+                <div class="absolute -right-12 -top-12 w-52 h-52 bg-white/10 blur-2xl"></div>
+                <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-white/10 blur-2xl"></div>
+                <div class="relative">
+                    <div
+                        class="w-16 h-16 mx-auto bg-yellow text-ink flex items-center justify-center mb-4"
+                    >
+                        <Icon icon="mdi:cash-remove" width="32" height="32" />
+                    </div>
+                    <p class="text-5xl md:text-6xl font-bold tracking-tight mb-2">GRATIS</p>
+                    <p class="text-sm text-cream/90 max-w-xl mx-auto leading-relaxed">
+                        Tidak ada biaya pendaftaran, biaya formulir, maupun pungutan lain dalam
+                        bentuk apa pun. Seluruh layanan gratis sesuai ketentuan peraturan
+                        perundang-undangan.
+                    </p>
+                </div>
+            </div>
+            <div class="mt-4 p-4 bg-white/50 border border-ink/8 flex items-start gap-3">
+                <Icon
+                    icon="mdi:shield-alert"
+                    width="20"
+                    height="20"
+                    class="text-red-600 shrink-0 mt-0.5"
+                />
+                <p class="text-xs text-ink/65 leading-relaxed">
+                    <strong class="text-ink">Waspada pungutan liar.</strong> Jika ada pihak yang
+                    meminta pembayaran atas layanan SOLUSI, mohon laporkan melalui kanal pengaduan
+                    resmi Kemenag Kota Probolinggo.
+                </p>
+            </div>
+        </div>
+    </section>
+    </div>
+
     <!-- ── Video Tutorial ───────────────────────────────────────── -->
-    <section id="video-tutorial" class="scroll-mt-28 mt-8 md:mt-0" use:reveal>
+    <section id="video-tutorial" class="scroll-mt-28" use:reveal>
         <div class="text-center max-w-2xl mx-auto mb-8">
             <h2 class="text-3xl md:text-4xl font-bold mb-3">Video Panduan Penggunaan</h2>
             <p class="text-ink/65">
@@ -1427,7 +1537,7 @@
         </div>
     </section>
 
-    <!-- ── Kompensasi ───────────────────────────────────────────── -->
+    <!-- ── Kompensasi ────────────────────────────────────── -->
     <section id="kompensasi" class="scroll-mt-28" use:reveal>
         <div class="text-center max-w-2xl mx-auto mb-10">
             <h2 class="text-3xl md:text-4xl font-bold mb-3">Kompensasi Keterlambatan</h2>
